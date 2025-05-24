@@ -73,6 +73,16 @@
               Atras
         </a>  
           <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>  <!-- Añadido mt-3 -->
+    </form>
+
+
+<form action="{% url 'logout' %}" method="post" class="d-inline">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+    </button>
+</form>
+
         </div>
       </form>
     </div>

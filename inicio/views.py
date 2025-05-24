@@ -1,10 +1,48 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .forms import CustomLoginForm
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 
 def inicio_view(request):
     return render(request, 'inicio/inicial.html')
 
+
 def login_view(request):
-    return render(request, 'inicio/login.html')
+    if request.user.is_authenticated:
+        return redirect('/admin/')
+    
+    if request.method == 'POST':
+        form = CustomLoginForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                return redirect('/admin/')
+        messages.error(request, "Usuario o contraseña incorrectos")
+    else:
+        form = CustomLoginForm()
+    
+    return render(request, 'inicio/login.html', {'form': form})
+
+
+@require_POST
+@csrf_protect
+def custom_logout(request):
+    return LogoutView.as_view()(request)
+
+
+@login_required
+def mi_vista_protegida(request):
+    # Tu lógica aquí
+    return render(request, 'inicio/registro_docto4.html')
 
 def seleccion_view(request):
     return render(request, 'inicio/seleccion_registro.html')
