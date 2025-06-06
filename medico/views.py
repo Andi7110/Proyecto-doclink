@@ -6,3 +6,5 @@ from django.shortcuts import render, redirect
 def views_home(request):
     return render(request, 'medico/home.html')
 
+def dashboard_doctor(request):
+    return render(request, 'dashboard_doctor.html')

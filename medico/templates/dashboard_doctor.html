@@ -1,0 +1,96 @@
+{% extends 'dashboard_base.html' %}
+{% block content %}
+        <main id="main-content" class="flex-grow-1 px-md-5 py-0" style="transition: margin 0.2s, width 0.2s;">
+          <!-- Nombre y calificación -->
+          <div class="row mt-4">
+            <div class="col-12 col-md-8">
+              <h2 class="mb-1">¡Bienvenido Dr. Carlos Hernandez!</h2>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="me-1">Tus calificaciones:</span>
+                <span class="rating-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <button class="btn btn-info btn-sm text-white ms-2">Reseñas</button>
+              </div>
+            </div>
+            <!-- Buscador alineado a la derecha -->
+            <div class="col-12 col-md-4 d-flex justify-content-end align-items-start">
+              <input type="search" class="form-control w-75" placeholder="Buscar..." aria-label="Buscar" style="min-width: 180px; max-width: 220px;" />
+            </div>
+          </div>
+          <!-- Botones principales -->
+          <div class="mb-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-info btn-custom text-white">Programar nueva</button>
+            <button class="btn btn-danger btn-custom">Cancelar cita</button>
+            <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
+            <button class="btn btn-info btn-custom text-white">+ Agregar Ubicación</button>
+            <button class="btn btn-info btn-custom text-white">Configuracion Horarios</button>
+            <button class="btn btn-info btn-custom text-white">Crear Receta</button>
+          </div>
+          <!-- Cards resumen -->
+          <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm p-3">
+                <h6>Doctores registrados</h6>
+                <h2 class="mb-0">2,402</h2>
+                <small class="text-muted">Último año</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm p-3">
+                <h6>Comunidad</h6>
+                <h2 class="mb-0">100,353</h2>
+                <small class="text-muted">Último año</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm p-3">
+                <h6>Citas</h6>
+                <h2 class="mb-0">0</h2>
+                <small class="text-muted">Últimos días</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm p-3">
+                <h6>Ingresos</h6>
+                <h2 class="mb-0">$45,000</h2>
+                <small class="text-muted">Total</small>
+              </div>
+            </div>
+          </div>
+          <!-- Gráficos y usuarios -->
+          <div class="row">
+            <div class="col-md-8 mb-4">
+              <div class="card shadow-sm p-4">
+                <h6>Ingresos por mes</h6>
+                <img src="https://i.ibb.co/S5bXBgc/bar-placeholder.png" alt="Gráfico barras" class="w-100 rounded" style="min-height:340px;" />
+              </div>
+            </div>
+            <div class="col-md-4 mb-4">
+              <div class="card shadow-sm p-4">
+                <h6>Usuarios</h6>
+                <ul class="list-unstyled users-list mt-3">
+                  <li class="d-flex align-items-center mb-3">
+                    <img src="https://randomuser.me/api/portraits/women/1.jpg" class="me-2" /> Helena<br />
+                    <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
+                  </li>
+                  <li class="d-flex align-items-center mb-3">
+                    <img src="https://randomuser.me/api/portraits/men/2.jpg" class="me-2" /> Oscar<br />
+                    <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
+                  </li>
+                  <li class="d-flex align-items-center mb-3">
+                    <img src="https://randomuser.me/api/portraits/men/3.jpg" class="me-2" /> Daniel<br />
+                    <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
+                  </li>
+                  <li class="d-flex align-items-center mb-3">
+                    <img src="https://randomuser.me/api/portraits/men/4.jpg" class="me-2" /> Daniel Jay Park<br />
+                    <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
+                  </li>
+                  <li class="d-flex align-items-center">
+                    <img src="https://randomuser.me/api/portraits/men/5.jpg" class="me-2" /> Mark Rojas<br />
+                    <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </main>
+{% endblock %}

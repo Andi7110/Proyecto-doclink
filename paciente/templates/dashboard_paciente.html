@@ -1,0 +1,88 @@
+{% extends 'dashboard_base.html' %}
+{% block content %}
+<div class="row mt-4 align-items-center">
+  <div class="col-12 col-lg-8 d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h2 class="mb-0">¡Bienvenido Juan Hernandez!</h2>
+  </div>
+  <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
+    <div class="card shadow-sm p-3 text-center" style="min-width: 180px; width: 200px;">
+      <h6>Comunidad</h6>
+      <h2 class="mb-0" style="font-weight:bold;">100,353</h2>
+      <small class="text-muted">último año</small>
+    </div>
+  </div>
+</div>
+<!-- Botones principales -->
+<div class="d-flex flex-wrap gap-2 mb-4 mt-2">
+  <button class="btn btn-info btn-custom text-white" style="background:#00b8e6;">+ Póliza de seguro medico</button>
+  <button class="btn btn-danger btn-custom">Cancelar cita</button>
+  <div class="dropdown">
+    <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0099ff;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Recetas
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#">Ver recetas</a></li>
+      <li><a class="dropdown-item" href="#">Descargar PDF</a></li>
+    </ul>
+  </div>
+  <div class="dropdown">
+    <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0076b5;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Cuadro Clinico
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#">Ver cuadro</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="row gx-4">
+  <!-- Panel izquierdo: Buscar Medico -->
+  <div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-sm p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="fw-bold" style="font-size:1.5rem;">Buscar Medico</span>
+        <span stye="font-size:2rem; line-height:1;">
+        <i class="bi bi-funnel"></i>
+        </span>
+        <span style="font-size:1.5rem;">&#9660;</span>
+        <div class="ms-auto" style="min-width: 250px; max-width: 320px; width: 100%;">
+          <input type="search" class="form-control" placeholder="Buscar por nombre, especialidad...">
+        </div>
+      </div>
+      <div class="row">
+        <!-- Info médico -->
+        <div class="col-md-6 border-end">
+          <h6 style="font-weight: bold;">Informacion de medico</h6>
+          <p class="mb-3" style="font-size: 1rem;">
+            Dr. Carlos Hernández es un destacado cardiólogo con más de 15 años de experiencia en el diagnóstico y tratamiento de enfermedades cardiovasculares. Graduado con honores de la Universidad Nacional Autónoma de México (UNAM), se especializó en intervencionismo cardíaco en el Instituto Nacional de Cardiología.
+          </p>
+        </div>
+        <!-- Puntaje y botón -->
+        <div class="col-md-6 d-flex flex-column align-items-center justify-content-between">
+          <div>
+            <h6 style="font-weight: bold;">Puntuacion de medico</h6>
+            <span class="rating-stars" style="font-size:2rem;">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+          <button class="btn btn-info mt-4 w-75 text-white" style="background:#00b8e6;"><b>+ Agendar cita</b></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Panel derecho: Ranking de Médicos -->
+  <div class="col-12 col-lg-6 mb-4">
+    <div class="card shadow-sm p-3 h-100">
+      <h6 class="mb-3" style="font-weight:bold;">Ranking de Medicos</h6>
+      <div>
+        <!-- Puedes cambiar esta imagen por una gráfica real si lo deseas -->
+        <img src="https://i.ibb.co/S5bXBgc/bar-placeholder.png" alt="Ranking de Medicos" class="w-100 rounded" style="min-height:200px;max-height:250px;object-fit:contain;"/>
+      </div>
+      <!-- Opcional: Leyenda de especialidades debajo de la gráfica -->
+      <div class="mt-2">
+        <small>
+          <b>Dentista</b> &bull; <b>Dermatologo</b> &bull; <b>Cirujano</b> &bull; <b>Cardiologo</b> &bull; <b>Ginecologo</b> &bull; <b>Neurologo</b>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
