@@ -255,9 +255,11 @@ class Paciente(models.Model):
     nombre_aseguradora = models.TextField(blank=True, null=True)
     nombre_responsable = models.TextField(blank=True, null=True)
     fk_cuadro_clinico = models.BigIntegerField(blank=True, null=True)
+    dui = models.CharField(max_length=10, unique=True, null=False, blank=False, default='00000000-0')
+
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'paciente'
     
     def get_nombre_display(self):

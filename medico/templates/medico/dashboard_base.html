@@ -125,7 +125,17 @@
         <div class="d-flex align-items-center gap-2 ms-auto">
           <img src="https://randomuser.me/api/portraits/men/1.jpg" class="avatar" alt="avatar" />
           <button class="btn btn-light btn-sm ms-2"><b>⋮</b></button>
-          <button class="btn btn-dark btn-sm ms-2">Share</button>
+
+        <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+       <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+      </button>
+      </form>
+
+
+
+
         </div>
       </div>
     </nav>

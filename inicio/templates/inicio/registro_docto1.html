@@ -26,44 +26,41 @@
         <p class="text-muted">Ingresa todos los datos solicitados</p>
       </div>
       
-      <!-- Formulario -->
-      <form class="mt-4">  <!-- Añadido mt-4 -->
-        <!-- Nombre completo con más espacio -->
-        <div class="mb-4">  <!-- Cambiado mb-3 a mb-4 -->
-          <label class="form-label fw-medium d-block text-center mb-3">Nombre Completo</label>  <!-- Añadido mb-3 -->
-          <input type="text" class="form-control form-control-lg py-3 text-center" placeholder="Nombres Apellidos">  <!-- Añadido py-3 -->
-        </div>
-        
-        <!-- Especialidad médica con más espacio -->
-        <div class="mb-4">  <!-- Cambiado mb-3 a mb-4 -->
-          <label class="form-label fw-medium d-block text-center mb-3">Ingrese especialidad médica</label>  <!-- Añadido mb-3 -->
-          <select class="form-select form-select-lg py-3 text-center">  <!-- Añadido py-3 -->
-            <option selected disabled>Seleccione su especialidad</option>
-            <option>Cardiología</option>
-            <option>Pediatría</option>
-            <option>Dermatología</option>
-            <option>Neurología</option>
-          </select>
-        </div>
-        
-        <!-- Número de licencia con más espacio -->
-        <div class="mb-5">  <!-- Cambiado mb-4 a mb-5 -->
-          <label class="form-label fw-medium d-block text-center mb-3">Número de licencia médica</label>  <!-- Añadido mb-3 -->
-          <input type="text" class="form-control form-control-lg py-3 text-center" placeholder="#">  <!-- Añadido py-3 -->
-        </div>
-        
-        <!-- Botones con más espacio -->
-        <div class="d-grid gap-3 mt-4">  <!-- Cambiado gap-2 a gap-3 y añadido mt-4 -->
-           <div class="d-flex flex-column mt-3 gap-3">
-            <a href="{% url 'registro_doctor2' %}" class="btn btn-info btn-lg fw-bold">
-              Siguiente
-        </a>  <!-- Añadido py-3 -->
-          <a href="/" class="btn btn-danger btn-lg">
-              Cancelar
-        </a>  
-          <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>  <!-- Añadido mt-3 -->
-        </div>
-      </form>
+      <form method="post" class="mt-4">
+  {% csrf_token %}
+  
+  <!-- Campo: Nombre completo -->
+  <div class="mb-4">
+    <label class="form-label fw-medium d-block text-center mb-3">Nombre Completo</label>
+    <input type="text" name="nombre_apellido" class="form-control form-control-lg py-3 text-center" placeholder="Nombres Apellidos">
+  </div>
+
+  <!-- Campo: Especialidad -->
+  <div class="mb-4">
+    <label class="form-label fw-medium d-block text-center mb-3">Ingrese especialidad médica</label>
+    <select name="especialidad" class="form-select form-select-lg py-3 text-center">
+      <option selected disabled>Seleccione su especialidad</option>
+      <option value="Cardiología">Cardiología</option>
+      <option value="Pediatría">Pediatría</option>
+      <option value="Dermatología">Dermatología</option>
+      <option value="Neurología">Neurología</option>
+    </select>
+  </div>
+
+  <!-- Campo: Licencia -->
+  <div class="mb-5">
+    <label class="form-label fw-medium d-block text-center mb-3">Número de licencia médica</label>
+    <input type="text" name="licencia" class="form-control form-control-lg py-3 text-center" placeholder="#">
+  </div>
+
+  <!-- Botones -->
+  <div class="d-grid gap-3 mt-4">
+    <button type="submit" class="btn btn-info btn-lg fw-bold">Siguiente</button>
+    <a href="/" class="btn btn-danger btn-lg">Cancelar</a>
+    <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>
+  </div>
+</form>
+
     </div>
   </div>
 

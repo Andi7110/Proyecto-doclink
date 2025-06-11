@@ -10,72 +10,68 @@
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
   <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
+
     <!-- Logo -->
     <div class="text-center mb-5">
       <a class="navbar-brand fw-bold" href="/">
         <img src="{% static 'img/logo.png' %}" alt="Donlink Logo" width="300" class="me-2"> 
       </a>
     </div>
-    
+
     <!-- Contenedor del formulario -->
     <div class="bg-white rounded shadow-sm p-5 w-100" style="max-width: 600px;">
-      
-      <!-- Progreso -->
       <div class="text-center mb-4">
         <p class="text-primary fw-bold mb-2">Paso 1 de 4</p>
         <p class="text-muted">Ingresa todos los datos solicitados</p>
       </div>
-      
+
       <!-- Formulario -->
-      <form class="mt-4">
+      <form method="POST" class="mt-4">
+        {% csrf_token %}
+
         <!-- Nombre completo -->
         <div class="mb-4">
           <label class="form-label fw-medium d-block text-center mb-3">Nombre Completo*</label>
-          <input type="text" class="form-control form-control-lg py-3" placeholder="Ingrese su nombre completo" required>
+          <input type="text" name="nombre_apellido" class="form-control form-control-lg py-3" placeholder="Ingrese su nombre completo" required>
         </div>
-        
+
         <!-- Fecha de nacimiento -->
         <div class="mb-4">
           <label class="form-label fw-medium d-block text-center mb-3">Fecha de Nacimiento*</label>
-          <input type="date" class="form-control form-control-lg py-3" required>
+          <input type="date" name="fecha_nacimiento" class="form-control form-control-lg py-3" required>
         </div>
-        
+
         <!-- Número de DUI -->
         <div class="mb-4">
           <label class="form-label fw-medium d-block text-center mb-3">Número de DUI*</label>
-          <input type="text" class="form-control form-control-lg py-3" placeholder="00000000-0" pattern="[0-9]{8}-[0-9]{1}" required>
+          <input type="text" name="dui" class="form-control form-control-lg py-3" placeholder="00000000-0" pattern="[0-9]{8}-[0-9]{1}" required>
           <div class="form-text text-center">Formato: 8 dígitos, guión y 1 dígito</div>
         </div>
-        
+
         <!-- Género -->
         <div class="mb-4">
           <label class="form-label fw-medium d-block text-center mb-3">Género*</label>
           <div class="d-flex justify-content-center gap-3">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="genero" id="masculino" value="masculino" required>
+              <input class="form-check-input" type="radio" name="genero" id="masculino" value="M" required>
               <label class="form-check-label" for="masculino">Masculino</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="genero" id="femenino" value="femenino">
+              <input class="form-check-input" type="radio" name="genero" id="femenino" value="F">
               <label class="form-check-label" for="femenino">Femenino</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="genero" id="otro" value="otro">
+              <input class="form-check-input" type="radio" name="genero" id="otro" value="O">
               <label class="form-check-label" for="otro">Otro</label>
             </div>
           </div>
         </div>
-        
+
         <!-- Botones -->
-       <div class="d-grid gap-3 mt-4">  <!-- Cambiado gap-2 a gap-3 y añadido mt-4 -->
-           <div class="d-flex flex-column mt-3 gap-3">
-            <a href="{% url 'registro_paciente2' %}" class="btn btn-info btn-lg fw-bold">
-              Siguiente
-        </a>  <!-- Añadido py-3 -->
-          <a href="/" class="btn btn-danger btn-lg">
-              Cancelar
-        </a>  
-          <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>  <!-- Añadido mt-3 -->
+        <div class="d-grid gap-3 mt-4">
+          <button type="submit" class="btn btn-info btn-lg fw-bold">Siguiente</button>
+          <a href="/" class="btn btn-danger btn-lg">Cancelar</a>
+          <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>
         </div>
       </form>
     </div>
