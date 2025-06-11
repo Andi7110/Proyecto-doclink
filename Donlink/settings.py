@@ -83,9 +83,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'Donlink',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': '12345678',
         'HOST': 'localhost',
         'PORT': '5432',
+        
     }
 }
 

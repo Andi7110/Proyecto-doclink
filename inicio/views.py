@@ -7,6 +7,8 @@ from django.contrib.auth.views import LogoutView
 from django.shortcuts import redirect
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from bd.models import Usuario, Medico
+
 
 def inicio_view(request):
     return render(request, 'inicio/inicial.html')
@@ -25,12 +27,20 @@ def login_view(request):
             
             if user is not None:
                 login(request, user)
+
+                # Verificar si el usuario tiene un médico asociado
+                if user.fk_medico_id:
+                    return redirect('vista_medico')  # Cambia esto al `name` real de la vista de médico
+
+                # Puedes verificar roles adicionales aquí
                 return redirect('/admin/')
+        
         messages.error(request, "Usuario o contraseña incorrectos")
     else:
         form = CustomLoginForm()
     
     return render(request, 'inicio/login.html', {'form': form})
+
 
 
 @require_POST
@@ -76,3 +86,6 @@ def contraOlvidada_view(request):
 
 def autenticacion_view(request):
     return render(request, 'inicio/autenticacion.html')
+
+def vistaMedico_view(request):
+    return render(request, 'medico/dashboard_doctor.html')  
