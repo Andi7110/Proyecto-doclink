@@ -1,4 +1,3 @@
-
 {% extends 'medico/dashboard_base.html' %}
 {% load static %}
 {% block content %}
@@ -27,18 +26,17 @@
     </div>
   </div>
 
-  <!-- Botones principales -->
-  <div class="mb-4 d-flex gap-2 flex-wrap">
-    <button class="btn btn-info btn-custom text-white">Programar nueva</button>
-    <button class="btn btn-danger btn-custom">Cancelar cita</button>
-    <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
-    <a href="{% url 'clinica_doctor' %}">
-    <button class="btn btn-info btn-custom text-white">Clinica Doctor</button>
-    <a href="{% url 'ubicacion_doctor' %}">
-    <button class="btn btn-info btn-custom text-white">Ubicación</button>
-    <a href="{% url 'receta_medica' %}">
-    <button class="btn btn-info btn-custom text-white">Crear Receta</button>
-  </div>
+<!-- Botones principales -->
+<div class="mb-4 d-flex gap-2 flex-wrap">
+  <button class="btn btn-info btn-custom text-white">Programar nueva</button>
+  <button class="btn btn-danger btn-custom">Cancelar cita</button>
+  <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
+
+  <a href="{% url 'clinica_doctor' %}" class="btn btn-info btn-custom text-white">Clínica Doctor</a>
+  <a href="{% url 'ubicacion_doctor' %}" class="btn btn-info btn-custom text-white">Ubicación</a>
+  <a href="{% url 'receta_medica' %}" class="btn btn-info btn-custom text-white">Crear Receta</a>
+</div>
+
 
   <!-- Cards resumen -->
   <div class="row mb-4">
@@ -109,5 +107,6 @@
       </div>
     </div>
   </div>
+
 </main>
 {% endblock %}

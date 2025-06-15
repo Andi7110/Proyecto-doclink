@@ -103,6 +103,11 @@ def config_horario(request):
     medico = request.user.fk_medico
     horario = medico.fk_horario_medico
 
+    if not cita:
+        return render(request, 'medico/realizar_consulta.html', {
+            'mensaje': 'No hay citas pendientes para este paciente.'
+        })
+
     if request.method == 'POST':
         hora_inicio = request.POST.get('hora_inicio')
         hora_fin = request.POST.get('hora_fin')
