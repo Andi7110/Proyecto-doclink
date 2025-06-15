@@ -54,7 +54,6 @@ def agendar_cita(request):
             'nombre_completo': nombre_completo,
         })
 
-    # Procesamiento del formulario
     if request.method == 'POST':
         medico_id = request.POST.get('medico_id')
         fecha_str = request.POST.get('fecha_cita')
@@ -64,12 +63,6 @@ def agendar_cita(request):
         if not (medico_id and fecha_str and hora_str and motivo):
             messages.error(request, "Por favor completa todos los campos.")
             return redirect('agendar_cita')
-        
-        print("medico_id:", medico_id)
-        print("fecha_cita:", fecha_str)
-        print("hora_cita:", hora_str)
-        print("motivo:", motivo)
-
 
         try:
             fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
@@ -84,14 +77,19 @@ def agendar_cita(request):
             messages.error(request, "Médico no encontrado.")
             return redirect('agendar_cita')
 
-        CitasMedicas.objects.create(
-            fecha_consulta=fecha,
-            hora_inicio=hora,
-            status_cita_medica="Pendiente",
-            des_motivo_consulta_paciente=motivo,
-            fk_paciente=paciente,
-            fk_medico=medico
-        )
+        try:
+            CitasMedicas.objects.create(
+                fecha_consulta=fecha,
+                hora_inicio=hora,
+                status_cita_medica="Pendiente",
+                des_motivo_consulta_paciente=motivo,
+                fk_paciente=paciente,
+                fk_medico=medico
+            )
+        except Exception as e:
+            messages.error(request, f"Error al guardar la cita: {e}")
+            return redirect('agendar_cita')
+
         messages.success(request, "Cita agendada correctamente.")
         return redirect('agenda')
 
@@ -102,10 +100,12 @@ def agendar_cita(request):
         'especialidad_seleccionada': especialidad,
         'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', ''),
+        'hoy': date.today(),
+        # Opcional: lista de especialidades para filtro rápido
+        'especialidades': Medico.objects.values_list('especialidad', flat=True).distinct(),
     }
 
     return render(request, 'paciente/agendar_cita.html', context)
-
 
 @login_required
 @paciente_required
@@ -117,13 +117,16 @@ def ver_agenda(request):
 
     paciente = usuario.fk_paciente
 
-    citas_confirmadas = CitasMedicas.objects.filter(
+    citas = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).order_by('fecha_consulta', 'hora_inicio')
 
+    ahora = datetime.now()
+
     context = {
         'paciente': paciente,
-        'citas_confirmadas': citas_confirmadas,
+        'citas': citas,
+        'ahora': ahora,
     }
 
     return render(request, 'paciente/agenda.html', context)
