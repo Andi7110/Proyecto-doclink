@@ -26,7 +26,6 @@ def dashboard_paciente(request):
 def agendar_cita(request):
     usuario = request.user
 
-    # Verifica si el usuario tiene un paciente asociado
     if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
         raise PermissionDenied("No tienes permisos para agendar citas.")
 
@@ -34,7 +33,7 @@ def agendar_cita(request):
 
     # Calcular edad desde fecha de nacimiento
     edad = None
-    if usuario.fecha_nacimiento:
+    if hasattr(usuario, 'fecha_nacimiento') and usuario.fecha_nacimiento:
         hoy = date.today()
         nacimiento = usuario.fecha_nacimiento
         edad = hoy.year - nacimiento.year - ((hoy.month, hoy.day) < (nacimiento.month, nacimiento.day))
@@ -45,55 +44,73 @@ def agendar_cita(request):
     if especialidad:
         medicos = medicos.filter(especialidad__icontains=especialidad)
 
-    # Procesar formulario
+    # Crear lista enriquecida con nombre del médico
+    medicos_con_nombre = []
+    for medico in medicos:
+        usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+        if usuario_medico:
+            nombre_completo = f"{usuario_medico.nombre or ''} {usuario_medico.apellido or ''}".strip()
+        else:
+            nombre_completo = "Nombre no disponible"
+        medicos_con_nombre.append({
+            'id_medico': medico.id_medico,
+            'especialidad': medico.especialidad,
+            'nombre_completo': nombre_completo,
+        })
+
     if request.method == 'POST':
         medico_id = request.POST.get('medico_id')
-        fecha = request.POST.get('fecha_cita')
-        hora_inicio = request.POST.get('hora_cita')
+        fecha_str = request.POST.get('fecha_cita')
+        hora_str = request.POST.get('hora_cita')
         motivo = request.POST.get('motivo')
 
-        # Validar campos
-        if medico_id and fecha and hora_inicio and motivo:
-            try:
-                medico = Medico.objects.get(id_medico=medico_id)
+        if not (medico_id and fecha_str and hora_str and motivo):
+            messages.error(request, "Por favor completa todos los campos.")
+            return redirect('agendar_cita')
 
-                # Prevenir duplicados: ya existe cita con mismo médico y horario
-                if CitasMedicas.objects.filter(
-                    fk_medico=medico,
-                    fecha_consulta=fecha,
-                    hora_inicio=hora_inicio
-                ).exists():
-                    messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
-                    return redirect('agendar_cita')
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            hora = datetime.strptime(hora_str, '%H:%M').time()
+        except ValueError:
+            messages.error(request, "Formato de fecha u hora inválido.")
+            return redirect('agendar_cita')
 
-                # Crear cita
-                nueva_cita = CitasMedicas.objects.create(
-                    fecha_consulta=fecha,
-                    hora_inicio=hora_inicio,
-                    status_cita_medica="Pendiente",
-                    des_motivo_consulta_paciente=motivo,
-                    fk_paciente=paciente,
-                    fk_medico=medico
-                )
-                messages.success(request, "¡Cita agendada correctamente!")
-                return redirect('agenda')
+        try:
+            medico = Medico.objects.get(id_medico=medico_id)
+        except Medico.DoesNotExist:
+            messages.error(request, "Médico no encontrado.")
+            return redirect('agendar_cita')
 
-            except Medico.DoesNotExist:
-                messages.error(request, "El médico seleccionado no existe.")
-        else:
-            messages.error(request, "Todos los campos son obligatorios.")
+        # Prevenir duplicado
+        if CitasMedicas.objects.filter(
+            fk_medico=medico,
+            fecha_consulta=fecha,
+            hora_inicio=hora
+        ).exists():
+            messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
+            return redirect('agendar_cita')
+
+        CitasMedicas.objects.create(
+            fecha_consulta=fecha,
+            hora_inicio=hora,
+            status_cita_medica="Pendiente",
+            des_motivo_consulta_paciente=motivo,
+            fk_paciente=paciente,
+            fk_medico=medico
+        )
+        messages.success(request, "¡Cita agendada correctamente!")
+        return redirect('agenda')
 
     context = {
         'edad': edad,
         'paciente': paciente,
-        'medicos': medicos,
+        'medicos': medicos_con_nombre,
         'especialidad_seleccionada': especialidad,
-        'nombre': usuario.get_full_name() if hasattr(usuario, 'get_full_name') else str(usuario),
+        'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', ''),
     }
 
-    return render(request, 'paciente/agendar_cita.html', context)
-
+    return render(request, 'paciente/agenda.html', context)
 
 @login_required
 @paciente_required
@@ -107,7 +124,6 @@ def ver_agenda(request):
     hoy = date.today()
     ahora = datetime.now().time()
 
-    # Citas futuras
     citas_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).filter(
@@ -115,7 +131,6 @@ def ver_agenda(request):
         Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
     ).order_by('fecha_consulta', 'hora_inicio')
 
-    # Citas pasadas
     citas_pasadas = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).filter(
@@ -130,3 +145,4 @@ def ver_agenda(request):
     }
 
     return render(request, 'paciente/agenda.html', context)
+
