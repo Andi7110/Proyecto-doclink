@@ -81,6 +81,20 @@ def agendar_cita(request):
             messages.error(request, "Médico no encontrado.")
             return redirect('agendar_cita')
 
+        try:
+            CitasMedicas.objects.create(
+                fecha_consulta=fecha,
+                hora_inicio=hora,
+                status_cita_medica="Pendiente",
+                des_motivo_consulta_paciente=motivo,
+                fk_paciente=paciente,
+                fk_medico=medico
+            )
+        except Exception as e:
+            messages.error(request, f"Error al guardar la cita: {e}")
+            return redirect('agendar_cita')
+
+        messages.success(request, "Cita agendada correctamente.")
         # Prevenir duplicado
         if CitasMedicas.objects.filter(
             fk_medico=medico,
@@ -108,7 +122,12 @@ def agendar_cita(request):
         'especialidad_seleccionada': especialidad,
         'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', ''),
+        'hoy': date.today(),
+        # Opcional: lista de especialidades para filtro rápido
+        'especialidades': Medico.objects.values_list('especialidad', flat=True).distinct(),
     }
+
+    return render(request, 'paciente/agendar_cita.html', context)
 
     return render(request, 'paciente/agenda.html', context)
 
@@ -124,12 +143,15 @@ def ver_agenda(request):
     hoy = date.today()
     ahora = datetime.now().time()
 
+    citas = CitasMedicas.objects.filter(
     citas_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).filter(
         Q(fecha_consulta__gt=hoy) |
         Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
     ).order_by('fecha_consulta', 'hora_inicio')
+
+    ahora = datetime.now()
 
     citas_pasadas = CitasMedicas.objects.filter(
         fk_paciente=paciente
@@ -140,6 +162,8 @@ def ver_agenda(request):
 
     context = {
         'paciente': paciente,
+        'citas': citas,
+        'ahora': ahora,
         'citas_futuras': citas_futuras,
         'citas_pasadas': citas_pasadas,
     }
