@@ -1,108 +1,90 @@
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render,redirect
+from django.core.exceptions import PermissionDenied
+from django.utils.timezone import now
 from datetime import date
-from bd.models import Medico,Paciente,CitasMedicas
-from django.contrib import messages
 
-def views_home(request):  
+from bd.models import Usuario, Medico, Paciente, CitasMedicas
+
+def views_home(request):
     return render(request, 'paciente/home.html')
 
-def dashboard_paciente(request):
-    return render(request, 'dashboard_paciente.html')
-
-## Vista para ver la agenda del paciente
 @login_required
-def ver_agenda(request):
-    usuario = request.user
-    try:
-        paciente = Paciente.objects.get(usuario=usuario)
-    except Paciente.DoesNotExist:
-        paciente = None
+def dashboard_paciente(request):
+    return render(request, 'paciente/dashboard_paciente.html')
 
-    citas = []
-    if paciente:
-        # Cambia 'fecha_cita' por 'fecha_consulta'
-        citas = CitasMedicas.objects.filter(fk_paciente=paciente).order_by('fecha_consulta')
-
-    context = {
-        'citas': citas,
-    }
-    return render(request, 'paciente/agenda.html', context)
-
-## Vista para agendar una cita médica
 @login_required
 def agendar_cita(request):
     usuario = request.user
 
-    # Calcular edad si fecha_nacimiento está definida
+    # Verificamos si el usuario tiene asociado un paciente
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para agendar citas.")
+
+    paciente = usuario.fk_paciente
+
+    # Calcular edad desde la fecha_nacimiento del usuario
     edad = None
-    if hasattr(usuario, 'fecha_nacimiento') and usuario.fecha_nacimiento:
+    if usuario.fecha_nacimiento:
         hoy = date.today()
-        edad = hoy.year - usuario.fecha_nacimiento.year - (
-            (hoy.month, hoy.day) < (usuario.fecha_nacimiento.month, usuario.fecha_nacimiento.day)
-        )
+        nacimiento = usuario.fecha_nacimiento
+        edad = hoy.year - nacimiento.year - ((hoy.month, hoy.day) < (nacimiento.month, nacimiento.day))
 
-    # Filtrado de médicos por especialidad
-    filtro = request.GET.get('especialidad', '')
+    # Obtener especialidad seleccionada por GET (filtro)
+    especialidad = request.GET.get('especialidad')
     medicos = Medico.objects.all()
-    if filtro:
-        medicos = medicos.filter(especialidad__icontains=filtro)
-
-    especialidades = Medico.objects.values_list('especialidad', flat=True).distinct()
-
-    # Variables para mantener valores del formulario en caso de error
-    medico_id = ''
-    medico_nombre = ''
-    fecha_cita = ''
-    motivo = ''
+    if especialidad:
+        medicos = medicos.filter(especialidad__icontains=especialidad)
 
     if request.method == 'POST':
-        medico_id = request.POST.get('medico_id', '')
-        fecha_cita = request.POST.get('fecha_cita', '')
-        motivo = request.POST.get('motivo', '')
+        medico_id = request.POST.get('medico_id')
+        fecha = request.POST.get('fecha_cita')       
+        hora_inicio = request.POST.get('hora_cita')  
+        motivo = request.POST.get('motivo')
 
-        if not medico_id:
-            messages.error(request, "Debes seleccionar un médico.")
-        elif not fecha_cita:
-            messages.error(request, "Debes ingresar una fecha para la cita.")
-        elif not motivo:
-            messages.error(request, "Debes ingresar el motivo de la consulta.")
-        else:
+        if medico_id and fecha and hora_inicio and motivo:
             try:
-                medico = Medico.objects.get(pk=medico_id)
-                paciente = Paciente.objects.get(usuario=usuario)
-                CitasMedicas.objects.create(
-                    fk_medico=medico,
+                medico = Medico.objects.get(id_medico=medico_id)
+                nueva_cita = CitasMedicas.objects.create(
+                    fecha_consulta=fecha,
+                    hora_inicio=hora_inicio,
+                    status_cita_medica="Pendiente",
+                    des_motivo_consulta_paciente=motivo,
                     fk_paciente=paciente,
-                    fecha_cita=fecha_cita,
-                    motivo=motivo,
+                    fk_medico=medico
                 )
-                messages.success(request, f"Cita agendada exitosamente para {fecha_cita}.")
-                return redirect('agenda')
+                return redirect('dashboard_paciente')
             except Medico.DoesNotExist:
-                messages.error(request, "El médico seleccionado no existe.")
-            except Paciente.DoesNotExist:
-                messages.error(request, "No se encontró el paciente asociado.")
-            else:
-                medico_nombre = medico.get_nombre_display()
-
-    # Si no se seleccionó un médico, pero se quiere mostrar el nombre que estaba
-    if medico_id and not medico_nombre:
-        try:
-            medico_nombre = Medico.objects.get(pk=medico_id).get_nombre_display()
-        except Medico.DoesNotExist:
-            medico_nombre = ''
+                # Manejar error si el médico no existe
+                pass
 
     context = {
-        'nombre': f"{usuario.nombre} {usuario.apellido}",
         'edad': edad,
-        'sexo': usuario.sexo,
+        'paciente': paciente,
         'medicos': medicos,
-        'especialidades': especialidades,
-        'filtro_especialidad': filtro,
-        'medico_id': medico_id,
-        'medico_nombre': medico_nombre,
-        'fecha_cita': fecha_cita,
-        'motivo': motivo,
+        'especialidad_seleccionada': especialidad,
+        'nombre': usuario.get_full_name() if hasattr(usuario, 'get_full_name') else str(usuario),
+        'sexo': getattr(usuario, 'sexo', ''),  # Aseguramos que el usuario tenga el atributo sexo
     }
-    return render(request, 'agendar_cita.html', context)
+
+    return render(request, 'paciente/agendar_cita.html', context)
+
+@login_required
+def ver_agenda(request):
+    usuario = request.user
+
+    # Verificamos si el usuario tiene asociado un paciente
+    if not usuario.fk_paciente:
+        raise PermissionDenied("No tienes permisos para ver esta agenda.")
+
+    paciente = usuario.fk_paciente
+
+    # Filtrar las citas médicas por paciente
+    citas = CitasMedicas.objects.filter(fk_paciente=paciente).order_by('fecha_consulta', 'hora_inicio')
+
+    context = {
+        'paciente': paciente,
+        'citas': citas,
+    }
+
+    return render(request, 'paciente/agenda.html', context)

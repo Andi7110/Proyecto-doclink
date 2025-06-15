@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.forms import ValidationError
 from django.utils import timezone
 
 class UsuarioManager(BaseUserManager):
@@ -120,6 +121,9 @@ class CitasMedicas(models.Model):
     class Meta:
         managed = False
         db_table = 'citas_medicas'
+    
+    class Meta:
+        ordering = ['fecha_consulta', 'hora_inicio']  # Ordenar por fecha y hora
     
     def clean(self):
         # Validación adicional para asegurar que:
