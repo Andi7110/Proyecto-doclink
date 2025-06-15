@@ -1,31 +1,45 @@
+
 {% extends 'medico/dashboard_base.html' %}
+{% load static %}
 {% block content %}
 <main id="main-content" class="flex-grow-1 px-md-5 py-0" style="transition: margin 0.2s, width 0.2s;">
+  
+  <!-- LOGO DOC LINK -->
+  <div class="text-center my-4">
+    <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" class="img-fluid" style="max-height: 80px;">
+  </div>
+
   <!-- Nombre y calificación -->
-  <div class="row mt-4">
+  <div class="row mt-2">
     <div class="col-12 col-md-8">
-      <h2 class="mb-1">¡Bienvenido Dr. Carlos Hernandez!</h2>
+      <h2 class="mb-1">¡Bienvenido Dr. {{ request.user.nombre }} {{ request.user.apellido }}!</h2>
       <div class="d-flex align-items-center gap-2 mb-2">
         <span class="me-1">Tus calificaciones:</span>
         <span class="rating-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
         <button class="btn btn-info btn-sm text-white ms-2">Reseñas</button>
       </div>
     </div>
+
     <!-- Buscador alineado a la derecha -->
     <div class="col-12 col-md-4 d-flex justify-content-end align-items-start">
       <input type="search" class="form-control w-75" placeholder="Buscar..." aria-label="Buscar"
         style="min-width: 180px; max-width: 220px;" />
     </div>
   </div>
+
   <!-- Botones principales -->
   <div class="mb-4 d-flex gap-2 flex-wrap">
     <button class="btn btn-info btn-custom text-white">Programar nueva</button>
     <button class="btn btn-danger btn-custom">Cancelar cita</button>
     <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
-    <button class="btn btn-info btn-custom text-white">+ Agregar Ubicación</button>
-    <button class="btn btn-info btn-custom text-white">Configuracion Horarios</button>
+    <a href="{% url 'clinica_doctor' %}">
+    <button class="btn btn-info btn-custom text-white">Clinica Doctor</button>
+    <a href="{% url 'ubicacion_doctor' %}">
+    <button class="btn btn-info btn-custom text-white">Ubicación</button>
+    <a href="{% url 'receta_medica' %}">
     <button class="btn btn-info btn-custom text-white">Crear Receta</button>
   </div>
+
   <!-- Cards resumen -->
   <div class="row mb-4">
     <div class="col-md-3 mb-3">
@@ -57,6 +71,7 @@
       </div>
     </div>
   </div>
+
   <!-- Gráficos y usuarios -->
   <div class="row">
     <div class="col-md-8 mb-4">

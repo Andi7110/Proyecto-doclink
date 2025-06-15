@@ -1,0 +1,60 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="main-content" class="flex-grow-1 px-md-5 py-4">
+  <div class="container">
+
+    <div class="text-center mb-4">
+      <h2 class="mb-3">👨‍⚕️ Configuración del Perfil Médico</h2>
+      <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="60" class="mb-3">
+      <p class="text-muted">Edita tu información profesional y de atención médica.</p>
+    </div>
+
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="especialidad" class="form-label">Especialidad</label>
+        <input type="text" class="form-control" id="especialidad" name="especialidad"
+               value="{{ request.user.fk_medico.especialidad }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="sub_especialidad_1" class="form-label">Subespecialidad 1</label>
+        <input type="text" class="form-control" id="sub_especialidad_1" name="sub_especialidad_1"
+               value="{{ request.user.fk_medico.sub_especialidad_1 }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="sub_especialidad_2" class="form-label">Subespecialidad 2</label>
+        <input type="text" class="form-control" id="sub_especialidad_2" name="sub_especialidad_2"
+               value="{{ request.user.fk_medico.sub_especialidad_2 }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="no_jvpm" class="form-label">Número JVPM</label>
+        <input type="text" class="form-control" id="no_jvpm" name="no_jvpm"
+               value="{{ request.user.fk_medico.no_jvpm }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="dui" class="form-label">DUI</label>
+        <input type="text" class="form-control" id="dui" name="dui"
+               value="{{ request.user.fk_medico.dui }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ request.user.fk_medico.descripcion }}</textarea>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+
+  </div>
+</main>
+{% endblock %}

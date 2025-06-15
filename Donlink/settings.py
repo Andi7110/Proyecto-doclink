@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'bd',
     'medico',
     'paciente',
+   
     
 ]
 
