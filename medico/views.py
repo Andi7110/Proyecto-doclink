@@ -1,18 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import render, redirect   
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
-from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
+from django.db import connection
+from collections import namedtuple
 
+from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente
 
 @login_required 
 def views_home(request):
-    return render(request, 'medico/home.html')
-
-def dashboard_doctor(request):
-    return render(request, 'dashboard_doctor.html')
-
+    return redirect('dashboard_doctor') 
 
 @csrf_protect
 def receta_medica(request):
@@ -44,7 +44,6 @@ def receta_medica(request):
         except Exception as e:
             messages.error(request, f"Error al guardar la receta: {e}")
 
-    # Enviar citas disponibles al formulario
     citas = CitasMedicas.objects.all()
     contexto = {
         'citas': [
@@ -58,12 +57,8 @@ def receta_medica(request):
 
     return render(request, 'medico/receta_medica.html', contexto)
 
-#js
-
-
 def ubicacion_doctor(request):
     return render(request, 'medico/ubicacion_doctor.html')
-
 
 @login_required
 def clinica_doctor(request):
@@ -103,11 +98,6 @@ def config_horario(request):
     medico = request.user.fk_medico
     horario = medico.fk_horario_medico
 
-    if not cita:
-        return render(request, 'medico/realizar_consulta.html', {
-            'mensaje': 'No hay citas pendientes para este paciente.'
-        })
-
     if request.method == 'POST':
         hora_inicio = request.POST.get('hora_inicio')
         hora_fin = request.POST.get('hora_fin')
@@ -123,7 +113,6 @@ def config_horario(request):
 
     return render(request, 'medico/config_horario.html')
 
-
 @login_required
 def config_perfildoc(request):
     medico = request.user.fk_medico
@@ -138,6 +127,57 @@ def config_perfildoc(request):
         medico.save()
 
         messages.success(request, "Perfil médico actualizado correctamente.")
-        return redirect('clinica_doctor')  # <- Debe redirigir
+        return redirect('clinica_doctor')
 
     return render(request, 'medico/config_perfildoc.html')
+
+@login_required
+def dashboard_doctor(request):
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    if not medico:
+        return render(request, 'medico/no_es_medico.html')
+
+    citas_raw = CitasMedicas.objects.filter(
+        fk_medico=medico
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
+
+    citas = []
+    for cita in citas_raw:
+        user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_completo = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+        citas.append({
+            'id': cita.id_cita_medicas,
+            'fecha': cita.fecha_consulta,
+            'hora': cita.hora_inicio,
+            'motivo': cita.des_motivo_consulta_paciente,
+            'estado': cita.status_cita_medica,
+            'nombre_paciente': nombre_completo,
+            'paciente_id': cita.fk_paciente.id_paciente
+        })
+
+    return render(request, 'medico/dashboard_doctor.html', {'citas': citas})
+
+@require_POST
+@login_required
+def actualizar_estado_cita(request, cita_id):
+    cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
+
+    accion = request.POST.get('accion')
+    if accion == 'aceptar':
+        cita.status_cita_medica = 'En proceso'
+    elif accion == 'cancelar':
+        cita.status_cita_medica = 'Cancelado'
+
+    cita.save()
+    return redirect('dashboard_doctor')
+
+@login_required
+def realizar_consulta(request, paciente_id):
+    paciente = get_object_or_404(Paciente, id=paciente_id, doctor=request.user)
+
+    if request.method == 'POST':
+        pass
+
+    return render(request, 'medico/realizar_consulta.html', {'paciente': paciente})

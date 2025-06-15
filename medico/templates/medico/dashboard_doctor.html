@@ -1,8 +1,9 @@
 {% extends 'medico/dashboard_base.html' %}
 {% load static %}
+
 {% block content %}
 <main id="main-content" class="flex-grow-1 px-md-5 py-0" style="transition: margin 0.2s, width 0.2s;">
-  
+
   <!-- LOGO DOC LINK -->
   <div class="text-center my-4">
     <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" class="img-fluid" style="max-height: 80px;">
@@ -26,17 +27,16 @@
     </div>
   </div>
 
-<!-- Botones principales -->
-<div class="mb-4 d-flex gap-2 flex-wrap">
-  <button class="btn btn-info btn-custom text-white">Programar nueva</button>
-  <button class="btn btn-danger btn-custom">Cancelar cita</button>
-  <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
+  <!-- Botones principales -->
+  <div class="mb-4 d-flex gap-2 flex-wrap">
+    <button class="btn btn-info btn-custom text-white">Programar nueva</button>
+    <button class="btn btn-danger btn-custom">Cancelar cita</button>
+    <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
 
-  <a href="{% url 'clinica_doctor' %}" class="btn btn-info btn-custom text-white">Clínica Doctor</a>
-  <a href="{% url 'ubicacion_doctor' %}" class="btn btn-info btn-custom text-white">Ubicación</a>
-  <a href="{% url 'receta_medica' %}" class="btn btn-info btn-custom text-white">Crear Receta</a>
-</div>
-
+    <a href="{% url 'clinica_doctor' %}" class="btn btn-info btn-custom text-white">Clínica Doctor</a>
+    <a href="{% url 'ubicacion_doctor' %}" class="btn btn-info btn-custom text-white">Ubicación</a>
+    <a href="{% url 'receta_medica' %}" class="btn btn-info btn-custom text-white">Crear Receta</a>
+  </div>
 
   <!-- Cards resumen -->
   <div class="row mb-4">
@@ -57,7 +57,7 @@
     <div class="col-md-3 mb-3">
       <div class="card shadow-sm p-3">
         <h6>Citas</h6>
-        <h2 class="mb-0">0</h2>
+        <h2 class="mb-0">{{ citas|length }}</h2>
         <small class="text-muted">Últimos días</small>
       </div>
     </div>
@@ -69,6 +69,69 @@
       </div>
     </div>
   </div>
+
+  <!-- Citas médicas -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card shadow-sm p-4">
+        <h5 class="mb-3">Citas médicas próximas</h5>
+
+        {% if citas %}
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas %}
+              <tr>
+                <td>{{ cita.fecha|date:"d/m/Y" }}</td>
+                <td>{{ cita.hora|time:"g a" }}</td>
+                <td>{{ cita.nombre_paciente }}</td>
+                <td>{{ cita.motivo|default:"-" }}</td>
+                <td>{{ cita.estado|default:"-" }}</td>
+                <td class="d-flex gap-2">
+                  {% if cita.estado == "Pendiente" %}
+                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm">Aceptar</button>
+                  </form>
+
+                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
+                  </form>
+
+                  {% elif cita.estado == "En proceso" %}
+                  <a href="{% url 'realizar_consulta' cita.id %}" class="btn btn-primary btn-sm">Consultar</a>
+
+                  {% elif cita.estado == "Cancelado" %}
+                  <span class="text-muted">Cita cancelada</span>
+                  {% else %}
+                  <span class="text-muted">Sin ID</span>
+                  {% endif %}
+
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No tienes citas registradas aún.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
 
   <!-- Gráficos y usuarios -->
   <div class="row">
@@ -107,6 +170,8 @@
       </div>
     </div>
   </div>
+
+
 
 </main>
 {% endblock %}
