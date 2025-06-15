@@ -1,0 +1,32 @@
+{% extends "paciente/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Mi Agenda</h3>
+  {% if citas %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Médico</th>
+          <th>Especialidad</th>
+          <th>Fecha</th>
+          <th>Motivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cita in citas %}
+        <tr>
+          <td>{{ cita.fk_medico.get_nombre_display }}</td>
+          <td>{{ cita.fk_medico.especialidad }}</td>
+          <td>{{ cita.fecha_cita }}</td>
+          <td>{{ cita.motivo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No tienes citas agendadas.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -52,6 +52,13 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'user_name'
     REQUIRED_FIELDS = ['correo']  # Campos requeridos para createsuperuser
+    
+    def get_full_name(self):
+        if self.nombre and self.apellido:
+            return f"{self.nombre} {self.apellido}"
+        elif self.nombre:
+            return self.nombre
+        return self.user_name
 
     class Meta:
         managed = False

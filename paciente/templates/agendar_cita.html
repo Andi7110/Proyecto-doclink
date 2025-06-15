@@ -1,0 +1,153 @@
+{% extends "paciente/dashboard_base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  .especialidad-btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .star-rating {
+    color: gold;
+    font-size: 1.5rem;
+  }
+  .card-left {
+    border-right: 1px solid #ccc;
+  }
+  .btn-atras {
+    background-color: red;
+    color: white;
+  }
+  .btn-confirmar {
+    background-color: #00d2ff;
+    color: black;
+  }
+</style>
+
+<div class="container mt-4">
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row">
+    <!-- Panel izquierdo -->
+    <div class="col-md-8 card-left">
+      <h4 class="mb-3">Buscar médico</h4>
+
+      <!-- Input de búsqueda -->
+      <form method="get" action="">
+        <div class="input-group mb-3">
+          <input type="text" name="especialidad" class="form-control" placeholder="Buscar por especialidad..." value="{{ filtro_especialidad }}">
+          <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+      </form>
+
+      {% if medicos %}
+        <div class="card p-3 mb-3 border-success">
+          <h5 class="text-success">Médico encontrado:</h5>
+          <strong>{{ medicos.0.get_nombre_display }}</strong><br>
+          Especialidad: {{ medicos.0.especialidad }}<br>
+          Subespecialidades: 
+          {{ medicos.0.sub_especialidad_1 }}{% if medicos.0.sub_especialidad_2 %}, {{ medicos.0.sub_especialidad_2 }}{% endif %}
+          <br>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2 seleccionar-medico"
+            data-id="{{ medicos.0.id }}" data-nombre="{{ medicos.0.get_nombre_display }}">
+            Seleccionar este médico
+          </button>
+        </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <div class="d-flex flex-wrap" style="gap: 0.5rem;">
+          {% for esp in especialidades %}
+            <a href="?especialidad={{ esp }}" class="btn btn-info btn-sm">{{ esp }}</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if medicos|length > 1 %}
+        <h6>Otros médicos disponibles:</h6>
+        {% for medico in medicos|slice:"1:" %}
+          <div class="card p-2 mb-2">
+            <strong>{{ medico.get_nombre_display }}</strong><br>
+            Especialidad: {{ medico.especialidad }}<br>
+            <button type="button" class="btn btn-outline-primary btn-sm seleccionar-medico"
+              data-id="{{ medico.id }}" data-nombre="{{ medico.get_nombre_display }}">
+              Seleccionar este médico
+            </button>
+          </div>
+        {% endfor %}
+      {% elif not medicos %}
+        <p>No se encontraron médicos con esa especialidad.</p>
+      {% endif %}
+    </div>
+
+    <!-- Panel derecho -->
+    <div class="col-md-4">
+      <h5 class="mb-3">Tus Datos</h5>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label>Nombre</label>
+          <input type="text" name="nombre" class="form-control" value="{{ nombre }}" readonly>
+        </div>
+        <div class="mb-2">
+          <label>Edad</label>
+          <input type="number" name="edad" class="form-control" value="{{ edad }}" readonly>
+        </div>
+        <div class="mb-2">
+          <label>Sexo</label>
+          <input type="text" name="sexo" class="form-control" value="{{ sexo }}" readonly>
+        </div>
+
+        <!-- Médico seleccionado -->
+        <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}" required>
+        <div class="mb-2">
+          <label>Médico seleccionado</label>
+          <input type="text" id="medico_nombre" class="form-control" readonly placeholder="Selecciona un médico..." value="{{ medico_nombre|default:'' }}">
+        </div>
+
+        <!-- Campos editables -->
+        <div class="mb-2">
+          <label>Fecha de Cita</label>
+          <input type="date" name="fecha_cita" class="form-control" value="{{ fecha_cita|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+          <label>Motivo de consulta</label>
+          <textarea name="motivo" class="form-control" rows="3" required>{{ motivo|default:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-confirmar w-100" disabled>Confirmar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const confirmarBtn = document.querySelector('.btn-confirmar');
+  const medicoIdInput = document.getElementById('medico_id');
+
+  // Activar botón si ya hay un médico seleccionado
+  if (medicoIdInput.value) {
+    confirmarBtn.disabled = false;
+  }
+
+  // Al seleccionar un médico
+  document.querySelectorAll('.seleccionar-medico').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const nombre = btn.getAttribute('data-nombre');
+      document.getElementById('medico_id').value = id;
+      document.getElementById('medico_nombre').value = nombre;
+      confirmarBtn.disabled = false;
+    });
+  });
+</script>
+{% endblock content %}
