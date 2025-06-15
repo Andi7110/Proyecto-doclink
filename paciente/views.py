@@ -8,6 +8,8 @@ from .decorators import paciente_required
 from bd.models import Usuario, Medico, Paciente, CitasMedicas
 from django.db.models import Q 
 
+@login_required
+@paciente_required
 def views_home(request):
     return render(request, 'paciente/home.html')
 

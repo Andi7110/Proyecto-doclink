@@ -6,8 +6,11 @@ def paciente_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         usuario = request.user
-        if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        es_paciente = hasattr(usuario, 'fk_paciente') and usuario.fk_paciente is not None
+        es_doctor = hasattr(usuario, 'fk_doctor') and usuario.fk_doctor is not None
+
+        if not es_paciente or es_doctor:
             messages.error(request, "No tienes permisos para acceder. Solo los pacientes pueden ingresar a esta sección.")
-            return redirect('dashboard_paciente')  # o cualquier página que tengas de destino
+            return redirect('dashboard_doctor')  # O redirecciona a home o login si prefieres
         return view_func(request, *args, **kwargs)
     return _wrapped_view
