@@ -9,9 +9,9 @@
             <i class="fas fa-plus"></i> Nueva Cita
         </a>
     </div>
-    
+
     {% include 'paciente/partials/alert_messages.html' %}
-    
+
     <!-- Citas Futuras -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
@@ -19,51 +19,70 @@
         </div>
         <div class="card-body">
             {% if citas_futuras %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Médico</th>
-                                <th>Especialidad</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cita in citas_futuras %}
-                            <tr>
-                                <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
-                                <td>{{ cita.hora_inicio|time:"H:i" }} - {{ cita.hora_fin|time:"H:i" }}</td>
-                                <td>{{ cita.fk_medico.get_full_name }}</td>
-                                <td>{{ cita.fk_medico.especialidad }}</td>
-                                <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
-                                <td>
-                                    <span class="badge bg-warning text-dark">{{ cita.status_cita_medica }}</span>
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="#" class="btn btn-sm btn-outline-danger" title="Cancelar">
-                                        <i class="fas fa-times"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Médico</th>
+                            <th>Especialidad</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cita in citas_futuras %}
+                        <tr>
+                            <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
+                            <td>{{ cita.hora_inicio|time:"H:i" }} - {{ cita.hora_fin|time:"H:i" }}</td>
+                            <td>
+                                {% if cita.fk_medico %}
+                                    {% with usuario=cita.fk_medico.usuario_set.first %}
+                                        {{ usuario.get_full_name }}
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="text-muted">Sin asignar</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cita.fk_medico.especialidad }}</td>
+                            <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if cita.status_cita_medica == 'Pendiente' %}
+                                        bg-warning text-dark
+                                    {% elif cita.status_cita_medica == 'Completada' %}
+                                        bg-success
+                                    {% elif cita.status_cita_medica == 'Cancelada' %}
+                                        bg-danger
+                                    {% else %}
+                                        bg-secondary
+                                    {% endif %}">
+                                    {{ cita.status_cita_medica }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-danger" title="Cancelar">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-                <div class="alert alert-info mb-0">
-                    No tienes citas programadas.
-                </div>
+            <div class="alert alert-info mb-0">
+                No tienes citas programadas.
+            </div>
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Citas Pasadas -->
     <div class="card">
         <div class="card-header bg-secondary text-white">
@@ -71,44 +90,61 @@
         </div>
         <div class="card-body">
             {% if citas_pasadas %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Médico</th>
-                                <th>Especialidad</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cita in citas_pasadas %}
-                            <tr>
-                                <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
-                                <td>{{ cita.fk_medico.get_full_name }}</td>
-                                <td>{{ cita.fk_medico.especialidad }}</td>
-                                <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
-                                <td>
-                                    <span class="badge bg-{% if cita.status_cita_medica == 'Completada' %}success{% else %}danger{% endif %}">
-                                        {{ cita.status_cita_medica }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Médico</th>
+                            <th>Especialidad</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cita in citas_pasadas %}
+                        <tr>
+                            <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if cita.fk_medico %}
+                                    {% with usuario=cita.fk_medico.usuario_set.first %}
+                                        {{ usuario.get_full_name }}
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="text-muted">Sin asignar</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cita.fk_medico.especialidad }}</td>
+                            <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if cita.status_cita_medica == 'Completada' %}
+                                        bg-success
+                                    {% elif cita.status_cita_medica == 'Cancelada' %}
+                                        bg-danger
+                                    {% elif cita.status_cita_medica == 'Pendiente' %}
+                                        bg-warning text-dark
+                                    {% else %}
+                                        bg-secondary
+                                    {% endif %}">
+                                    {{ cita.status_cita_medica }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-                <div class="alert alert-info mb-0">
-                    No tienes citas anteriores registradas.
-                </div>
+            <div class="alert alert-info mb-0">
+                No tienes citas anteriores registradas.
+            </div>
             {% endif %}
         </div>
     </div>

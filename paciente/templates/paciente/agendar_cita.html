@@ -5,20 +5,26 @@
 <div class="container mt-4">
     <h2 class="mb-4">Agendar Nueva Cita</h2>
 
-    {% include 'paciente/partials/alert_messages.html' %}
+    <!-- Mostrar mensajes flash -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <form method="post" class="row g-3">
         {% csrf_token %}
 
         <!-- Columna izquierda - Buscar Médico -->
         <div class="col-md-5">
-            <!-- Tarjeta de búsqueda de médicos -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Buscar Médico</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Barra de búsqueda -->
                     <div class="input-group mb-3">
                         <input type="text" id="buscar-medico" class="form-control"
                                placeholder="Buscar por nombre o especialidad...">
@@ -27,18 +33,16 @@
                         </button>
                     </div>
 
-                    <!-- Filtros rápidos -->
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         {% for esp in especialidades|slice:":5" %}
                         <a href="?especialidad={{ esp }}" class="btn btn-sm btn-outline-primary">{{ esp }}</a>
                         {% endfor %}
                     </div>
 
-                    <!-- Lista de médicos -->
                     <div class="list-group" style="max-height: 300px; overflow-y: auto;">
                         {% for medico in medicos %}
                         <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
-                           data-id="{{ medico.id }}" data-nombre="{{ medico.get_nombre_display }}">
+                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.get_nombre_display }}">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ medico.get_nombre_display }}</h6>
                                 <small class="text-primary">{{ medico.especialidad }}</small>
@@ -97,13 +101,9 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-0 fs-5" id="medico-seleccionado-texto">
-                                    {% if medico_nombre %}
-                                    <strong>{{ medico_nombre }}</strong>
-                                    {% else %}
-                                    <span class="text-muted">Ningún médico seleccionado</span>
-                                    {% endif %}
+                                    <strong>{% if medico_nombre %}{{ medico_nombre }}{% else %}<span class="text-muted">Ningún médico seleccionado</span>{% endif %}</strong>
                                 </p>
-                                <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id }}">
+                                <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}">
                             </div>
                         </div>
                     </div>
@@ -132,8 +132,7 @@
                     </div>
 
                     <!-- Botón de confirmación -->
-                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar"
-                            {% if not medico_id %}disabled{% endif %}>
+                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar">
                         <i class="fas fa-calendar-check me-2"></i> Confirmar Cita
                     </button>
                 </div>
@@ -142,11 +141,11 @@
     </form>
 </div>
 
-<!-- JavaScript para funcionalidades -->
+<!-- Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const medicoSeleccionadoTexto = document.getElementById('medico-seleccionado-texto');
-    const btnConfirmar = document.getElementById('btn-confirmar');
+    const medicoInput = document.getElementById('medico_id');
 
     document.querySelectorAll('.seleccionar-medico').forEach(btn => {
         btn.addEventListener('click', function (e) {
@@ -154,11 +153,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const medicoId = this.dataset.id;
             const medicoNombre = this.dataset.nombre;
 
-            document.getElementById('medico_id').value = medicoId;
+            medicoInput.value = medicoId;
             medicoSeleccionadoTexto.innerHTML = `<strong>${medicoNombre}</strong>`;
-            btnConfirmar.disabled = false;
-
-            document.getElementById('fecha_cita').focus();
         });
     });
 
@@ -172,9 +168,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const fechaInput = document.getElementById('fecha_cita');
     fechaInput.addEventListener('change', function () {
         const hoy = new Date();
-        hoy.setHours(0,0,0,0);
+        hoy.setHours(0, 0, 0, 0);
         const seleccion = new Date(this.value);
-        seleccion.setHours(0,0,0,0);
+        seleccion.setHours(0, 0, 0, 0);
         if (seleccion < hoy) {
             alert('No puede seleccionar una fecha pasada');
             this.value = '';
@@ -194,9 +190,11 @@ document.addEventListener('DOMContentLoaded', function () {
         background-color: #f8f9fa;
         cursor: pointer;
     }
+
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
+
     textarea {
         resize: none;
     }
