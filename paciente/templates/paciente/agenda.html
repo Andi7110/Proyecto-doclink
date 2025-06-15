@@ -1,116 +1,32 @@
 {% extends "paciente/dashboard_base.html" %}
-{% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Mi Agenda</h2>
-        <a href="{% url 'agendar_cita' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nueva Cita
-        </a>
-    </div>
-    
-    {% include 'paciente/partials/alert_messages.html' %}
-    
-    <!-- Citas Futuras -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Próximas Citas</h5>
-        </div>
-        <div class="card-body">
-            {% if citas_futuras %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Médico</th>
-                                <th>Especialidad</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cita in citas_futuras %}
-                            <tr>
-                                <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
-                                <td>{{ cita.hora_inicio|time:"H:i" }} - {{ cita.hora_fin|time:"H:i" }}</td>
-                                <td>{{ cita.fk_medico.get_full_name }}</td>
-                                <td>{{ cita.fk_medico.especialidad }}</td>
-                                <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
-                                <td>
-                                    <span class="badge bg-warning text-dark">{{ cita.status_cita_medica }}</span>
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="#" class="btn btn-sm btn-outline-danger" title="Cancelar">
-                                        <i class="fas fa-times"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info mb-0">
-                    No tienes citas programadas.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Citas Pasadas -->
-    <div class="card">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">Historial de Citas</h5>
-        </div>
-        <div class="card-body">
-            {% if citas_pasadas %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Médico</th>
-                                <th>Especialidad</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cita in citas_pasadas %}
-                            <tr>
-                                <td>{{ cita.fecha_consulta|date:"d/m/Y" }}</td>
-                                <td>{{ cita.fk_medico.get_full_name }}</td>
-                                <td>{{ cita.fk_medico.especialidad }}</td>
-                                <td>{{ cita.des_motivo_consulta_paciente|truncatechars:30 }}</td>
-                                <td>
-                                    <span class="badge bg-{% if cita.status_cita_medica == 'Completada' %}success{% else %}danger{% endif %}">
-                                        {{ cita.status_cita_medica }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info mb-0">
-                    No tienes citas anteriores registradas.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
+<h2>Mi Agenda de Citas</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Hora Inicio</th>
+      <th>Médico</th>
+      <th>Motivo</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cita in citas %}
+      <tr>
+        <td>{{ cita.fecha_consulta }}</td>
+        <td>{{ cita.hora_inicio }}</td>
+        <td>{{ cita.fk_medico }}</td>
+        <td>{{ cita.des_motivo_consulta_paciente }}</td>
+        <td>{{ cita.status_cita_medica }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6">No hay citas agendadas.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

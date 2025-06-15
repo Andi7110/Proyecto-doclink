@@ -38,17 +38,12 @@
                     <div class="list-group" style="max-height: 300px; overflow-y: auto;">
                         {% for medico in medicos %}
                         <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
-                           data-id="{{ medico.id }}" data-nombre="{{ medico.get_nombre_display }}">
+                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ medico.get_nombre_display }}</h6>
+                                <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
                                 <small class="text-primary">{{ medico.especialidad }}</small>
                             </div>
-                            <small class="text-muted">
-                                {% if medico.sub_especialidad_1 %}
-                                {{ medico.sub_especialidad_1 }}
-                                {% if medico.sub_especialidad_2 %}, {{ medico.sub_especialidad_2 }}{% endif %}
-                                {% endif %}
-                            </small>
+                            <!-- Aquí podrías agregar sub-especialidades si las tienes en tu modelo -->
                         </a>
                         {% empty %}
                         <div class="alert alert-info mb-0">
@@ -97,13 +92,9 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-0 fs-5" id="medico-seleccionado-texto">
-                                    {% if medico_nombre %}
-                                    <strong>{{ medico_nombre }}</strong>
-                                    {% else %}
                                     <span class="text-muted">Ningún médico seleccionado</span>
-                                    {% endif %}
                                 </p>
-                                <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id }}">
+                                <input type="hidden" name="medico_id" id="medico_id" value="">
                             </div>
                         </div>
                     </div>
@@ -113,13 +104,13 @@
                         <div class="col-md-6">
                             <label for="fecha_cita" class="form-label">Fecha de la cita</label>
                             <input type="date" name="fecha_cita" id="fecha_cita"
-                                   class="form-control" value="{{ fecha_cita }}" required
+                                   class="form-control" required
                                    min="{{ hoy|date:'Y-m-d' }}">
                         </div>
                         <div class="col-md-6">
                             <label for="hora_cita" class="form-label">Hora</label>
                             <input type="time" name="hora_cita" id="hora_cita"
-                                   class="form-control" value="{{ hora_cita|default:'09:00' }}" required
+                                   class="form-control" value="09:00" required
                                    min="08:00" max="18:00" step="1800">
                         </div>
                     </div>
@@ -128,12 +119,11 @@
                     <div class="mb-4">
                         <label for="motivo" class="form-label">Motivo de consulta</label>
                         <textarea name="motivo" id="motivo" class="form-control"
-                                  rows="5" required>{{ motivo }}</textarea>
+                                  rows="5" required></textarea>
                     </div>
 
                     <!-- Botón de confirmación -->
-                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar"
-                            {% if not medico_id %}disabled{% endif %}>
+                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar" disabled>
                         <i class="fas fa-calendar-check me-2"></i> Confirmar Cita
                     </button>
                 </div>

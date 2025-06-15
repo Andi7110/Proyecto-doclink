@@ -1,12 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from datetime import date, datetime, time
+from datetime import date, datetime
 from .decorators import paciente_required
+from django.contrib import messages
 
-
-from bd.models import Usuario, Medico, Paciente, CitasMedicas
-from django.db.models import Q 
+from bd.models import Usuario, Medico, CitasMedicas
 
 @login_required
 @paciente_required
@@ -23,58 +22,90 @@ def dashboard_paciente(request):
 def agendar_cita(request):
     usuario = request.user
 
-    # Verificamos si el usuario tiene asociado un paciente
     if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
         raise PermissionDenied("No tienes permisos para agendar citas.")
 
     paciente = usuario.fk_paciente
 
-    # Calcular edad desde la fecha_nacimiento del usuario
+    # Cálculo de edad 
     edad = None
-    if usuario.fecha_nacimiento:
+    if hasattr(usuario, 'fecha_nacimiento') and usuario.fecha_nacimiento:
         hoy = date.today()
         nacimiento = usuario.fecha_nacimiento
         edad = hoy.year - nacimiento.year - ((hoy.month, hoy.day) < (nacimiento.month, nacimiento.day))
 
-    # Obtener especialidad seleccionada por GET (filtro)
+    # Filtro por especialidad
     especialidad = request.GET.get('especialidad')
     medicos = Medico.objects.all()
     if especialidad:
         medicos = medicos.filter(especialidad__icontains=especialidad)
 
+    # Lista de médicos con nombre completo
+    medicos_con_nombre = []
+    for medico in medicos:
+        usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+        if usuario_medico:
+            nombre_completo = f"{usuario_medico.nombre or ''} {usuario_medico.apellido or ''}".strip()
+        else:
+            nombre_completo = "Nombre no disponible"
+        medicos_con_nombre.append({
+            'id_medico': medico.id_medico,
+            'especialidad': medico.especialidad,
+            'nombre_completo': nombre_completo,
+        })
+
+    # Procesamiento del formulario
     if request.method == 'POST':
         medico_id = request.POST.get('medico_id')
-        fecha = request.POST.get('fecha_cita')
-        hora_inicio = request.POST.get('hora_cita')
+        fecha_str = request.POST.get('fecha_cita')
+        hora_str = request.POST.get('hora_cita')
         motivo = request.POST.get('motivo')
 
-        if medico_id and fecha and hora_inicio and motivo:
-            try:
-                medico = Medico.objects.get(id_medico=medico_id)
-                nueva_cita = CitasMedicas.objects.create(
-                    fecha_consulta=fecha,
-                    hora_inicio=hora_inicio,
-                    status_cita_medica="Pendiente",
-                    des_motivo_consulta_paciente=motivo,
-                    fk_paciente=paciente,
-                    fk_medico=medico
-                )
-                # Redirigir a la vista de agenda para mostrar la cita creada
-                return redirect('agenda')  # Asegúrate que la url name sea 'ver_agenda'
-            except Medico.DoesNotExist:
-                # Manejar error si el médico no existe
-                pass
+        if not (medico_id and fecha_str and hora_str and motivo):
+            messages.error(request, "Por favor completa todos los campos.")
+            return redirect('agendar_cita')
+        
+        print("medico_id:", medico_id)
+        print("fecha_cita:", fecha_str)
+        print("hora_cita:", hora_str)
+        print("motivo:", motivo)
+
+
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            hora = datetime.strptime(hora_str, '%H:%M').time()
+        except ValueError:
+            messages.error(request, "Formato de fecha u hora inválido.")
+            return redirect('agendar_cita')
+
+        try:
+            medico = Medico.objects.get(id_medico=medico_id)
+        except Medico.DoesNotExist:
+            messages.error(request, "Médico no encontrado.")
+            return redirect('agendar_cita')
+
+        CitasMedicas.objects.create(
+            fecha_consulta=fecha,
+            hora_inicio=hora,
+            status_cita_medica="Pendiente",
+            des_motivo_consulta_paciente=motivo,
+            fk_paciente=paciente,
+            fk_medico=medico
+        )
+        messages.success(request, "Cita agendada correctamente.")
+        return redirect('agenda')
 
     context = {
         'edad': edad,
         'paciente': paciente,
-        'medicos': medicos,
+        'medicos': medicos_con_nombre,
         'especialidad_seleccionada': especialidad,
-        'nombre': usuario.get_full_name() if hasattr(usuario, 'get_full_name') else str(usuario),
+        'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', ''),
     }
 
     return render(request, 'paciente/agendar_cita.html', context)
+
 
 @login_required
 @paciente_required
@@ -86,29 +117,13 @@ def ver_agenda(request):
 
     paciente = usuario.fk_paciente
 
-    hoy = date.today()
-    ahora = datetime.now().time()
-
-    # Citas futuras: fecha > hoy o fecha = hoy y hora_inicio >= ahora
-    citas_futuras = CitasMedicas.objects.filter(
+    citas_confirmadas = CitasMedicas.objects.filter(
         fk_paciente=paciente
-    ).filter(
-        Q(fecha_consulta__gt=hoy) |
-        Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
     ).order_by('fecha_consulta', 'hora_inicio')
-
-    # Citas pasadas: fecha < hoy o fecha = hoy y hora_inicio < ahora
-    citas_pasadas = CitasMedicas.objects.filter(
-        fk_paciente=paciente
-    ).filter(
-        Q(fecha_consulta__lt=hoy) |
-        Q(fecha_consulta=hoy, hora_inicio__lt=ahora)
-    ).order_by('-fecha_consulta', '-hora_inicio')
 
     context = {
         'paciente': paciente,
-        'citas_futuras': citas_futuras,
-        'citas_pasadas': citas_pasadas,
+        'citas_confirmadas': citas_confirmadas,
     }
 
     return render(request, 'paciente/agenda.html', context)
