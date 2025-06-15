@@ -1,0 +1,13 @@
+<!-- templates/medico/realizar_consulta.html -->
+<h2>Consulta médica - {{ paciente.nombre }}</h2>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button type="submit" class="btn btn-primary">Guardar Consulta</button>
+</form>
+
+{% if consulta and consulta.consulta_completada %}
+  <p class="alert alert-success">Consulta completada el {{ consulta.fecha }}</p>
+{% endif %}
