@@ -1,10 +1,4 @@
 {% load static %}
-{% block title %}
-<title>Dashboard - DOCLINK</title>
-{% endblock %}
-{% block styles %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -14,11 +8,18 @@
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+
+  {% block title %}
+  <title>Dashboard - DOCLINK</title>
+  {% endblock %}
+
+  {% block styles %}
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <style>
     body {
       background: #f8f9fa;
     }
-
+    /* Sidebar y navbar */
     .sidebar {
       width: 200px;
       min-width: 180px;
@@ -28,30 +29,25 @@
       transition: width 0.2s;
       z-index: 2;
     }
-
     .sidebar.collapsed {
       width: 60px !important;
       min-width: 60px !important;
       max-width: 60px !important;
     }
-
     #main-content {
       transition: margin 0.2s, width 0.2s;
       width: 100%;
     }
-
     @media (min-width: 768px) {
       .sidebar+#main-content {
         margin-left: 0;
       }
     }
-
     .sidebar .sidebar-text {
       transition: opacity 0.2s;
       opacity: 1;
       white-space: nowrap;
     }
-
     .sidebar.collapsed .sidebar-text {
       opacity: 0;
       width: 0;
@@ -59,7 +55,6 @@
       overflow: hidden;
       transition: opacity 0.2s, width 0.2s;
     }
-
     .sidebar .nav-link {
       font-size: 1.05rem;
       padding: 0.7rem 1rem;
@@ -71,58 +66,48 @@
       align-items: center;
       gap: 0.7rem;
     }
-
     .sidebar .nav-link.active,
     .sidebar .nav-link:hover {
       background: #eaf6ff !important;
       color: #007bff !important;
       font-weight: bold;
     }
-
     .avatar {
       width: 36px;
       height: 36px;
       border-radius: 50%;
       object-fit: cover;
     }
-
     .btn-custom {
       min-width: 140px;
       margin-bottom: 0.5rem;
     }
-
     .card {
       border-radius: 1.2rem;
     }
-
     .users-list img {
       width: 32px;
       height: 32px;
       border-radius: 50%;
     }
-
     .sidebar-icon {
       font-size: 2rem;
       display: block;
       margin-bottom: 0.7rem;
     }
-
     .navbar {
       background: #fff;
       border-bottom: 1px solid #e0e0e0;
       z-index: 1040;
     }
-
     .navbar-logo {
       height: 54px;
       margin-right: 8px;
     }
-
     .rating-stars {
       color: #ffc107;
       font-size: 1.5rem;
     }
-
     @media (max-width: 767px) {
       .sidebar {
         min-height: auto;
@@ -130,17 +115,49 @@
         border-bottom: 1px solid #eee;
       }
     }
+
+    /* Estilo mejorado para el buscador */
+    .navbar form[role="search"] {
+      max-width: 600px;
+      width: 100%;
+      margin-left: 1rem; /* ms-3 */
+      display: flex;
+      flex-grow: 1;
+    }
+    .navbar form[role="search"] input.form-control {
+      flex-grow: 1;
+    }
   </style>
+  {% endblock %}
 </head>
 
 <body>
   <!-- NAVBAR SUPERIOR -->
   <nav class="navbar navbar-expand-lg navbar-light px-3">
     <div class="container-fluid">
+
       <div class="d-flex align-items-center">
         <img src="https://i.ibb.co/bNts5Xc/logo.png" alt="Logo" class="navbar-logo" />
         <span style="color:#00a8ff; font-weight:bold; font-size:1.5rem;">DOCLINK</span>
       </div>
+
+      <div>
+        <!-- Buscador mejorado -->
+        <form method="get" action="{% url 'agendar_cita' %}" role="search">
+          <input
+            class="form-control form-control-sm me-2"
+            type="search"
+            placeholder="Buscar especialidad"
+            aria-label="Buscar"
+            name="especialidad"
+            value="{{ especialidad_seleccionada|default:'' }}"
+          >
+          <button class="btn btn-outline-primary btn-sm" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+      </div>
+
       <div class="d-flex align-items-center gap-2 ms-auto">
         <img src="https://randomuser.me/api/portraits/men/1.jpg" class="avatar" alt="avatar" />
         <button class="btn btn-light btn-sm ms-2"><b>⋮</b></button>
@@ -153,6 +170,7 @@
       </div>
     </div>
   </nav>
+
   <div class="container-fluid">
     <div class="d-flex" style="min-height: 100vh;">
       <!-- Sidebar -->
@@ -173,12 +191,12 @@
               <span class="sidebar-text">Inicio</span>
             </a>
           </li>
-        <li class="nav-item w-100">
-          <a class="nav-link d-flex align-items-center gap-2" href="{% url 'agenda' %}">
-            <i class="bi bi-calendar-event"></i>
-            <span class="sidebar-text">Agenda</span>
-          </a>
-        </li>
+          <li class="nav-item w-100">
+            <a class="nav-link d-flex align-items-center gap-2" href="{% url 'agenda' %}">
+              <i class="bi bi-calendar-event"></i>
+              <span class="sidebar-text">Agenda</span>
+            </a>
+          </li>
           <li class="nav-item w-100">
             <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">
               <i class="bi bi-file-earmark-text"></i>
@@ -200,15 +218,16 @@
         </ul>
         <div class="flex-grow-1"></div>
       </nav>
-      <!-- Main content: solo va el bloque de contenido -->
+
+      <!-- Main content -->
       <main id="main-content" class="flex-grow-1 px-md-5 py-0" style="transition: margin 0.2s, width 0.2s;">
         <!-- CONTENIDO VARIABLE -->
         {% block content %}
-
         {% endblock %}
       </main>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function activateMenu(el) {
