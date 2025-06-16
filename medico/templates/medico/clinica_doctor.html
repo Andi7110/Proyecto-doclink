@@ -1,0 +1,55 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="main-content" class="flex-grow-1 px-md-5 py-4">
+  <div class="container">
+
+    <div class="text-center mb-5">
+      <h2 class="mb-3">Perfil Profesional del Dr. {{ request.user.nombre }} {{ request.user.apellido }}</h2>
+      <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="80" class="mb-3">
+      <p class="text-muted">Consulta tu información clínica, profesional y de atención médica.</p>
+    </div>
+
+    <div class="row justify-content-center mb-5 text-center">
+      <div class="col-md-4 mb-4">
+        <a href="{% url 'config_clinica' %}" class="btn btn-primary btn-lg w-100 py-3 shadow-sm">🏥 Configurar Clínica</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <a href="{% url 'config_horario' %}" class="btn btn-success btn-lg w-100 py-3 shadow-sm">⏰ Configurar Horario</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <a href="{% url 'config_perfildoc' %}" class="btn btn-dark btn-lg w-100 py-3 shadow-sm">👨‍⚕️ Configurar Perfil Médico</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <a href="{% url 'dashboard_doctor' %}" class="btn btn-dark btn-lg w-100 py-3 shadow-sm"> Regresar Dashboard</a>
+      </div>
+    </div>
+
+    <div class="card shadow-sm p-4">
+      <h4 class="mb-4">🩺 Información del Médico</h4>
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Especialidad:</strong> {{ request.user.fk_medico.especialidad }}</p>
+          <p><strong>Subespecialidad 1:</strong> {{ request.user.fk_medico.sub_especialidad_1|default:"-" }}</p>
+          <p><strong>Subespecialidad 2:</strong> {{ request.user.fk_medico.sub_especialidad_2|default:"-" }}</p>
+          <p><strong>Número JVPM:</strong> {{ request.user.fk_medico.no_jvpm }}</p>
+          <p><strong>DUI:</strong> {{ request.user.fk_medico.dui }}</p>
+          <p><strong>Descripción:</strong> {{ request.user.fk_medico.descripcion|default:"No registrada." }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Clínica:</strong> {{ request.user.fk_medico.fk_clinica.nombre }}</p>
+          <p><strong>Dirección:</strong> {{ request.user.fk_medico.fk_clinica.direccion }}</p>
+          <p><strong>Teléfono:</strong> {{ request.user.fk_medico.fk_clinica.telefono_clinica }}</p>
+          <p><strong>Correo:</strong> {{ request.user.fk_medico.fk_clinica.correo_electronico_clinica }}</p>
+          <p><strong>Horario:</strong> {{ request.user.fk_medico.fk_horario_medico.hora_inicio|time:"H:i" }} - {{ request.user.fk_medico.fk_horario_medico.hora_fin|time:"H:i" }}</p>
+          <p><strong>Web:</strong> <a href="#">{{ request.user.fk_medico.fk_clinica.sitio_web }}</a></p>
+          <p><strong>Facebook:</strong> <a href="#">{{ request.user.fk_medico.fk_clinica.facebook }}</a></p>
+          <p><strong>Instagram:</strong> <a href="#">{{ request.user.fk_medico.fk_clinica.instagram }}</a></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+{% endblock %}

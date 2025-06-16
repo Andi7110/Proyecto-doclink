@@ -1,0 +1,66 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="main-content" class="flex-grow-1 px-md-5 py-4">
+  <div class="container">
+
+    <div class="text-center mb-4">
+      <h2 class="mb-3">🏥 Configuración de Clínica</h2>
+      <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="60" class="mb-3">
+      <p class="text-muted">Edita la información general de tu clínica.</p>
+    </div>
+
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre Clínica</label>
+        <input type="text" class="form-control" id="nombre" name="nombre"
+               value="{{ request.user.fk_medico.fk_clinica.nombre }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="direccion" class="form-label">Dirección</label>
+        <textarea class="form-control" id="direccion" name="direccion" rows="2" required>{{ request.user.fk_medico.fk_clinica.direccion }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label for="telefono_clinica" class="form-label">Teléfono</label>
+        <input type="text" class="form-control" id="telefono_clinica" name="telefono_clinica"
+               value="{{ request.user.fk_medico.fk_clinica.telefono_clinica }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="correo_electronico_clinica" class="form-label">Correo Electrónico</label>
+        <input type="email" class="form-control" id="correo_electronico_clinica" name="correo_electronico_clinica"
+               value="{{ request.user.fk_medico.fk_clinica.correo_electronico_clinica }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="sitio_web" class="form-label">Sitio Web</label>
+        <input type="url" class="form-control" id="sitio_web" name="sitio_web"
+               value="{{ request.user.fk_medico.fk_clinica.sitio_web }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="facebook" class="form-label">Facebook</label>
+        <input type="text" class="form-control" id="facebook" name="facebook"
+               value="{{ request.user.fk_medico.fk_clinica.facebook }}">
+      </div>
+
+      <div class="mb-3">
+        <label for="instagram" class="form-label">Instagram</label>
+        <input type="text" class="form-control" id="instagram" name="instagram"
+               value="{{ request.user.fk_medico.fk_clinica.instagram }}">
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+
+  </div>
+</main>
+{% endblock %}

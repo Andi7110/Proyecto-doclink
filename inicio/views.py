@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 from bd.models import Usuario, Paciente,Rol,Medico
 from django.db import IntegrityError
+from medico import views
 
 
 def inicio_view(request):
@@ -275,7 +276,7 @@ def autenticacion_view(request):
     return render(request, 'inicio/autenticacion.html')
 
 def vistaMedico_view(request):
-    return render(request, 'medico/dashboard_doctor.html')
+    return redirect('dashboard_doctor')
 
 def vistaPacienteview(request):
     return render(request, 'paciente/dashboard_paciente.html') 

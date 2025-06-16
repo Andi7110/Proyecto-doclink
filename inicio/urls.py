@@ -16,6 +16,7 @@ from .views import custom_logout
 from django.contrib import admin
 from .views import vistaMedico_view
 from .views import vistaPacienteview
+from medico import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +34,6 @@ urlpatterns = [
     path('registro_paciente4/', registroPaciente4_view, name='registro_paciente4'),
     path('contra_olvidada/', contraOlvidada_view, name='contra_olvidada'),
     path('autenticacion/', autenticacion_view, name='autenticacion'),
-    path('medico/dashboard_doctor/', vistaMedico_view, name='vista_medico'),
+    path('dashboard_doctor/', views.dashboard_doctor, name='dashboard_doctor'),  # ← correcto
     path('paciente/dashboard_paciente/', vistaPacienteview, name='vista_paciente'),
 ]

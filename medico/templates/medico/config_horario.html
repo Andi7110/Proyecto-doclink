@@ -1,0 +1,43 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="main-content" class="flex-grow-1 px-md-5 py-4">
+  <div class="container">
+
+    <div class="text-center mb-4">
+      <h2 class="mb-3">🏥 Configuración de Clínica</h2>
+      <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="60" class="mb-3">
+      <p class="text-muted">Edita la información de tu disponibilidad de horario</p>
+    </div>
+
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="hora_inicio" class="form-label">Hora de Inicio</label>
+        <input type="time" class="form-control" id="hora_inicio" name="hora_inicio"
+               value="{{ request.user.fk_medico.fk_horario_medico.hora_inicio|time:'H:i' }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="hora_fin" class="form-label">Hora de Fin</label>
+        <input type="time" class="form-control" id="hora_fin" name="hora_fin"
+               value="{{ request.user.fk_medico.fk_horario_medico.hora_fin|time:'H:i' }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="status_disponibilidad" class="form-label">Disponibilidad (S/N)</label>
+        <input type="text" class="form-control" id="status_disponibilidad" name="status_disponibilidad"
+               value="{{ request.user.fk_medico.fk_horario_medico.status_disponibilidad }}" maxlength="1" required>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+
+  </div>
+</main>
+{% endblock %}

@@ -340,3 +340,5 @@ class ValoracionConsulta(models.Model):
     def __str__(self):
         calificacion = f" - {self.calificacion_consulta}★" if self.calificacion_consulta else ""
         return f"Valoración {self.id_valoracion_consulta}{calificacion}"
+    
+    

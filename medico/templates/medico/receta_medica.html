@@ -1,0 +1,54 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Crear Receta Médica</h2>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Medicamento -->
+    <div class="mb-3">
+      <label for="medicamento" class="form-label">Medicamento</label>
+      <input type="text" name="medicamento" id="medicamento" class="form-control" required>
+    </div>
+
+    <!-- Vía de administración -->
+    <div class="mb-3">
+      <label for="via_administracion" class="form-label">Vía de Administración</label>
+      <input type="text" name="via_administracion" id="via_administracion" class="form-control" required>
+    </div>
+
+    <!-- Dosis -->
+    <div class="mb-3">
+      <label for="dosis" class="form-label">Dosis</label>
+      <input type="text" name="dosis" id="dosis" class="form-control" required>
+    </div>
+
+    <!-- Fechas -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+        <input type="date" name="fecha_inicio_tratamiento" id="fecha_inicio" class="form-control" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="fecha_fin" class="form-label">Fecha Fin</label>
+        <input type="date" name="fecha_fin_tratamiento" id="fecha_fin" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Relación con cita médica -->
+    <div class="mb-3">
+      <label for="fk_citas_medicas" class="form-label">Cita Médica</label>
+      <select name="fk_citas_medicas" id="fk_citas_medicas" class="form-select" required>
+        {% for cita in citas %}
+          <option value="{{ cita.id }}">{{ cita.descripcion }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Receta</button>
+  </form>
+</div>
+{% endblock %}
