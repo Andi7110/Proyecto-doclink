@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.db import connection
 from collections import namedtuple
+from django.db.models import Sum
 
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente
 
@@ -16,6 +17,9 @@ def views_home(request):
 
 @csrf_protect
 def receta_medica(request):
+    usuario = request.user
+    medico = usuario.fk_medico
+
     if request.method == 'POST':
         medicamento = request.POST.get('medicamento')
         via = request.POST.get('via_administracion')
@@ -44,18 +48,23 @@ def receta_medica(request):
         except Exception as e:
             messages.error(request, f"Error al guardar la receta: {e}")
 
-    citas = CitasMedicas.objects.all()
-    contexto = {
-        'citas': [
-            {
-                'id': c.id_cita_medicas,
-                'descripcion': f"Cita #{c.id_cita_medicas} - {c.fecha_consulta}"
-            }
-            for c in citas
-        ]
-    }
+    # Filtramos citas solo del médico actual
+    citas = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        fk_paciente__isnull=False  # evita errores por pacientes nulos
+    ).select_related('fk_paciente')
 
-    return render(request, 'medico/receta_medica.html', contexto)
+    # Extraemos pacientes únicos de esas citas
+    pacientes_ids = citas.values_list('fk_paciente_id', flat=True).distinct()
+
+    # Buscamos los usuarios que están relacionados con esos pacientes
+    pacientes = Usuario.objects.filter(fk_paciente_id__in=pacientes_ids)
+
+    return render(request, 'medico/receta_medica.html', {
+        'citas': citas,
+        'pacientes': pacientes
+    })
+
 
 def ubicacion_doctor(request):
     return render(request, 'medico/ubicacion_doctor.html')
@@ -157,7 +166,28 @@ def dashboard_doctor(request):
             'paciente_id': cita.fk_paciente.id_paciente
         })
 
-    return render(request, 'medico/dashboard_doctor.html', {'citas': citas})
+    #Ingresos de Factura
+    ingresos = (
+        CitasMedicas.objects
+        .filter(fk_medico=medico, fk_factura__isnull=False)
+        .values('fk_factura__fecha_emision')
+        .annotate(total=Sum('fk_factura__monto'))
+        .order_by('fk_factura__fecha_emision')
+    )
+
+    #Suma ingresos
+    total_ingresos = (
+    CitasMedicas.objects
+    .filter(fk_medico=medico, fk_factura__isnull=False)
+    .aggregate(suma=Sum('fk_factura__monto'))['suma'] or 0
+    )
+
+
+    return render(request, 'medico/dashboard_doctor.html', {
+        'citas': citas,
+        'ingresos': ingresos,
+        'total_ingresos': total_ingresos
+    })
 
 @require_POST
 @login_required

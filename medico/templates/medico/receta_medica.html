@@ -5,8 +5,41 @@
 <div class="container mt-4">
   <h2 class="mb-4">Crear Receta Médica</h2>
 
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
   <form method="post">
     {% csrf_token %}
+
+    <!-- Selección de paciente -->
+    <div class="mb-3">
+      <label for="paciente" class="form-label">Paciente</label>
+      <select id="paciente" class="form-select" required>
+        <option value="" disabled selected>Seleccione un paciente</option>
+        {% for paciente in pacientes %}
+          <option value="{{ paciente.fk_paciente.id }}">{{ paciente.nombre }} {{ paciente.apellido }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Selección de cita médica -->
+    <div class="mb-3">
+      <label for="fk_citas_medicas" class="form-label">Cita Médica</label>
+      <select name="fk_citas_medicas" id="fk_citas_medicas" class="form-select" required>
+        <option value="" disabled selected>Seleccione una cita</option>
+        {% for cita in citas %}
+          <option value="{{ cita.id_cita_medicas }}" data-paciente="{{ cita.fk_paciente.id }}">
+            {{ cita.fecha_consulta }} - {{ cita.des_motivo_consulta_paciente|truncatechars:40 }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
     <!-- Medicamento -->
     <div class="mb-3">
@@ -38,17 +71,29 @@
       </div>
     </div>
 
-    <!-- Relación con cita médica -->
-    <div class="mb-3">
-      <label for="fk_citas_medicas" class="form-label">Cita Médica</label>
-      <select name="fk_citas_medicas" id="fk_citas_medicas" class="form-select" required>
-        {% for cita in citas %}
-          <option value="{{ cita.id }}">{{ cita.descripcion }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
     <button type="submit" class="btn btn-primary">Guardar Receta</button>
   </form>
+
+        <div class="col-md-2 mb-2">
+        <a href="{% url 'dashboard_doctor' %}" class="btn btn-blue btn-lg w-100 py-3 shadow-sm"> Regresar Dashboard</a>
+      </div>
+    </div>
 </div>
+
+<!-- Script para filtrar citas por paciente -->
+<script>
+  const selectPaciente = document.getElementById('paciente');
+  const selectCita = document.getElementById('fk_citas_medicas');
+
+  selectPaciente.addEventListener('change', function () {
+    const pacienteSeleccionado = this.value;
+
+    Array.from(selectCita.options).forEach(option => {
+      if (!option.dataset.paciente) return;
+      option.hidden = option.dataset.paciente !== pacienteSeleccionado;
+    });
+
+    selectCita.value = ""; // Reiniciar selección
+  });
+</script>
 {% endblock %}

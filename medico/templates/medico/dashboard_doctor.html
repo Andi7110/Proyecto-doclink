@@ -51,20 +51,6 @@
   <div class="row mb-4">
     <div class="col-md-3 mb-3">
       <div class="card shadow-sm p-3">
-        <h6>Doctores registrados</h6>
-        <h2 class="mb-0">2,402</h2>
-        <small class="text-muted">Último año</small>
-      </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm p-3">
-        <h6>Comunidad</h6>
-        <h2 class="mb-0">100,353</h2>
-        <small class="text-muted">Último año</small>
-      </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm p-3">
         <h6>Citas</h6>
         <h2 class="mb-0">{{ citas|length }}</h2>
         <small class="text-muted">Últimos días</small>
@@ -73,11 +59,10 @@
     <div class="col-md-3 mb-3">
       <div class="card shadow-sm p-3">
         <h6>Ingresos</h6>
-        <h2 class="mb-0">$45,000</h2>
+        <h2 class="mb-0">${{ total_ingresos|floatformat:2 }}</h2>
         <small class="text-muted">Total</small>
       </div>
     </div>
-  </div>
 
   <!-- Citas médicas -->
   <div class="row mb-5">
@@ -121,6 +106,11 @@
                   {% elif cita.estado == "En proceso" %}
                   <a href="{% url 'realizar_consulta' cita.id %}" class="btn btn-primary btn-sm">Consultar</a>
 
+                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
+                  </form>
+
                   {% elif cita.estado == "Cancelado" %}
                   <span class="text-muted">Cita cancelada</span>
                   {% else %}
@@ -142,44 +132,82 @@
   </div>
 
 
-  <!-- Gráficos y usuarios -->
-  <div class="row">
-    <div class="col-md-8 mb-4">
-      <div class="card shadow-sm p-4">
-        <h6>Ingresos por mes</h6>
-        <img src="https://i.ibb.co/S5bXBgc/bar-placeholder.png" alt="Gráfico barras" class="w-100 rounded"
-          style="min-height:340px;" />
-      </div>
-    </div>
-    <div class="col-md-4 mb-4">
-      <div class="card shadow-sm p-4">
-        <h6>Usuarios</h6>
-        <ul class="list-unstyled users-list mt-3">
-          <li class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/women/1.jpg" class="me-2" /> Helena<br />
-            <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
-          </li>
-          <li class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/men/2.jpg" class="me-2" /> Oscar<br />
-            <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
-          </li>
-          <li class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/men/3.jpg" class="me-2" /> Daniel<br />
-            <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
-          </li>
-          <li class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/men/4.jpg" class="me-2" /> Daniel Jay Park<br />
-            <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
-          </li>
-          <li class="d-flex align-items-center">
-            <img src="https://randomuser.me/api/portraits/men/5.jpg" class="me-2" /> Mark Rojas<br />
-            <small class="ms-2 text-muted">email@figmasfakedomain.net</small>
-          </li>
-        </ul>
-      </div>
+ <!-- Gráficos y usuarios -->
+<div class="row mb-6"></div>
+  <div class="col-md- mb-3">
+    <div class="card shadow-sm p-4">
+      <h6>Ingresos por fecha</h6>
+      <canvas id="graficoIngresos" height="280"></canvas>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ctx = document.getElementById('graficoIngresos').getContext('2d');
+
+    const data = {
+      labels: [
+        {% for ingreso in ingresos %}
+          "{{ ingreso.fk_factura__fecha_emision|date:'d/m/Y' }}",
+        {% endfor %}
+      ],
+      datasets: [{
+        label: 'Ingresos ($)',
+        data: [
+          {% for ingreso in ingresos %}
+            {{ ingreso.total }},
+          {% endfor %}
+        ],
+        backgroundColor: 'rgba(13, 110, 253, 0.6)',
+        borderColor: 'rgba(13, 110, 253, 1)',
+        borderWidth: 1
+      }]
+    };
+
+    const config = {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    new Chart(ctx, config);
+  </script>
+
+
+  <div class="col-md-4 mb-4">
+    <div class="card shadow-sm p-4">
+      <h6>Pacientes que te han consultado</h6>
+
+      {% if citas %}
+        <ul class="list-group list-group-flush mt-3">
+          {% for cita in citas %}
+            <li class="list-group-item">
+              <strong>{{ cita.nombre_paciente }}</strong>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">Aún no tienes pacientes registrados.</p>
+      {% endif %}
+    </div>
+  </div>
 
 
 </main>
