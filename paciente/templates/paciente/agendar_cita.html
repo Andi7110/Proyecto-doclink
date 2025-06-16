@@ -1,0 +1,187 @@
+{% extends "paciente/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Agendar Nueva Cita</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <!-- Buscar Médico -->
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Buscar Médico</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="buscar-medico" class="form-control" placeholder="Buscar por nombre o especialidad...">
+                        <button class="btn btn-outline-secondary" type="button" id="btn-buscar">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        {% for esp in especialidades|slice:":5" %}
+                        <a href="?especialidad={{ esp }}" class="btn btn-sm btn-outline-primary">{{ esp }}</a>
+                        {% endfor %}
+                    </div>
+
+                    <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                        {% for medico in medicos %}
+                        <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
+                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
+                                <small class="text-primary">{{ medico.especialidad }}</small>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="alert alert-info mb-0">
+                            No se encontraron médicos con esos criterios.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos del paciente y cita -->
+        <div class="col-md-7">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Tus Datos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" value="{{ nombre }}" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Edad</label>
+                            <input type="text" class="form-control" value="{{ edad }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sexo</label>
+                            <input type="text" class="form-control" value="{{ sexo }}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles de cita -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Detalles de la Cita</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h6>Médico seleccionado:</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fs-5" id="medico-seleccionado-texto">
+                                    {% if medico_nombre %}
+                                        <strong>{{ medico_nombre }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">Ningún médico seleccionado</span>
+                                    {% endif %}
+                                </p>
+                                <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="fecha_cita" class="form-label">Fecha de la cita</label>
+                            <input type="date" name="fecha_cita" id="fecha_cita" class="form-control" required min="{{ hoy|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hora_cita" class="form-label">Hora</label>
+                            <input type="time" name="hora_cita" id="hora_cita" class="form-control" value="09:00" required min="08:00" max="18:00" step="1800">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="motivo" class="form-label">Motivo de consulta</label>
+                        <textarea name="motivo" id="motivo" class="form-control" rows="5" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar">
+                        <i class="fas fa-calendar-check me-2"></i> Confirmar Cita
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const medicoSeleccionadoTexto = document.getElementById('medico-seleccionado-texto');
+    const medicoInput = document.getElementById('medico_id');
+
+    document.querySelectorAll('.seleccionar-medico').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const medicoId = this.dataset.id;
+            const medicoNombre = this.dataset.nombre;
+
+            medicoInput.value = medicoId;
+            medicoSeleccionadoTexto.innerHTML = `<strong>${medicoNombre}</strong>`;
+        });
+    });
+
+    document.getElementById('btn-buscar').addEventListener('click', function () {
+        const termino = document.getElementById('buscar-medico').value.trim();
+        if (termino) {
+            window.location.href = `?especialidad=${encodeURIComponent(termino)}`;
+        }
+    });
+
+    const fechaInput = document.getElementById('fecha_cita');
+    fechaInput.addEventListener('change', function () {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const seleccion = new Date(this.value);
+        seleccion.setHours(0, 0, 0, 0);
+        if (seleccion < hoy) {
+            alert('No puede seleccionar una fecha pasada');
+            this.value = '';
+        }
+    });
+
+    document.getElementById('buscar-medico').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            document.getElementById('btn-buscar').click();
+        }
+    });
+});
+</script>
+
+<style>
+    .seleccionar-medico:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    textarea {
+        resize: none;
+    }
+</style>
+{% endblock %}

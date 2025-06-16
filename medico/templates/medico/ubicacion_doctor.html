@@ -1,0 +1,53 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="main-content" class="flex-grow-1 px-md-5 py-4">
+  <div class="container">
+
+    <div class="text-center mb-4">
+      <h2 class="mb-3">Ubicación del Consultorio</h2>
+      <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="60" class="mb-3">
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card p-4 shadow-sm">
+          <h5 class="card-title">🏥 Dirección del consultorio</h5>
+          <p class="card-text">
+            {{ request.user.fk_medico.fk_clinica.nombre }}<br>
+            {{ request.user.fk_medico.fk_clinica.direccion }}
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="card p-4 shadow-sm">
+          <h5 class="card-title">📞 Datos de contacto</h5>
+          <p class="card-text">
+            Teléfono: {{ request.user.fk_medico.fk_clinica.telefono_clinica }}<br>
+            Correo: {{ request.user.fk_medico.fk_clinica.correo_electronico_clinica }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mapa del consultorio -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card p-4 shadow-sm">
+          <h5 class="card-title">📌 Mapa del consultorio</h5>
+          <div class="ratio ratio-16x9">
+            <iframe 
+              src="https://www.google.com/maps?q={{ request.user.fk_medico.fk_clinica.latitud }},{{ request.user.fk_medico.fk_clinica.longitud }}&z=16&output=embed"
+              style="border:0;" allowfullscreen="" loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+{% endblock %}

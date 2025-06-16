@@ -1,0 +1,59 @@
+{% extends "medico/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">🩺 Realizar Consulta Médica</h2>
+
+  <!-- Información del paciente -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Información del paciente</h5>
+      <p><strong>ID Paciente:</strong> {{ paciente.id_paciente }}</p>
+      <p><strong>Nombre de emergencia:</strong> {{ paciente.contacto_emergencia }}</p>
+      <p><strong>Teléfono de emergencia:</strong> {{ paciente.tel_emergencia }}</p>
+    </div>
+  </div>
+
+  <!-- Formulario de la consulta -->
+  <form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Detalles de la consulta</h5>
+
+        <div class="mb-3">
+          <label for="diagnostico" class="form-label"><b>Diagnóstico</b></label>
+          <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3" placeholder="Ej. Diagnóstico médico..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="tratamiento" class="form-label"><b>Tratamiento recomendado</b></label>
+          <textarea class="form-control" id="tratamiento" name="tratamiento" rows="3" placeholder="Ej. Reposo, medicación, fisioterapia..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="prescripcion" class="form-label"><b>Prescripción médica</b></label>
+          <textarea class="form-control" id="prescripcion" name="prescripcion" rows="3" placeholder="Ej. Ibuprofeno 400mg cada 8 horas por 5 días..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="observaciones" class="form-label"><b>Observaciones adicionales</b></label>
+          <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales que desee dejar..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="adjunto" class="form-label"><b>Adjuntar documento o imagen (opcional)</b></label>
+          <input type="file" class="form-control" id="adjunto" name="adjunto" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-success"><b>💾 Guardar y confirmar consulta</b></button>
+          <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
