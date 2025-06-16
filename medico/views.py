@@ -8,8 +8,9 @@ from django.views.decorators.http import require_POST
 from django.db import connection
 from collections import namedtuple
 from django.db.models import Sum
+from django.utils import timezone
 
-from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente
+from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta
 
 @login_required 
 def views_home(request):
@@ -182,11 +183,14 @@ def dashboard_doctor(request):
     .aggregate(suma=Sum('fk_factura__monto'))['suma'] or 0
     )
 
+    #valoraciones
+    valoraciones = ValoracionConsulta.objects.all() 
 
     return render(request, 'medico/dashboard_doctor.html', {
         'citas': citas,
         'ingresos': ingresos,
-        'total_ingresos': total_ingresos
+        'total_ingresos': total_ingresos,
+        'valoraciones': valoraciones
     })
 
 @require_POST
@@ -211,3 +215,77 @@ def realizar_consulta(request, paciente_id):
         pass
 
     return render(request, 'medico/realizar_consulta.html', {'paciente': paciente})
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from bd.models import Paciente, Usuario, Factura, CitasMedicas
+from django.utils import timezone
+
+@login_required
+def programar_cita_doc(request):
+    if request.method == 'POST':
+        # Verifica si se seleccionó un paciente existente
+        paciente_id = request.POST.get('fk_paciente')
+        paciente = None
+
+        if paciente_id:
+            try:
+                paciente = Paciente.objects.get(id_paciente=paciente_id)
+            except Paciente.DoesNotExist:
+                messages.error(request, "Paciente no encontrado.")
+                return redirect('programar_cita_doc')
+        else:
+            # Crear nuevo paciente
+            nombre = request.POST.get('nombre')
+            apellido = request.POST.get('apellido')
+            correo = request.POST.get('correo')
+            telefono = request.POST.get('telefono')
+
+            if not all([nombre, apellido, correo]):
+                messages.error(request, "Debe ingresar los datos del nuevo paciente.")
+                return redirect('programar_cita_doc')
+
+            paciente = Paciente.objects.create(
+                contacto_emergencia=nombre,
+                tel_emergencia=telefono or ''
+            )
+
+            # Crear también el usuario
+            Usuario.objects.create(
+                user_name=correo,
+                nombre=nombre,
+                apellido=apellido,
+                correo=correo,
+                telefono=telefono,
+                fk_paciente=paciente
+            )
+
+        # Crear factura
+        precio = request.POST.get('precio')
+        factura = Factura.objects.create(
+            fecha_emision=timezone.now().date(),
+            monto=precio,
+            fk_metodopago=None  # puedes definirlo después
+        )
+
+        # Crear la cita médica
+        cita = CitasMedicas.objects.create(
+            fk_paciente=paciente,
+            fk_medico=request.user.fk_medico,
+            fk_factura=factura,
+            fecha_consulta=request.POST.get('fecha_consulta'),
+            hora_inicio=request.POST.get('hora_inicio'),
+            hora_fin=request.POST.get('hora_fin'),
+            status_cita_medica=request.POST.get('status_cita_medica'),
+            des_motivo_consulta_paciente=request.POST.get('des_motivo_consulta_paciente')
+        )
+
+        messages.success(request, "✅ Cita médica programada con éxito.")
+        return redirect('dashboard_doctor')
+
+    else:
+        pacientes = Paciente.objects.all()
+        return render(request, 'medico/programar_cita_doc.html', {
+            'pacientes': pacientes
+        })

@@ -38,7 +38,7 @@
 
   <!-- Botones principales -->
   <div class="mb-4 d-flex gap-2 flex-wrap">
-    <button class="btn btn-info btn-custom text-white">Programar nueva</button>
+    <a href="{% url 'programar_cita_doc' %}" class="btn btn-info btn-custom text-white">Programar Cita</a>
     <button class="btn btn-danger btn-custom">Cancelar cita</button>
     <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
 
@@ -190,7 +190,7 @@
     new Chart(ctx, config);
   </script>
 
-
+<div class="row mb-7"></div>
   <div class="col-md-4 mb-4">
     <div class="card shadow-sm p-4">
       <h6>Pacientes que te han consultado</h6>
@@ -209,6 +209,35 @@
     </div>
   </div>
 
+  <!-- Sección de Valoraciones -->
+<div class="card shadow-sm p-4 mt-4">
+  <h5 class="mb-3">📝 Valoraciones Recibidas</h5>
+
+  {% if valoraciones %}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Calificación</th>
+            <th>Reseña</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in valoraciones %}
+            <tr>
+              <td>{{ v.id_valoracion_consulta }}</td>
+              <td>{{ v.calificacion_consulta }} ★</td>
+              <td>{{ v.resena|default:"(Sin comentario)" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Aún no tienes valoraciones.</p>
+  {% endif %}
+</div>
 
 </main>
 {% endblock %}

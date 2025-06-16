@@ -1,0 +1,94 @@
+{% extends 'medico/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">📅 Programar Nueva Cita Médica</h2>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Selección o creación de paciente -->
+    <div class="mb-3">
+      <label for="fk_paciente" class="form-label">Paciente existente (opcional)</label>
+      <select name="fk_paciente" id="fk_paciente" class="form-select">
+        <option value="">-- Seleccione un paciente existente --</option>
+        {% for paciente in pacientes %}
+          <option value="{{ paciente.id_paciente }}">{{ paciente.nombre }} {{ paciente.apellido }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3 text-center fw-bold">O registre un nuevo paciente:</div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="apellido" class="form-label">Apellido</label>
+        <input type="text" name="apellido" id="apellido" class="form-control">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="correo" class="form-label">Correo electrónico</label>
+        <input type="email" name="correo" id="correo" class="form-control">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="telefono" class="form-label">Teléfono</label>
+        <input type="text" name="telefono" id="telefono" class="form-control">
+      </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Precio de la consulta -->
+    <div class="mb-3">
+      <label for="precio" class="form-label">💰 Precio de la consulta ($)</label>
+      <input type="number" name="precio" id="precio" class="form-control" step="0.01" min="0" required>
+    </div>
+
+    <!-- Fecha y horario -->
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="fecha_consulta" class="form-label">Fecha</label>
+        <input type="date" name="fecha_consulta" id="fecha_consulta" class="form-control" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="hora_inicio" class="form-label">Hora Inicio</label>
+        <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="hora_fin" class="form-label">Hora Fin</label>
+        <input type="time" name="hora_fin" id="hora_fin" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="status_cita_medica" class="form-label">Estado</label>
+      <select name="status_cita_medica" id="status_cita_medica" class="form-select" required>
+        <option value="Programada" selected>Programada</option>
+        <option value="Cancelada">Cancelada</option>
+        <option value="Finalizada">Finalizada</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="des_motivo_consulta_paciente" class="form-label">Motivo de la Consulta</label>
+      <textarea name="des_motivo_consulta_paciente" id="des_motivo_consulta_paciente" class="form-control" rows="3" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cita</button>
+    <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary ms-3">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

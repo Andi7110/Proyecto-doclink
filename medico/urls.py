@@ -21,6 +21,6 @@ urlpatterns = [
     path('config_perfildoc/', views.config_perfildoc, name='config_perfildoc'),
     path('actualizar-cita/<int:cita_id>/', views.actualizar_estado_cita, name='actualizar_estado_cita'),
     path('realizar-consulta/<int:paciente_id>/', views.realizar_consulta, name='realizar_consulta'),
-
+    path('programar_cita_doc/', views.programar_cita_doc, name='programar_cita_doc'),
 ]
 
