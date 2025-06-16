@@ -2,7 +2,7 @@
 {% block content %}
 <div class="row mt-4 align-items-center">
   <div class="col-12 col-lg-8 d-flex flex-wrap align-items-center gap-2 mb-3">
-    <h2 class="mb-0">¡Bienvenido Juan Hernandez!</h2>
+    <h2 class="mb-0">¡Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}! </h2>
   </div>
   <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
     <div class="card shadow-sm p-3 text-center" style="min-width: 180px; width: 200px;">
