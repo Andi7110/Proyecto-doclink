@@ -145,7 +145,8 @@ def registroDoctor4_view(request):
             for key in ['nombre_apellido', 'especialidad', 'licencia', 'correo', 'telefono', 'password']:
                 request.session.pop(key, None)
 
-            return redirect('vista_medico')
+            return redirect('dashboard_doctor')
+
         except IntegrityError:
             messages.error(request, "El correo ya está en uso.")
             return redirect('registro_doctor')
@@ -283,7 +284,8 @@ def vistaPacienteview(request):
 
 def redirigir_segun_usuario(user):
     if hasattr(user, 'fk_medico') and user.fk_medico_id:
-        return redirect('vista_medico')
+        return redirect('dashboard_doctor')
+
     elif hasattr(user, 'fk_paciente') and user.fk_paciente_id:
         return redirect('vista_paciente')
     else:

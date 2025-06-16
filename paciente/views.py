@@ -143,7 +143,7 @@ def ver_agenda(request):
     hoy = date.today()
     ahora = datetime.now().time()
 
-    citas = CitasMedicas.objects.filter(
+    citas = CitasMedicas.objects.filter()
     citas_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).filter(

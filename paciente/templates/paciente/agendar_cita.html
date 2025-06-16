@@ -5,7 +5,6 @@
 <div class="container mt-4">
     <h2 class="mb-4">Agendar Nueva Cita</h2>
 
-    <!-- Mostrar mensajes flash -->
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -18,7 +17,7 @@
     <form method="post" class="row g-3">
         {% csrf_token %}
 
-        <!-- Columna izquierda - Buscar Médico -->
+        <!-- Buscar Médico -->
         <div class="col-md-5">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
@@ -26,8 +25,7 @@
                 </div>
                 <div class="card-body">
                     <div class="input-group mb-3">
-                        <input type="text" id="buscar-medico" class="form-control"
-                               placeholder="Buscar por nombre o especialidad...">
+                        <input type="text" id="buscar-medico" class="form-control" placeholder="Buscar por nombre o especialidad...">
                         <button class="btn btn-outline-secondary" type="button" id="btn-buscar">
                             <i class="fas fa-search"></i>
                         </button>
@@ -42,16 +40,11 @@
                     <div class="list-group" style="max-height: 300px; overflow-y: auto;">
                         {% for medico in medicos %}
                         <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
-<<<<<<< HEAD
-                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.get_nombre_display }}">
-=======
                            data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}">
->>>>>>> d4a0cdcc4468aed035903e6d4e05b8bbe13f588f
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
                                 <small class="text-primary">{{ medico.especialidad }}</small>
                             </div>
-                            <!-- Aquí podrías agregar sub-especialidades si las tienes en tu modelo -->
                         </a>
                         {% empty %}
                         <div class="alert alert-info mb-0">
@@ -63,9 +56,8 @@
             </div>
         </div>
 
-        <!-- Columna derecha - Tus Datos + Detalles de Cita -->
+        <!-- Datos del paciente y cita -->
         <div class="col-md-7">
-            <!-- Tarjeta de datos del paciente -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Tus Datos</h5>
@@ -88,60 +80,45 @@
                 </div>
             </div>
 
-            <!-- Detalles de la Cita -->
+            <!-- Detalles de cita -->
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Detalles de la Cita</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Médico seleccionado -->
                     <div class="mb-4 p-3 bg-light rounded">
                         <h6>Médico seleccionado:</h6>
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-0 fs-5" id="medico-seleccionado-texto">
-<<<<<<< HEAD
-                                    <strong>{% if medico_nombre %}{{ medico_nombre }}{% else %}<span class="text-muted">Ningún médico seleccionado</span>{% endif %}</strong>
+                                    {% if medico_nombre %}
+                                        <strong>{{ medico_nombre }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">Ningún médico seleccionado</span>
+                                    {% endif %}
                                 </p>
                                 <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}">
-=======
-                                    <span class="text-muted">Ningún médico seleccionado</span>
-                                </p>
-                                <input type="hidden" name="medico_id" id="medico_id" value="">
->>>>>>> d4a0cdcc4468aed035903e6d4e05b8bbe13f588f
                             </div>
                         </div>
                     </div>
 
-                    <!-- Fecha y hora -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label for="fecha_cita" class="form-label">Fecha de la cita</label>
-                            <input type="date" name="fecha_cita" id="fecha_cita"
-                                   class="form-control" required
-                                   min="{{ hoy|date:'Y-m-d' }}">
+                            <input type="date" name="fecha_cita" id="fecha_cita" class="form-control" required min="{{ hoy|date:'Y-m-d' }}">
                         </div>
                         <div class="col-md-6">
                             <label for="hora_cita" class="form-label">Hora</label>
-                            <input type="time" name="hora_cita" id="hora_cita"
-                                   class="form-control" value="09:00" required
-                                   min="08:00" max="18:00" step="1800">
+                            <input type="time" name="hora_cita" id="hora_cita" class="form-control" value="09:00" required min="08:00" max="18:00" step="1800">
                         </div>
                     </div>
 
-                    <!-- Motivo de consulta -->
                     <div class="mb-4">
                         <label for="motivo" class="form-label">Motivo de consulta</label>
-                        <textarea name="motivo" id="motivo" class="form-control"
-                                  rows="5" required></textarea>
+                        <textarea name="motivo" id="motivo" class="form-control" rows="5" required></textarea>
                     </div>
 
-                    <!-- Botón de confirmación -->
-<<<<<<< HEAD
                     <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar">
-=======
-                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar" disabled>
->>>>>>> d4a0cdcc4468aed035903e6d4e05b8bbe13f588f
                         <i class="fas fa-calendar-check me-2"></i> Confirmar Cita
                     </button>
                 </div>
@@ -150,7 +127,6 @@
     </form>
 </div>
 
-<!-- Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const medicoSeleccionadoTexto = document.getElementById('medico-seleccionado-texto');
