@@ -1,21 +1,25 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from datetime import date, datetime
-from .decorators import paciente_required
 from django.contrib import messages
+from datetime import date, datetime, time
+from django.db.models import Q
+from .decorators import paciente_required
 
-from bd.models import Usuario, Medico, CitasMedicas
+from bd.models import Usuario, Medico, Paciente, CitasMedicas
+
 
 @login_required
 @paciente_required
 def views_home(request):
     return render(request, 'paciente/home.html')
 
+
 @login_required
 @paciente_required
 def dashboard_paciente(request):
     return render(request, 'paciente/dashboard_paciente.html')
+
 
 @login_required
 @paciente_required
@@ -27,7 +31,7 @@ def agendar_cita(request):
 
     paciente = usuario.fk_paciente
 
-    # Cálculo de edad 
+    # Calcular edad desde fecha de nacimiento
     edad = None
     if hasattr(usuario, 'fecha_nacimiento') and usuario.fecha_nacimiento:
         hoy = date.today()
@@ -40,7 +44,7 @@ def agendar_cita(request):
     if especialidad:
         medicos = medicos.filter(especialidad__icontains=especialidad)
 
-    # Lista de médicos con nombre completo
+    # Crear lista enriquecida con nombre del médico
     medicos_con_nombre = []
     for medico in medicos:
         usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
@@ -91,6 +95,24 @@ def agendar_cita(request):
             return redirect('agendar_cita')
 
         messages.success(request, "Cita agendada correctamente.")
+        # Prevenir duplicado
+        if CitasMedicas.objects.filter(
+            fk_medico=medico,
+            fecha_consulta=fecha,
+            hora_inicio=hora
+        ).exists():
+            messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
+            return redirect('agendar_cita')
+
+        CitasMedicas.objects.create(
+            fecha_consulta=fecha,
+            hora_inicio=hora,
+            status_cita_medica="Pendiente",
+            des_motivo_consulta_paciente=motivo,
+            fk_paciente=paciente,
+            fk_medico=medico
+        )
+        messages.success(request, "¡Cita agendada correctamente!")
         return redirect('agenda')
 
     context = {
@@ -107,6 +129,8 @@ def agendar_cita(request):
 
     return render(request, 'paciente/agendar_cita.html', context)
 
+    return render(request, 'paciente/agenda.html', context)
+
 @login_required
 @paciente_required
 def ver_agenda(request):
@@ -116,17 +140,33 @@ def ver_agenda(request):
         raise PermissionDenied("No tienes permisos para ver esta agenda.")
 
     paciente = usuario.fk_paciente
+    hoy = date.today()
+    ahora = datetime.now().time()
 
     citas = CitasMedicas.objects.filter(
+    citas_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente
+    ).filter(
+        Q(fecha_consulta__gt=hoy) |
+        Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
     ).order_by('fecha_consulta', 'hora_inicio')
 
     ahora = datetime.now()
+
+    citas_pasadas = CitasMedicas.objects.filter(
+        fk_paciente=paciente
+    ).filter(
+        Q(fecha_consulta__lt=hoy) |
+        Q(fecha_consulta=hoy, hora_inicio__lt=ahora)
+    ).order_by('-fecha_consulta', '-hora_inicio')
 
     context = {
         'paciente': paciente,
         'citas': citas,
         'ahora': ahora,
+        'citas_futuras': citas_futuras,
+        'citas_pasadas': citas_pasadas,
     }
 
     return render(request, 'paciente/agenda.html', context)
+

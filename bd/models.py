@@ -121,33 +121,26 @@ class CitasMedicas(models.Model):
     class Meta:
         managed = False
         db_table = 'citas_medicas'
-    
-    class Meta:
-        ordering = ['fecha_consulta', 'hora_inicio']  # Ordenar por fecha y hora
-    
+        ordering = ['fecha_consulta', 'hora_inicio']
+
     def clean(self):
-        # Validación adicional para asegurar que:
-        # - El paciente es realmente un paciente
-        # - El médico es realmente un médico
         if self.fk_paciente:
             usuario_paciente = self.fk_paciente.usuario_set.first()
             if usuario_paciente and usuario_paciente.get_rol() != 'paciente':
                 raise ValidationError("El paciente asignado no tiene rol de paciente")
-        
+
         if self.fk_medico:
             usuario_medico = self.fk_medico.usuario_set.first()
             if usuario_medico and usuario_medico.get_rol() != 'medico':
                 raise ValidationError("El médico asignado no tiene rol de médico")
-    
+
     def __str__(self):
         fecha = self.fecha_consulta.strftime("%d/%m/%Y") if self.fecha_consulta else "Sin fecha"
         hora = self.hora_inicio.strftime("%H:%M") if self.hora_inicio else ""
-        
-        # Mostrar nombres con verificación de roles
         paciente_str = f" - {self.fk_paciente}" if self.fk_paciente else ""
         medico_str = f" - {self.fk_medico}" if self.fk_medico else ""
-        
         return f"Cita {self.id_cita_medicas} ({fecha} {hora}){paciente_str}{medico_str}"
+
 
 class Clinica(models.Model):
     id_clinica = models.BigAutoField(primary_key=True)
