@@ -209,8 +209,6 @@ def actualizar_estado_cita(request, cita_id):
 
 @login_required
 def realizar_consulta(request, paciente_id):
-    paciente = get_object_or_404(Paciente, id=paciente_id, doctor=request.user)
-
     paciente = get_object_or_404(Paciente, id_paciente=paciente_id)
 
     if request.method == 'POST':

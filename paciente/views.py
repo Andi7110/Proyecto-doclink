@@ -101,7 +101,7 @@ def agendar_cita(request):
             fecha_consulta=fecha,
             hora_inicio=hora
         ).exists():
-            messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
+            # messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
             return redirect('agendar_cita')
 
         CitasMedicas.objects.create(
