@@ -342,3 +342,19 @@ class ValoracionConsulta(models.Model):
         return f"Valoración {self.id_valoracion_consulta}{calificacion}"
     
     
+class ConsultaMedica(models.Model):
+    id_consulta_medica = models.BigAutoField(primary_key=True)
+    fk_cita = models.OneToOneField(CitasMedicas, on_delete=models.CASCADE, db_column='fk_cita', related_name='consulta_medica')
+    sintomas = models.TextField(blank=True, null=True)
+    diagnostico = models.TextField(blank=True, null=True)
+    tratamiento = models.TextField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    documentos_adjuntos = models.FileField(upload_to='consultas/documentos/', blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'consulta_medica'
+
+    def __str__(self):
+        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"    
