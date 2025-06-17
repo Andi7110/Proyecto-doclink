@@ -34,12 +34,12 @@
                 <td>{{ cita.fk_medico.especialidad }}</td>
                 <td>{{ cita.des_motivo_consulta_paciente }}</td>
                 <td>
-                  {% if cita.status_cita_medica == 'Confirmada' %}
-                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Confirmada</span>
+                  {% if cita.status_cita_medica == 'En proceso' %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>En proceso</span>
                   {% elif cita.status_cita_medica == 'Pendiente' %}
                     <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill me-1"></i>Pendiente</span>
-                  {% elif cita.status_cita_medica == 'Cancelada' %}
-                    <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Cancelada</span>
+                  {% elif cita.status_cita_medica == 'Cancelado' %}
+                    <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Cancelado</span>
                   {% elif cita.status_cita_medica == 'Completada' %}
                     <span class="badge bg-primary"><i class="bi bi-check2-square me-1"></i>Completada</span>
                   {% else %}
