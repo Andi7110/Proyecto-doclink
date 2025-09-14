@@ -48,11 +48,6 @@ def custom_logout(request):
     return LogoutView.as_view()(request)
 
 
-@login_required
-def mi_vista_protegida(request):
-    # Tu lógica aquí
-    return render(request, 'inicio/registro_docto4.html')
-
 def seleccion_view(request):
     return render(request, 'inicio/seleccion_registro.html')
 
@@ -276,9 +271,11 @@ def contraOlvidada_view(request):
 def autenticacion_view(request):
     return render(request, 'inicio/autenticacion.html')
 
+@login_required
 def vistaMedico_view(request):
-    return redirect('dashboard_doctor')
+    return redirect('dashboard_doctor.html')
 
+@login_required
 def vistaPacienteview(request):
     return render(request, 'paciente/dashboard_paciente.html') 
 

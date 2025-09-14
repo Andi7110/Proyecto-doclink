@@ -140,5 +140,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+LOGIN_URL = '/login/'                  # obligatorio
+LOGIN_REDIRECT_URL = '/dashboard_doctor/'
 LOGOUT_REDIRECT_URL = '/login/'
 

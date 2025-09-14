@@ -34,6 +34,6 @@ urlpatterns = [
     path('registro_paciente4/', registroPaciente4_view, name='registro_paciente4'),
     path('contra_olvidada/', contraOlvidada_view, name='contra_olvidada'),
     path('autenticacion/', autenticacion_view, name='autenticacion'),
-    path('dashboard_doctor/', views.dashboard_doctor, name='dashboard_doctor'),  # ← correcto
+    path('dashboard_doctor/', vistaMedico_view, name='dashboard_doctor'),  
     path('paciente/dashboard_paciente/', vistaPacienteview, name='vista_paciente'),
 ]
