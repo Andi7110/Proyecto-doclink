@@ -31,5 +31,8 @@ RUN chmod +x /app/entrypoint.sh
 # Expose port
 EXPOSE 8000
 
+# Set default port if not provided
+ENV PORT=8000
+
 # Run entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]

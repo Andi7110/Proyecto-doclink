@@ -3,6 +3,8 @@
 # Salir inmediatamente si un comando falla
 set -e
 
+echo "=== Iniciando aplicación Django ==="
+
 # 1. Recopilar todos los archivos estáticos en el directorio STATIC_ROOT
 echo "Ejecutando collectstatic..."
 python manage.py collectstatic --noinput
@@ -13,6 +15,7 @@ python manage.py migrate
 
 # 3. Iniciar el servidor de Gunicorn
 # Dokploy (y la mayoría de plataformas) proveen una variable de entorno $PORT
-# Gunicorn debe escuchar en todas las IPs (0.0.0.0) en ese puerto.
-echo "Iniciando servidor Gunicorn..."
-gunicorn Donlink.wsgi:application --bind 0.0.0.0:$PORT
+# Si no está definida, usar puerto 8000 por defecto
+PORT=${PORT:-8000}
+echo "Iniciando servidor Gunicorn en puerto $PORT..."
+exec gunicorn Donlink.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
