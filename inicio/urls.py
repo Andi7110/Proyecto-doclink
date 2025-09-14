@@ -13,13 +13,11 @@ from .views import registroPaciente4_view
 from .views import contraOlvidada_view
 from .views import autenticacion_view
 from .views import custom_logout
-from django.contrib import admin
 from .views import vistaMedico_view
 from .views import vistaPacienteview
 from medico import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', inicio_view, name='inicio'),
     path('login/', login_view, name='login'),
     path('logout/', custom_logout, name='logout'),
