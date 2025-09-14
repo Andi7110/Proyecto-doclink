@@ -32,6 +32,23 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1').split(',')
 
+# CSRF Trusted Origins for production - Multiple fallback options
+csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if not csrf_origins:
+    # Fallback con múltiples opciones
+    csrf_origins = 'https://doclink-djangoapp-2d8lud-bba517-129-159-33-205.traefik.me,http://doclink-djangoapp-2d8lud-bba517-129-159-33-205.traefik.me,https://*.traefik.me,http://*.traefik.me'
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin.strip()]
+
+# Cookie settings for production
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
+SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
+
+# Additional CSRF settings
+CSRF_USE_SESSIONS = False
+CSRF_FAILURE_VIEW = 'inicio.views.csrf_failure'
+
 # Application definition
 
 INSTALLED_APPS = [
