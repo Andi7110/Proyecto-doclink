@@ -20,7 +20,7 @@ def views_home(request):
 def dashboard_paciente(request):
     return render(request, 'paciente/dashboard_paciente.html')
 
-
+#Agendar cita
 @login_required
 @paciente_required
 def agendar_cita(request):
