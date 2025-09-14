@@ -121,11 +121,16 @@ def registroDoctor4_view(request):
         apellido = partes[1] if len(partes) > 1 else ""
 
         try:
+            # Crear médico
             medico = Medico.objects.create(
                 no_jvpm=licencia,
                 especialidad=especialidad
             )
 
+            # Obtener el rol "medico"
+            rol = Rol.objects.get(nombre__iexact='medico')
+
+            # Crear usuario
             usuario = Usuario.objects.create(
                 user_name=correo,
                 correo=correo,
@@ -133,15 +138,20 @@ def registroDoctor4_view(request):
                 telefono=telefono,
                 nombre=nombre,
                 apellido=apellido,
-                fk_medico=medico
+                fk_medico=medico,
+                fk_rol=rol
             )
 
             # Limpiar sesión
             for key in ['nombre_apellido', 'especialidad', 'licencia', 'correo', 'telefono', 'password']:
                 request.session.pop(key, None)
 
+            messages.success(request, "Registro exitoso")
             return redirect('dashboard_doctor')
 
+        except Rol.DoesNotExist:
+            messages.error(request, "Rol 'medico' no encontrado.")
+            return redirect('registro_doctor')
         except IntegrityError:
             messages.error(request, "El correo ya está en uso.")
             return redirect('registro_doctor')

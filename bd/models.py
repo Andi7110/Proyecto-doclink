@@ -62,7 +62,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         return self.user_name
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'usuario'
 
     def get_rol(self):
@@ -76,10 +76,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}" if self.nombre and self.apellido else self.user_name
-
-    class Meta:
-        managed = False
-        db_table = 'usuario'
 
     def get_rol(self):
         if self.fk_medico:
@@ -98,7 +94,7 @@ class Admin(models.Model):
     cargo = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'admin'
     
     def __str__(self):
@@ -119,7 +115,7 @@ class CitasMedicas(models.Model):
     fk_medico = models.ForeignKey('Medico', models.DO_NOTHING, db_column='fk_medico', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'citas_medicas'
         ordering = ['fecha_consulta', 'hora_inicio']
 
@@ -155,7 +151,7 @@ class Clinica(models.Model):
     telefono_clinica = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'clinica'
     
     def __str__(self):
@@ -169,7 +165,7 @@ class Factura(models.Model):
     monto = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'factura'
     
     def __str__(self):
@@ -184,7 +180,7 @@ class HorarioMedico(models.Model):
     hora_fin = models.TimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'horario_medico'
     
     def __str__(self):
@@ -205,7 +201,7 @@ class Medico(models.Model):
     fk_ranking_medico = models.ForeignKey('RankingMedico', models.DO_NOTHING, db_column='fk_ranking_medico', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'medico'
     
     def get_nombre_display(self):
@@ -231,7 +227,7 @@ class MensajesNotificacion(models.Model):
     descripcion = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'mensajes_notificacion'
     
     def __str__(self):
@@ -243,7 +239,7 @@ class MetodosPago(models.Model):
     tipometodopago = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'metodos_pago'
     
     def __str__(self):
@@ -290,7 +286,7 @@ class RankingMedico(models.Model):
     fk_valoracion_consulta = models.ForeignKey('ValoracionConsulta', models.DO_NOTHING, db_column='fk_valoracion_consulta', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'ranking_medico'
     
     def __str__(self):
@@ -307,7 +303,7 @@ class RecetaMedica(models.Model):
     fk_citas_medicas = models.ForeignKey(CitasMedicas, models.DO_NOTHING, db_column='fk_citas_medicas', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'receta_medica'
     
     def __str__(self):
@@ -321,7 +317,7 @@ class Rol(models.Model):
     descripcion = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'rol'
     
     def __str__(self):
@@ -334,7 +330,7 @@ class ValoracionConsulta(models.Model):
     resena = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'valoracion_consulta'
     
     def __str__(self):
