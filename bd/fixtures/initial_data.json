@@ -1,0 +1,26 @@
+[
+  {
+    "model": "bd.rol",
+    "pk": 1,
+    "fields": {
+      "nombre": "medico",
+      "descripcion": "Rol para médicos del sistema"
+    }
+  },
+  {
+    "model": "bd.rol",
+    "pk": 2,
+    "fields": {
+      "nombre": "paciente",
+      "descripcion": "Rol para pacientes del sistema"
+    }
+  },
+  {
+    "model": "bd.rol",
+    "pk": 3,
+    "fields": {
+      "nombre": "admin",
+      "descripcion": "Rol para administradores del sistema"
+    }
+  }
+]

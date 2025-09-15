@@ -13,7 +13,28 @@ python manage.py collectstatic --noinput
 echo "Aplicando migraciones de la base de datos..."
 python manage.py migrate
 
-# 3. Iniciar el servidor de Gunicorn
+# 3. Crear roles iniciales si no existen
+echo "Creando roles iniciales..."
+python manage.py shell -c "
+from bd.models import Rol
+roles = [
+    ('medico', 'Rol para médicos del sistema'),
+    ('paciente', 'Rol para pacientes del sistema'),
+    ('admin', 'Rol para administradores del sistema')
+]
+for nombre, desc in roles:
+    rol, created = Rol.objects.get_or_create(
+        nombre=nombre,
+        defaults={'descripcion': desc}
+    )
+    if created:
+        print(f'Rol {nombre} creado')
+    else:
+        print(f'Rol {nombre} ya existe')
+print('Roles verificados')
+" 2>/dev/null || echo "Advertencia: No se pudieron crear roles automáticamente"
+
+# 4. Iniciar el servidor de Gunicorn
 # Dokploy (y la mayoría de plataformas) proveen una variable de entorno $PORT
 # Si no está definida, usar puerto 8000 por defecto
 PORT=${PORT:-8000}
