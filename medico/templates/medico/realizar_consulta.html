@@ -12,10 +12,13 @@
       <div class="row">
         <div class="col-md-6">
           <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
-          <p><strong>Hora:</strong> {{ cita.hora_inicio }} - {{ cita.hora_fin }}</p>
+          <p><strong>Hora de inicio:</strong> {{ cita.hora_inicio }}</p>
           <p><strong>Motivo:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
         </div>
         <div class="col-md-6">
+          <p><strong>Nombre del Paciente:</strong> {{ usuario_paciente.nombre }} {{ usuario_paciente.apellido }}</p>
+          <p><strong>Sexo:</strong> {{ usuario_paciente.sexo }}</p>
+          <p><strong>Edad:</strong> {{ edad }} años</p>
           <p><strong>ID Paciente:</strong> {{ paciente.id_paciente }}</p>
           <p><strong>Nombre de emergencia:</strong> {{ paciente.contacto_emergencia }}</p>
           <p><strong>Teléfono de emergencia:</strong> {{ paciente.tel_emergencia }}</p>
@@ -50,6 +53,11 @@
         <div class="mb-3">
           <label for="observaciones" class="form-label"><b>Observaciones adicionales</b></label>
           <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales que desee dejar..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="hora_fin" class="form-label"><b>Hora de finalización de la consulta</b></label>
+          <input type="time" class="form-control" id="hora_fin" name="hora_fin" required>
         </div>
 
         <div class="mb-3">

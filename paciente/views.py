@@ -191,9 +191,6 @@ def ver_agenda(request):
     citas_completadas = CitasMedicas.objects.filter(
         fk_paciente=paciente,
         status_cita_medica='Completada'
-    ).filter(
-        Q(fecha_consulta__lt=hoy) |
-        Q(fecha_consulta=hoy, hora_inicio__lt=ahora)
     ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
 
     # Enriquecer citas completadas con info de valoración

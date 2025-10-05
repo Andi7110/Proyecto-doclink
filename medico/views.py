@@ -340,12 +340,21 @@ def actualizar_estado_cita(request, cita_id):
 def realizar_consulta(request, cita_id):
     cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
     paciente = cita.fk_paciente
+    usuario_paciente = Usuario.objects.filter(fk_paciente=paciente).first()
+
+    # Calcular edad
+    edad = None
+    if usuario_paciente and usuario_paciente.fecha_nacimiento:
+        from datetime import date
+        today = date.today()
+        edad = today.year - usuario_paciente.fecha_nacimiento.year - ((today.month, today.day) < (usuario_paciente.fecha_nacimiento.month, usuario_paciente.fecha_nacimiento.day))
 
     if request.method == 'POST':
         diagnostico = request.POST.get('diagnostico')
         tratamiento = request.POST.get('tratamiento')
         prescripcion = request.POST.get('prescripcion')
         observaciones = request.POST.get('observaciones')
+        hora_fin = request.POST.get('hora_fin')
         adjunto = request.FILES.get('adjunto')
 
         try:
@@ -363,6 +372,8 @@ def realizar_consulta(request, cita_id):
             cita.status_cita_medica = 'Completada'
             cita.diagnostico = diagnostico
             cita.notas_medicas = observaciones
+            if hora_fin:
+                cita.hora_fin = hora_fin
             cita.save()
 
             messages.success(request, "Consulta médica guardada correctamente.")
@@ -371,7 +382,12 @@ def realizar_consulta(request, cita_id):
         except Exception as e:
             messages.error(request, f"Error al guardar la consulta: {e}")
 
-    return render(request, 'medico/realizar_consulta.html', {'paciente': paciente, 'cita': cita})
+    return render(request, 'medico/realizar_consulta.html', {
+        'paciente': paciente,
+        'cita': cita,
+        'usuario_paciente': usuario_paciente,
+        'edad': edad
+    })
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
