@@ -9,6 +9,7 @@ from django.db import connection, transaction
 from collections import namedtuple
 from django.db.models import Sum
 from django.utils import timezone
+from datetime import date, timedelta
 
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica
 from .forms import PerfilMedicoForm
@@ -233,18 +234,49 @@ def dashboard_doctor(request):
         fk_medico=medico
     ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
 
-    citas = []
-    for cita in citas_raw:
+    # Citas próximas (Pendiente y En proceso) - próximos 5 días
+    hoy = date.today()
+    fecha_limite = hoy + timedelta(days=5)
+    citas_proximas_raw = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        status_cita_medica__in=['Pendiente', 'En proceso'],
+        fecha_consulta__range=(hoy, fecha_limite)
+    ).order_by('fecha_consulta', 'hora_inicio').select_related('fk_paciente')
+
+    citas_proximas = []
+    for cita in citas_proximas_raw:
         user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
         nombre_completo = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
-        citas.append({
+        citas_proximas.append({
             'id': cita.id_cita_medicas,
             'fecha': cita.fecha_consulta,
             'hora': cita.hora_inicio,
             'motivo': cita.des_motivo_consulta_paciente,
             'estado': cita.status_cita_medica,
             'nombre_paciente': nombre_completo,
-            'paciente_id': cita.fk_paciente.id_paciente
+            'paciente_id': cita.fk_paciente.id_paciente,
+            'diagnostico': cita.diagnostico
+        })
+
+    # Citas completadas
+    citas_completadas_raw = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        status_cita_medica='Completada'
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
+
+    citas_completadas = []
+    for cita in citas_completadas_raw:
+        user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_completo = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+        citas_completadas.append({
+            'id': cita.id_cita_medicas,
+            'fecha': cita.fecha_consulta,
+            'hora': cita.hora_inicio,
+            'motivo': cita.des_motivo_consulta_paciente,
+            'estado': cita.status_cita_medica,
+            'nombre_paciente': nombre_completo,
+            'paciente_id': cita.fk_paciente.id_paciente,
+            'diagnostico': cita.diagnostico
         })
 
     #Ingresos de Factura
@@ -263,11 +295,26 @@ def dashboard_doctor(request):
     .aggregate(suma=Sum('fk_factura__monto'))['suma'] or 0
     )
 
+    # Pacientes consultados (únicos)
+    pacientes_consultados = []
+    pacientes_ids = set()
+    for cita in citas_raw:
+        if cita.fk_paciente and cita.fk_paciente.id_paciente not in pacientes_ids:
+            user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+            nombre_completo = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+            pacientes_consultados.append({
+                'id': cita.fk_paciente.id_paciente,
+                'nombre': nombre_completo
+            })
+            pacientes_ids.add(cita.fk_paciente.id_paciente)
+
     #valoraciones
-    valoraciones = ValoracionConsulta.objects.all() 
+    valoraciones = ValoracionConsulta.objects.all()
 
     return render(request, 'medico/dashboard_doctor.html', {
-        'citas': citas,
+        'citas_proximas': citas_proximas,
+        'citas_completadas': citas_completadas,
+        'pacientes_consultados': pacientes_consultados,
         'ingresos': ingresos,
         'total_ingresos': total_ingresos,
         'valoraciones': valoraciones
@@ -397,3 +444,92 @@ def programar_cita_doc(request):
         return render(request, 'medico/programar_cita_doc.html', {
             'pacientes': pacientes
         })
+
+@login_required
+def ver_diagnostico_medico(request, cita_id):
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    if not medico:
+        return render(request, 'medico/no_es_medico.html')
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_medico=medico)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    # Obtener la consulta médica si existe
+    try:
+        consulta = cita.consulta_medica
+    except:
+        consulta = None
+
+    # Información del paciente
+    usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+    nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
+
+    context = {
+        'cita': cita,
+        'consulta': consulta,
+        'nombre_paciente': nombre_paciente,
+    }
+
+    return render(request, 'medico/ver_diagnostico_medico.html', context)
+
+@login_required
+def agenda_medico(request):
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    if not medico:
+        return render(request, 'medico/no_es_medico.html')
+
+    hoy = date.today()
+
+    # Citas futuras (Pendiente y En proceso)
+    citas_futuras_raw = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        status_cita_medica__in=['Pendiente', 'En proceso']
+    ).order_by('fecha_consulta', 'hora_inicio').select_related('fk_paciente')
+
+    citas_futuras = []
+    for cita in citas_futuras_raw:
+        user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_paciente = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+        especialidad = medico.especialidad if medico.especialidad else ""
+        clinica = medico.fk_clinica.nombre if medico.fk_clinica else ""
+
+        citas_futuras.append({
+            'cita': cita,
+            'nombre_paciente': nombre_paciente,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
+
+    # Citas pasadas (Completadas)
+    citas_pasadas_raw = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        status_cita_medica='Completada'
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
+
+    citas_pasadas = []
+    for cita in citas_pasadas_raw:
+        user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_paciente = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+        especialidad = medico.especialidad if medico.especialidad else ""
+        clinica = medico.fk_clinica.nombre if medico.fk_clinica else ""
+
+        citas_pasadas.append({
+            'cita': cita,
+            'nombre_paciente': nombre_paciente,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
+
+    context = {
+        'citas_futuras': citas_futuras,
+        'citas_pasadas': citas_pasadas,
+        'hoy': hoy,
+    }
+
+    return render(request, 'medico/agenda_medico.html', context)

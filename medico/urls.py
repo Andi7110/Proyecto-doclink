@@ -22,5 +22,7 @@ urlpatterns = [
     path('actualizar-cita/<int:cita_id>/', views.actualizar_estado_cita, name='actualizar_estado_cita'),
     path('realizar-consulta/<int:cita_id>/', views.realizar_consulta, name='realizar_consulta'),
     path('programar_cita_doc/', views.programar_cita_doc, name='programar_cita_doc'),
+    path('ver-diagnostico/<int:cita_id>/', views.ver_diagnostico_medico, name='ver_diagnostico_medico'),
+    path('agenda/', views.agenda_medico, name='agenda_medico'),
 ]
 

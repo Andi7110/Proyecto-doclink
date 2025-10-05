@@ -1,0 +1,106 @@
+{% extends "medico/dashboard_base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-clipboard-check"></i> Diagnóstico Médico</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Información de la Cita -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">Información de la Consulta</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
+                                <p><strong>Hora:</strong> {{ cita.hora_inicio }} - {{ cita.hora_fin }}</p>
+                                <p><strong>Motivo de consulta:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Paciente:</strong> {{ nombre_paciente }}</p>
+                                <p><strong>Estado:</strong>
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-check2-square me-1"></i>Completada
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if consulta %}
+                        <!-- Diagnóstico Médico -->
+                        <div class="mb-4">
+                            <h5 class="text-success">📋 Diagnóstico</h5>
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.diagnostico|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tratamiento Recomendado -->
+                        <div class="mb-4">
+                            <h5 class="text-info">💊 Tratamiento Recomendado</h5>
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.tratamiento|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        {% if consulta.observaciones %}
+                        <div class="mb-4">
+                            <h5 class="text-warning">📝 Observaciones Adicionales</h5>
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.observaciones|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Documentos Adjuntos -->
+                        {% if consulta.documentos_adjuntos %}
+                        <div class="mb-4">
+                            <h5 class="text-secondary">📎 Documentos Adjuntos</h5>
+                            <div class="card border-secondary">
+                                <div class="card-body">
+                                    <p><i class="bi bi-file-earmark-pdf"></i>
+                                        <a href="{{ consulta.documentos_adjuntos.url }}" target="_blank" class="text-decoration-none">
+                                            Ver documento adjunto
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Fecha de creación -->
+                        <div class="mb-4">
+                            <p class="text-muted small">
+                                <i class="bi bi-calendar-event"></i>
+                                Consulta realizada el {{ consulta.fecha_creacion|date:"d/m/Y" }} a las {{ consulta.fecha_creacion|time:"H:i" }}
+                            </p>
+                        </div>
+                    {% else %}
+                        <!-- No hay consulta médica registrada -->
+                        <div class="alert alert-warning">
+                            <h5><i class="bi bi-exclamation-triangle"></i> Información no disponible</h5>
+                            <p>La consulta médica aún no ha sido completada o la información no está disponible en este momento.</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

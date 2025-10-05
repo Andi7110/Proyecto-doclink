@@ -39,6 +39,7 @@
   <!-- Botones principales -->
   <div class="mb-4 d-flex gap-2 flex-wrap">
     <a href="{% url 'programar_cita_doc' %}" class="btn btn-info btn-custom text-white">Programar Cita</a>
+    <a href="{% url 'agenda_medico' %}" class="btn btn-primary btn-custom text-white">Ver Agenda Completa</a>
     <button class="btn btn-danger btn-custom">Cancelar cita</button>
     <button class="btn btn-info btn-custom text-white">Reprogramar cita</button>
 
@@ -63,13 +64,13 @@
       </div>
     </div>
 
-  <!-- Citas médicas -->
+  <!-- Citas médicas próximas -->
   <div class="row mb-5">
     <div class="col-12">
       <div class="card shadow-sm p-4">
         <h5 class="mb-3">Citas médicas próximas</h5>
 
-        {% if citas %}
+        {% if citas_proximas %}
         <div class="table-responsive">
           <table class="table table-bordered table-striped">
             <thead>
@@ -83,7 +84,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for cita in citas %}
+              {% for cita in citas_proximas %}
               <tr>
                 <td>{{ cita.fecha|date:"d/m/Y" }}</td>
                 <td>{{ cita.hora|time:"g a" }}</td>
@@ -112,8 +113,6 @@
 
                   {% elif cita.estado == "Cancelado" %}
                   <span class="text-muted">Cita cancelada</span>
-                  {% else %}
-                  <span class="text-muted">Sin ID</span>
                   {% endif %}
 
                 </td>
@@ -124,11 +123,12 @@
           </table>
         </div>
         {% else %}
-        <p class="text-muted">No tienes citas registradas aún.</p>
+        <p class="text-muted">No tienes citas próximas registradas.</p>
         {% endif %}
       </div>
     </div>
   </div>
+
 
 
  <!-- Gráficos y usuarios -->
@@ -194,11 +194,11 @@
     <div class="card shadow-sm p-4">
       <h6>Pacientes que te han consultado</h6>
 
-      {% if citas %}
+      {% if pacientes_consultados %}
         <ul class="list-group list-group-flush mt-3">
-          {% for cita in citas %}
+          {% for paciente in pacientes_consultados %}
             <li class="list-group-item">
-              <strong>{{ cita.nombre_paciente }}</strong>
+              <strong>{{ paciente.nombre }}</strong>
             </li>
           {% endfor %}
         </ul>
