@@ -114,3 +114,8 @@ Asegúrate de configurar las variables de entorno en el archivo `.env` y montar 
 - `bd/`: App de base de datos y modelos
 - `static/`: Archivos estáticos
 - `templates/`: Plantillas HTML
+
+## Funcionalidades
+
+### Ranking de Médicos
+Los pacientes pueden visualizar un ranking de médicos basado en las calificaciones promedio de las consultas. Incluye filtros por especialidad y ubicación (municipio de la clínica). Accesible desde el dashboard del paciente en la sección "Ranking de Médicos".

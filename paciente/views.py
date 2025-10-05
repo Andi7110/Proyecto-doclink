@@ -3,10 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from datetime import date, datetime, time
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 from .decorators import paciente_required
 
-from bd.models import Usuario, Medico, Paciente, CitasMedicas
+from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica
 
 
 @login_required
@@ -169,4 +169,63 @@ def ver_agenda(request):
     }
 
     return render(request, 'paciente/agenda.html', context)
+
+
+@login_required
+@paciente_required
+def ranking_medico(request):
+    # Filtros
+    especialidad_filter = request.GET.get('especialidad', '')
+    ubicacion_filter = request.GET.get('ubicacion', '')
+
+    # Query base
+    medicos = Medico.objects.select_related('fk_clinica').annotate(
+        avg_rating=Avg('citasmedicas__valoracionconsulta__calificacion_consulta'),
+        num_ratings=Count('citasmedicas__valoracionconsulta'),
+        num_reviews=Count('citasmedicas__valoracionconsulta', filter=Q(citasmedicas__valoracionconsulta__resena__isnull=False))
+    ).filter(
+        Q(avg_rating__isnull=False)  # Solo médicos con al menos una valoración
+    )
+
+    # Aplicar filtros
+    if especialidad_filter:
+        medicos = medicos.filter(especialidad__icontains=especialidad_filter)
+
+    if ubicacion_filter:
+        medicos = medicos.filter(fk_clinica__municipio__icontains=ubicacion_filter)
+
+    # Ordenar por promedio descendente
+    medicos = medicos.order_by('-avg_rating')
+
+    # Obtener opciones para filtros
+    especialidades = Medico.objects.values_list('especialidad', flat=True).distinct().exclude(especialidad__isnull=True).exclude(especialidad='')
+    ubicaciones = Clinica.objects.values_list('municipio', flat=True).distinct().exclude(municipio__isnull=True).exclude(municipio='')
+
+    # Enriquecer con nombre del médico
+    medicos_con_datos = []
+    for medico in medicos:
+        usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+        nombre_completo = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+        clinica_nombre = medico.fk_clinica.nombre if medico.fk_clinica else "Sin clínica"
+
+        medicos_con_datos.append({
+            'id_medico': medico.id_medico,
+            'nombre_completo': nombre_completo,
+            'especialidad': medico.especialidad,
+            'clinica': clinica_nombre,
+            'ubicacion': medico.fk_clinica.municipio if medico.fk_clinica else '',
+            'avg_rating': round(medico.avg_rating, 1) if medico.avg_rating else 0,
+            'num_ratings': medico.num_ratings,
+            'num_reviews': medico.num_reviews,
+        })
+
+    context = {
+        'medicos': medicos_con_datos,
+        'especialidades': especialidades,
+        'ubicaciones': ubicaciones,
+        'especialidad_filter': especialidad_filter,
+        'ubicacion_filter': ubicacion_filter,
+    }
+
+    return render(request, 'paciente/ranking_medico.html', context)
 

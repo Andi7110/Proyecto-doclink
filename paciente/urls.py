@@ -9,5 +9,6 @@ urlpatterns = [
     path('dashboard_paciente/', views.dashboard_paciente, name='dashboard_paciente'),
     path('agendar_cita/', views.agendar_cita, name='agendar_cita'),
     path('agenda/', views.ver_agenda, name='agenda'),
-    
+    path('ranking_medico/', views.ranking_medico, name='ranking_medico'),
+
 ]
