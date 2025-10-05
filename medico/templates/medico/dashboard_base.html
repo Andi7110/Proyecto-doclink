@@ -3,7 +3,6 @@
   <title>Dashboard - DOCLINK</title>
 {% endblock %}
 {% block styles %}
-  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 <!DOCTYPE html>
 <html lang="es">
@@ -46,11 +45,13 @@
         white-space: nowrap;
       }
       .sidebar.collapsed .sidebar-text {
-        opacity: 0;
-        width: 0;
-        padding: 0;
-        overflow: hidden;
-        transition: opacity 0.2s, width 0.2s;
+        display: none !important;
+      }
+      .sidebar.collapsed .nav-link {
+        justify-content: center;
+      }
+      .sidebar .dropdown .dropdown-menu {
+        margin-left: .5rem;
       }
       .sidebar .nav-link {
         font-size: 1.05rem;
@@ -112,6 +113,20 @@
           border-bottom: 1px solid #eee;
         }
       }
+    /* Fix dropdown width/position (robusto) */
+    #sidebar { overflow: visible; }
+    #sidebar .dropdown-menu {
+      min-width: 280px;            /* ancho mínimo cómodo */
+      white-space: normal;         /* permite que el texto envuelva */
+      z-index: 2000;               /* sobre el contenido principal */
+    }
+    #sidebar .dropdown { position: relative; }
+    #sidebar .dropdown > .dropdown-menu {
+      left: 100% !important;       /* abre a la derecha del sidebar */
+      right: auto !important;
+      top: 0 !important;
+      margin-left: .5rem !important;
+    }
     </style>
   </head>
   <body>
@@ -167,17 +182,17 @@
                 <span class="sidebar-text">Documentos</span>
               </a>
             </li>
-            <li class="nav-item w-100 mt-4 dropdown">
-              <a class="nav-link d-flex align-items-center gap-2 dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="activateMenu(this)">
+            <li class="nav-item w-100 mt-4">
+              <a class="nav-link d-flex align-items-center gap-2 config-toggle" href="#" onclick="toggleConfigMenu()">
                 <i class="bi bi-gear"></i>
                 <span class="sidebar-text">Configuración</span>
               </a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{% url 'clinica_doctor' %}"><i class="bi bi-building"></i> Clínica</a></li>
-                <li><a class="dropdown-item" href="{% url 'config_perfildoc' %}"><i class="bi bi-person"></i> Perfil Médico</a></li>
-                <li><a class="dropdown-item" href="{% url 'config_horario' %}"><i class="bi bi-clock"></i> Horario</a></li>
-                <li><a class="dropdown-item" href="{% url 'config_clinica' %}"><i class="bi bi-gear"></i> Config. Clínica</a></li>
-                <li><a class="dropdown-item" href="{% url 'ubicacion_doctor' %}"><i class="bi bi-geo-alt"></i> Ubicación</a></li>
+              <ul class="config-submenu" id="configSubmenu" style="display: none; list-style: none; padding-left: 1rem; margin-top: 0.5rem;">
+                <li><a class="nav-link" href="{% url 'clinica_doctor' %}"><i class="bi bi-building"></i> <span class="sidebar-text">Clínica</span></a></li>
+                <li><a class="nav-link" href="{% url 'config_perfildoc' %}"><i class="bi bi-person"></i> <span class="sidebar-text">Perfil Médico</span></a></li>
+                <li><a class="nav-link" href="{% url 'config_horario' %}"><i class="bi bi-clock"></i> <span class="sidebar-text">Horario</span></a></li>
+                <li><a class="nav-link" href="{% url 'config_clinica' %}"><i class="bi bi-gear"></i> <span class="sidebar-text">Config. Clínica</span></a></li>
+                <li><a class="nav-link" href="{% url 'ubicacion_doctor' %}"><i class="bi bi-geo-alt"></i> <span class="sidebar-text">Ubicación</span></a></li>
               </ul>
             </li>
             <li class="nav-item w-100 mt-1">
@@ -204,6 +219,11 @@
         document.querySelectorAll('#sidebarMenu .nav-link').forEach((btn) => btn.classList.remove('active'))
         el.classList.add('active')
       }
+      function toggleConfigMenu() {
+        const submenu = document.getElementById('configSubmenu');
+        submenu.style.display = submenu.style.display === 'none' ? 'block' : 'none';
+        activateMenu(event.target.closest('.nav-link'));
+      }
       document.getElementById('sidebarToggle').addEventListener('click', function () {
         var sidebar = document.getElementById('sidebar')
         sidebar.classList.toggle('collapsed')
@@ -216,6 +236,27 @@
             link.classList.add('active');
           }
         });
+
+        // Fix dropdown position when sidebar is collapsed
+        const dropdownToggle = document.querySelector('#sidebar .dropdown-toggle');
+        const dropdownMenu = document.querySelector('#sidebar .dropdown-menu');
+        if (dropdownToggle && dropdownMenu) {
+          dropdownToggle.addEventListener('click', function() {
+            setTimeout(() => {
+              const sidebar = document.getElementById('sidebar');
+              if (sidebar.classList.contains('collapsed')) {
+                // Force position to the right
+                dropdownMenu.style.position = 'absolute';
+                dropdownMenu.style.left = '100%';
+                dropdownMenu.style.right = 'auto';
+                dropdownMenu.style.top = '0';
+                dropdownMenu.style.marginLeft = '.5rem';
+                dropdownMenu.style.zIndex = '2000';
+                dropdownMenu.style.minWidth = '280px';
+              }
+            }, 1);
+          });
+        }
       })
     </script>
   </body>
