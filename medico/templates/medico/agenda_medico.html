@@ -48,24 +48,16 @@
                     {% endif %}
                   </td>
                   <td>
-                    <div class="btn-group" role="group">
-                      {% if item.cita.status_cita_medica == 'Pendiente' %}
-                      <form method="post" action="{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm">Aceptar</button>
-                      </form>
-                      <form method="post" action="{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
-                      </form>
-                      {% elif item.cita.status_cita_medica == 'En proceso' %}
-                      <a href="{% url 'realizar_consulta' item.cita.id_cita_medicas %}" class="btn btn-primary btn-sm">Consultar</a>
-                      <form method="post" action="{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
-                      </form>
-                      {% endif %}
-                    </div>
+                    {% if item.cita.status_cita_medica == 'Pendiente' %}
+                    <form method="post" action="{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm me-1" style="width: 80px;">Aceptar</button>
+                    </form>
+                    <button class="btn btn-danger btn-sm" style="width: 80px;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
+                    {% elif item.cita.status_cita_medica == 'En proceso' %}
+                    <a href="{% url 'realizar_consulta' item.cita.id_cita_medicas %}" class="btn btn-primary btn-sm me-1" style="width: 80px;">Consultar</a>
+                    <button class="btn btn-danger btn-sm" style="width: 80px;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
+                    {% endif %}
                   </td>
                 </tr>
               {% endfor %}
@@ -76,10 +68,10 @@
       {% endif %}
 
       <!-- Citas Completadas -->
-      {% if citas_pasadas %}
+      {% if citas_completadas %}
       <div class="mb-5">
-        <h5 class="text-secondary mb-3">
-          <i class="bi bi-calendar-minus me-1"></i>Citas Completadas
+        <h5 class="text-primary mb-3">
+          <i class="bi bi-calendar-check me-1"></i>Citas Completadas
         </h5>
         <div class="table-responsive">
           <table class="table table-striped table-hover align-middle">
@@ -94,7 +86,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for item in citas_pasadas %}
+              {% for item in citas_completadas %}
                 <tr>
                   <td>{{ item.cita.fecha_consulta|date:"d/m/Y" }}</td>
                   <td>{{ item.cita.hora_inicio|time:"g:i a" }}</td>
@@ -116,9 +108,91 @@
       </div>
       {% endif %}
 
-      {% if not citas_futuras and not citas_pasadas %}
+      <!-- Citas Canceladas -->
+      {% if citas_canceladas %}
+      <div class="mb-5">
+        <h5 class="text-danger mb-3">
+          <i class="bi bi-calendar-x me-1"></i>Citas Canceladas
+        </h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in citas_canceladas %}
+                <tr>
+                  <td>{{ item.cita.fecha_consulta|date:"d/m/Y" }}</td>
+                  <td>{{ item.cita.hora_inicio|time:"g:i a" }}</td>
+                  <td>{{ item.nombre_paciente }}</td>
+                  <td>{{ item.cita.des_motivo_consulta_paciente }}</td>
+                  <td>
+                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Cancelada</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-info btn-sm" onclick="showCancelDetails('{{ item.cita.cancelado_por|default:'No disponible' }}', '{{ item.cita.fecha_cancelacion|date:'d/m/Y g:i a'|default:'No disponible' }}')">
+                      <i class="bi bi-info-circle"></i> Ver Detalles
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if not citas_futuras and not citas_completadas and not citas_canceladas %}
         <div class="text-center text-muted py-3">No hay citas agendadas.</div>
       {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para cancelar cita -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelModalLabel">Confirmar Cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro de que desea cancelar su cita? Esta acción no se puede deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <form id="cancelForm" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" name="accion" value="cancelar" class="btn btn-danger">Sí, Cancelar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para detalles de cancelación -->
+<div class="modal fade" id="cancelDetailsModal" tabindex="-1" aria-labelledby="cancelDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelDetailsModalLabel">Detalles de Cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Cancelada por:</strong> <span id="canceladoPor"></span></p>
+        <p><strong>Fecha y hora de cancelación:</strong> <span id="fechaCancelacion"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -148,5 +222,18 @@
       }
     });
   });
+
+  function showCancelModal(url) {
+    document.getElementById('cancelForm').action = url;
+    var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+  }
+
+  function showCancelDetails(canceladoPor, fecha) {
+    document.getElementById('canceladoPor').textContent = canceladoPor === 'medico' ? 'Médico' : (canceladoPor === 'paciente' ? 'Paciente' : canceladoPor);
+    document.getElementById('fechaCancelacion').textContent = fecha;
+    var modal = new bootstrap.Modal(document.getElementById('cancelDetailsModal'));
+    modal.show();
+  }
 </script>
 {% endblock %}

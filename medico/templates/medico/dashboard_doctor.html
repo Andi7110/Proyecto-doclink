@@ -91,25 +91,17 @@
                 <td>{{ cita.nombre_paciente }}</td>
                 <td>{{ cita.motivo|default:"-" }}</td>
                 <td>{{ cita.estado|default:"-" }}</td>
-                <td class="d-flex gap-2">
+                <td>
                   {% if cita.estado == "Pendiente" %}
-                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
+                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline me-1">
                     {% csrf_token %}
                     <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm">Aceptar</button>
                   </form>
-
-                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
-                  </form>
+                  <button class="btn btn-danger btn-sm" onclick="showCancelModal('{% url 'actualizar_estado_cita' cita.id %}?accion=cancelar')">Cancelar</button>
 
                   {% elif cita.estado == "En proceso" %}
-                  <a href="{% url 'realizar_consulta' cita.id %}" class="btn btn-primary btn-sm">Consultar</a>
-
-                  <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" name="accion" value="cancelar" class="btn btn-danger btn-sm">Cancelar</button>
-                  </form>
+                  <a href="{% url 'realizar_consulta' cita.id %}" class="btn btn-primary btn-sm me-1">Consultar</a>
+                  <button class="btn btn-danger btn-sm" onclick="showCancelModal('{% url 'actualizar_estado_cita' cita.id %}?accion=cancelar')">Cancelar</button>
 
                   {% elif cita.estado == "Cancelado" %}
                   <span class="text-muted">Cita cancelada</span>
@@ -237,6 +229,36 @@
     <p class="text-muted">Aún no tienes valoraciones.</p>
   {% endif %}
 </div>
+
+<!-- Modal de confirmación para cancelar cita -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelModalLabel">Confirmar Cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro de que desea cancelar su cita? Esta acción no se puede deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <form id="cancelForm" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" name="accion" value="cancelar" class="btn btn-danger">Sí, Cancelar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showCancelModal(url) {
+    document.getElementById('cancelForm').action = url;
+    var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+  }
+</script>
 
 </main>
 {% endblock %}

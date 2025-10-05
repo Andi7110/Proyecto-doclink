@@ -330,6 +330,8 @@ def actualizar_estado_cita(request, cita_id):
         cita.status_cita_medica = 'En proceso'
     elif accion == 'cancelar':
         cita.status_cita_medica = 'Cancelado'
+        cita.cancelado_por = 'medico'
+        cita.fecha_cancelacion = timezone.now()
 
     cita.save()
     return redirect('dashboard_doctor')
@@ -506,20 +508,40 @@ def agenda_medico(request):
             'clinica': clinica,
         })
 
-    # Citas pasadas (Completadas)
-    citas_pasadas_raw = CitasMedicas.objects.filter(
+    # Citas completadas
+    citas_completadas_raw = CitasMedicas.objects.filter(
         fk_medico=medico,
         status_cita_medica='Completada'
     ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
 
-    citas_pasadas = []
-    for cita in citas_pasadas_raw:
+    citas_completadas = []
+    for cita in citas_completadas_raw:
         user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
         nombre_paciente = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
         especialidad = medico.especialidad if medico.especialidad else ""
         clinica = medico.fk_clinica.nombre if medico.fk_clinica else ""
 
-        citas_pasadas.append({
+        citas_completadas.append({
+            'cita': cita,
+            'nombre_paciente': nombre_paciente,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
+
+    # Citas canceladas
+    citas_canceladas_raw = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        status_cita_medica='Cancelado'
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_paciente')
+
+    citas_canceladas = []
+    for cita in citas_canceladas_raw:
+        user_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_paciente = f"{user_paciente.nombre} {user_paciente.apellido}" if user_paciente else "Paciente desconocido"
+        especialidad = medico.especialidad if medico.especialidad else ""
+        clinica = medico.fk_clinica.nombre if medico.fk_clinica else ""
+
+        citas_canceladas.append({
             'cita': cita,
             'nombre_paciente': nombre_paciente,
             'especialidad': especialidad,
@@ -528,7 +550,8 @@ def agenda_medico(request):
 
     context = {
         'citas_futuras': citas_futuras,
-        'citas_pasadas': citas_pasadas,
+        'citas_completadas': citas_completadas,
+        'citas_canceladas': citas_canceladas,
         'hoy': hoy,
     }
 

@@ -162,7 +162,8 @@ def ver_agenda(request):
 
     # Construir lista enriquecida de citas futuras (para mostrar acciones si ya están "Completada")
     citas_qs_futuras = CitasMedicas.objects.filter(
-        fk_paciente=paciente
+        fk_paciente=paciente,
+        status_cita_medica__in=['Pendiente', 'En proceso']
     ).filter(
         Q(fecha_consulta__gt=hoy) |
         Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
@@ -186,25 +187,47 @@ def ver_agenda(request):
 
     ahora = datetime.now()
 
-    citas_pasadas = CitasMedicas.objects.filter(
-        fk_paciente=paciente
+    # Citas completadas
+    citas_completadas = CitasMedicas.objects.filter(
+        fk_paciente=paciente,
+        status_cita_medica='Completada'
     ).filter(
         Q(fecha_consulta__lt=hoy) |
         Q(fecha_consulta=hoy, hora_inicio__lt=ahora)
     ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
 
-    # Enriquecer citas pasadas con info de valoración
-    citas_pasadas_con_valoracion = []
-    for cita in citas_pasadas:
+    # Enriquecer citas completadas con info de valoración
+    citas_completadas_con_valoracion = []
+    for cita in citas_completadas:
         tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
         usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
         especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
         clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
 
-        citas_pasadas_con_valoracion.append({
+        citas_completadas_con_valoracion.append({
             'cita': cita,
             'tiene_valoracion': tiene_valoracion,
+            'nombre_medico': nombre_medico,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
+
+    # Citas canceladas
+    citas_canceladas = CitasMedicas.objects.filter(
+        fk_paciente=paciente,
+        status_cita_medica='Cancelado'
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
+
+    citas_canceladas_lista = []
+    for cita in citas_canceladas:
+        usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+        nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+        especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
+        clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
+
+        citas_canceladas_lista.append({
+            'cita': cita,
             'nombre_medico': nombre_medico,
             'especialidad': especialidad,
             'clinica': clinica,
@@ -215,7 +238,8 @@ def ver_agenda(request):
         'citas': citas,
         'ahora': ahora,
         'citas_futuras': citas_futuras,
-        'citas_pasadas': citas_pasadas_con_valoracion,
+        'citas_completadas': citas_completadas_con_valoracion,
+        'citas_canceladas': citas_canceladas_lista,
     }
 
     return render(request, 'paciente/agenda.html', context)
@@ -404,6 +428,8 @@ def cancelar_cita(request, cita_id):
 
     # Cambiar estado a Cancelado
     cita.status_cita_medica = 'Cancelado'
+    cita.cancelado_por = 'paciente'
+    cita.fecha_cancelacion = timezone.now()
     cita.save()
 
     messages.success(request, "Cita cancelada correctamente.")

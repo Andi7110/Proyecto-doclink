@@ -109,6 +109,8 @@ class CitasMedicas(models.Model):
     des_motivo_consulta_paciente = models.TextField(blank=True, null=True)
     diagnostico = models.TextField(blank=True, null=True)
     notas_medicas = models.TextField(blank=True, null=True)
+    cancelado_por = models.CharField(max_length=10, blank=True, null=True, choices=[('medico', 'Médico'), ('paciente', 'Paciente')])
+    fecha_cancelacion = models.DateTimeField(blank=True, null=True)
     fk_mensajes_notificacion = models.ForeignKey('MensajesNotificacion', models.DO_NOTHING, db_column='fk_mensajes_notificacion', blank=True, null=True)
     fk_factura = models.ForeignKey('Factura', models.DO_NOTHING, db_column='fk_factura', blank=True, null=True)
     fk_paciente = models.ForeignKey('Paciente', models.DO_NOTHING, db_column='fk_paciente', blank=True, null=True)
