@@ -5,6 +5,17 @@ set -e
 
 echo "=== Iniciando aplicación Django ==="
 
+# Verificar variables de entorno críticas
+echo "Verificando variables de entorno..."
+if [ -z "$SECRET_KEY" ]; then
+    echo "ERROR: SECRET_KEY no está definida"
+    exit 1
+fi
+if [ -z "$DATABASE_URL" ]; then
+    echo "ADVERTENCIA: DATABASE_URL no está definida, usando SQLite por defecto"
+fi
+echo "Variables de entorno verificadas"
+
 # 1. Recopilar todos los archivos estáticos en el directorio STATIC_ROOT
 echo "Ejecutando collectstatic..."
 python manage.py collectstatic --noinput
