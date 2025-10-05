@@ -24,11 +24,7 @@ python manage.py collectstatic --noinput
 echo "Aplicando migraciones de la base de datos..."
 python manage.py migrate
 
-# 3. Cargar datos iniciales desde fixtures
-echo "Cargando datos iniciales..."
-python manage.py loaddata bd/fixtures/initial_data.json
-
-# 4. Crear roles iniciales si no existen
+# 3. Crear roles iniciales si no existen
 echo "Creando roles iniciales..."
 python manage.py shell -c "
 from bd.models import Rol
