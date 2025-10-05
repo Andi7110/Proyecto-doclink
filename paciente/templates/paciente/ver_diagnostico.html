@@ -1,0 +1,160 @@
+{% extends "paciente/dashboard_base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-clipboard-check"></i> Diagnóstico Médico</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Información de la Cita -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">Información de la Consulta</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
+                                <p><strong>Hora:</strong> {{ cita.hora_inicio }} - {{ cita.hora_fin }}</p>
+                                <p><strong>Motivo de consulta:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Médico:</strong> {{ nombre_medico }}</p>
+                                <p><strong>Especialidad:</strong> {{ especialidad }}</p>
+                                <p><strong>Estado:</strong>
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-check2-square me-1"></i>Completada
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if consulta %}
+                        <!-- Diagnóstico Médico -->
+                        <div class="mb-4">
+                            <h5 class="text-success">📋 Diagnóstico</h5>
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.diagnostico|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tratamiento Recomendado -->
+                        <div class="mb-4">
+                            <h5 class="text-info">💊 Tratamiento Recomendado</h5>
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.tratamiento|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Receta Médica -->
+                        {% if consulta.tiene_receta %}
+                        <div class="mb-4">
+                            <h5 class="text-success">📄 Receta Médica</h5>
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    {% if consulta.medicamento %}
+                                    <p><strong>Medicamento:</strong> {{ consulta.medicamento }}</p>
+                                    {% endif %}
+                                    {% if consulta.via_administracion %}
+                                    <p><strong>Vía de Administración:</strong> {{ consulta.via_administracion }}</p>
+                                    {% endif %}
+                                    {% if consulta.dosis %}
+                                    <p><strong>Dosis:</strong> {{ consulta.dosis }}</p>
+                                    {% endif %}
+                                    {% if consulta.fecha_inicio_tratamiento %}
+                                    <p><strong>Fecha Inicio:</strong> {{ consulta.fecha_inicio_tratamiento|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    {% if consulta.fecha_fin_tratamiento %}
+                                    <p><strong>Fecha Fin:</strong> {{ consulta.fecha_fin_tratamiento|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    {% if consulta.archivos_receta %}
+                                    <p><i class="bi bi-file-earmark-pdf"></i>
+                                        <a href="{{ consulta.archivos_receta.url }}" target="_blank" class="text-decoration-none">
+                                            Ver archivo adjunto de receta
+                                        </a>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="mb-4">
+                            <h5 class="text-muted">📄 Receta Médica</h5>
+                            <div class="card border-muted">
+                                <div class="card-body">
+                                    <p class="text-muted mb-0">No se asignó una receta médica en esta consulta.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Observaciones -->
+                        {% if consulta.observaciones %}
+                        <div class="mb-4">
+                            <h5 class="text-warning">📝 Observaciones Adicionales</h5>
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ consulta.observaciones|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Documentos Adjuntos -->
+                        {% if consulta.documentos_adjuntos %}
+                        <div class="mb-4">
+                            <h5 class="text-secondary">📎 Documentos Adjuntos</h5>
+                            <div class="card border-secondary">
+                                <div class="card-body">
+                                    <p><i class="bi bi-file-earmark-pdf"></i>
+                                        <a href="{{ consulta.documentos_adjuntos.url }}" target="_blank" class="text-decoration-none">
+                                            Ver documento adjunto
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Fecha de creación -->
+                        <div class="mb-4">
+                            <p class="text-muted small">
+                                <i class="bi bi-calendar-event"></i>
+                                Consulta realizada el {{ consulta.fecha_creacion|date:"d/m/Y" }} a las {{ consulta.fecha_creacion|time:"H:i" }}
+                            </p>
+                        </div>
+                    {% else %}
+                        <!-- No hay consulta médica registrada -->
+                        <div class="alert alert-warning">
+                            <h5><i class="bi bi-exclamation-triangle"></i> Información no disponible</h5>
+                            <p>La consulta médica aún no ha sido completada por el médico o la información no está disponible en este momento.</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'agenda' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver a Agenda
+                        </a>
+                        <div>
+                            {% if not tiene_valoracion %}
+                                <a href="{% url 'calificar_medico' cita.id_cita_medicas %}" class="btn btn-warning">
+                                    <i class="bi bi-star"></i> Calificar al Médico
+                                </a>
+                            {% else %}
+                                <span class="btn btn-success disabled">
+                                    <i class="bi bi-check-circle"></i> Ya Calificado
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

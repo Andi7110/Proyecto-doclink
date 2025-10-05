@@ -109,6 +109,8 @@ class CitasMedicas(models.Model):
     des_motivo_consulta_paciente = models.TextField(blank=True, null=True)
     diagnostico = models.TextField(blank=True, null=True)
     notas_medicas = models.TextField(blank=True, null=True)
+    cancelado_por = models.CharField(max_length=10, blank=True, null=True, choices=[('medico', 'Médico'), ('paciente', 'Paciente')])
+    fecha_cancelacion = models.DateTimeField(blank=True, null=True)
     fk_mensajes_notificacion = models.ForeignKey('MensajesNotificacion', models.DO_NOTHING, db_column='fk_mensajes_notificacion', blank=True, null=True)
     fk_factura = models.ForeignKey('Factura', models.DO_NOTHING, db_column='fk_factura', blank=True, null=True)
     fk_paciente = models.ForeignKey('Paciente', models.DO_NOTHING, db_column='fk_paciente', blank=True, null=True)
@@ -144,6 +146,7 @@ class Clinica(models.Model):
     latitud = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitud = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     direccion = models.TextField(blank=True, null=True)
+    municipio = models.CharField(max_length=100, blank=True, null=True)
     sitio_web = models.TextField(blank=True, null=True)
     facebook = models.TextField(blank=True, null=True)
     instagram = models.TextField(blank=True, null=True)
@@ -153,7 +156,7 @@ class Clinica(models.Model):
     class Meta:
         managed = True
         db_table = 'clinica'
-    
+
     def __str__(self):
         return self.nombre if self.nombre else f"Clínica {self.id_clinica}"
 
@@ -328,11 +331,12 @@ class ValoracionConsulta(models.Model):
     id_valoracion_consulta = models.BigAutoField(primary_key=True)
     calificacion_consulta = models.IntegerField(blank=True, null=True)
     resena = models.TextField(blank=True, null=True)
+    fk_cita = models.ForeignKey(CitasMedicas, models.DO_NOTHING, db_column='fk_cita', blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'valoracion_consulta'
-    
+
     def __str__(self):
         calificacion = f" - {self.calificacion_consulta}★" if self.calificacion_consulta else ""
         return f"Valoración {self.id_valoracion_consulta}{calificacion}"
@@ -345,12 +349,22 @@ class ConsultaMedica(models.Model):
     diagnostico = models.TextField(blank=True, null=True)
     tratamiento = models.TextField(blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
-    documentos_adjuntos = models.FileField(upload_to='consultas/documentos/', blank=True, null=True)
+    documentos_adjuntos = models.FileField(upload_to='documentos/', blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Campos para receta médica
+    medicamento = models.TextField(blank=True, null=True)
+    via_administracion = models.TextField(blank=True, null=True)
+    dosis = models.TextField(blank=True, null=True)
+    fecha_inicio_tratamiento = models.DateField(blank=True, null=True)
+    fecha_fin_tratamiento = models.DateField(blank=True, null=True)
+    archivos_receta = models.FileField(upload_to='recetas/', blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'consulta_medica'
 
     def __str__(self):
-        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"    
+        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"
+
+    def tiene_receta(self):
+        return bool(self.medicamento or self.via_administracion or self.dosis)

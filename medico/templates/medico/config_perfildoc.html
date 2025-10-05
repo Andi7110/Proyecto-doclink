@@ -14,39 +14,114 @@
     <form method="post" class="card p-4 shadow-sm">
       {% csrf_token %}
 
+      <h4 class="mb-3">Información Personal</h4>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.nombre.label_tag }}
+          {{ form.nombre }}
+          {% if form.nombre.errors %}
+            <div class="text-danger">{{ form.nombre.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.apellido.label_tag }}
+          {{ form.apellido }}
+          {% if form.apellido.errors %}
+            <div class="text-danger">{{ form.apellido.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.correo.label_tag }}
+          {{ form.correo }}
+          {% if form.correo.errors %}
+            <div class="text-danger">{{ form.correo.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.telefono.label_tag }}
+          {{ form.telefono }}
+          {% if form.telefono.errors %}
+            <div class="text-danger">{{ form.telefono.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.departamento.label_tag }}
+          {{ form.departamento }}
+          {% if form.departamento.errors %}
+            <div class="text-danger">{{ form.departamento.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.municipio.label_tag }}
+          {{ form.municipio }}
+          {% if form.municipio.errors %}
+            <div class="text-danger">{{ form.municipio.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <h4 class="mb-3 mt-4">Información Profesional</h4>
+
       <div class="mb-3">
-        <label for="especialidad" class="form-label">Especialidad</label>
-        <input type="text" class="form-control" id="especialidad" name="especialidad"
-               value="{{ request.user.fk_medico.especialidad }}" required>
+        {{ form.especialidad.label_tag }}
+        {{ form.especialidad }}
+        {% if form.especialidad.errors %}
+          <div class="text-danger">{{ form.especialidad.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.sub_especialidad_1.label_tag }}
+          {{ form.sub_especialidad_1 }}
+          {% if form.sub_especialidad_1.errors %}
+            <div class="text-danger">{{ form.sub_especialidad_1.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.sub_especialidad_2.label_tag }}
+          {{ form.sub_especialidad_2 }}
+          {% if form.sub_especialidad_2.errors %}
+            <div class="text-danger">{{ form.sub_especialidad_2.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.no_jvpm.label_tag }}
+          {{ form.no_jvpm }}
+          {% if form.no_jvpm.errors %}
+            <div class="text-danger">{{ form.no_jvpm.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.dui.label_tag }}
+          {{ form.dui }}
+          {% if form.dui.errors %}
+            <div class="text-danger">{{ form.dui.errors }}</div>
+          {% endif %}
+        </div>
       </div>
 
       <div class="mb-3">
-        <label for="sub_especialidad_1" class="form-label">Subespecialidad 1</label>
-        <input type="text" class="form-control" id="sub_especialidad_1" name="sub_especialidad_1"
-               value="{{ request.user.fk_medico.sub_especialidad_1 }}">
-      </div>
-
-      <div class="mb-3">
-        <label for="sub_especialidad_2" class="form-label">Subespecialidad 2</label>
-        <input type="text" class="form-control" id="sub_especialidad_2" name="sub_especialidad_2"
-               value="{{ request.user.fk_medico.sub_especialidad_2 }}">
-      </div>
-
-      <div class="mb-3">
-        <label for="no_jvpm" class="form-label">Número JVPM</label>
-        <input type="text" class="form-control" id="no_jvpm" name="no_jvpm"
-               value="{{ request.user.fk_medico.no_jvpm }}" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="dui" class="form-label">DUI</label>
-        <input type="text" class="form-control" id="dui" name="dui"
-               value="{{ request.user.fk_medico.dui }}">
-      </div>
-
-      <div class="mb-3">
-        <label for="descripcion" class="form-label">Descripción</label>
-        <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ request.user.fk_medico.descripcion }}</textarea>
+        {{ form.descripcion.label_tag }}
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}
+          <div class="text-danger">{{ form.descripcion.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="d-flex justify-content-between mt-4">

@@ -55,11 +55,89 @@
                value="{{ request.user.fk_medico.fk_clinica.instagram }}">
       </div>
 
+      <!-- Campos ocultos para coordenadas -->
+      <input type="hidden" id="latitud" name="latitud" value="{{ request.user.fk_medico.fk_clinica.latitud|default:'' }}">
+      <input type="hidden" id="longitud" name="longitud" value="{{ request.user.fk_medico.fk_clinica.longitud|default:'' }}">
+
+      <!-- Mapa con OpenStreetMap -->
+      <div class="mb-3">
+        <label class="form-label">Ubicación en el mapa</label>
+        <div id="map" style="height: 300px; width: 100%;"></div>
+        <small class="form-text text-muted">Haz clic en el mapa para seleccionar la ubicación de tu clínica.</small>
+      </div>
+
       <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
       </div>
     </form>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      let map;
+      let marker;
+
+      function initMap() {
+        try {
+          // Coordenadas desde Django (None se convierte en null en JSON)
+          const savedLat = {{ request.user.fk_medico.fk_clinica.latitud|default:'null' }};
+          const savedLng = {{ request.user.fk_medico.fk_clinica.longitud|default:'null' }};
+
+          // Coordenadas por defecto (El Salvador)
+          const defaultLat = 13.7942;
+          const defaultLng = -88.8965;
+
+          let initialLat = (savedLat !== null && !isNaN(savedLat)) ? savedLat : defaultLat;
+          let initialLng = (savedLng !== null && !isNaN(savedLng)) ? savedLng : defaultLng;
+
+          // Inicializar mapa con OpenStreetMap
+          map = L.map('map').setView([initialLat, initialLng], 12);
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
+
+          // Agregar marcador
+          marker = L.marker([initialLat, initialLng]).addTo(map);
+
+          // Al hacer clic en el mapa
+          map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            // Mover marcador
+            marker.setLatLng([lat, lng]);
+
+            // Actualizar campos ocultos
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lng;
+
+            // Geocoding inverso con Nominatim (OpenStreetMap)
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+              .then(response => response.json())
+              .then(data => {
+                if (data && data.display_name) {
+                  document.getElementById('direccion').value = data.display_name;
+                }
+              })
+              .catch(error => console.log('Error en geocoding:', error));
+          });
+
+          console.log('Mapa inicializado correctamente con coords:', initialLat, initialLng);
+        } catch (error) {
+          console.error('Error inicializando mapa:', error);
+        }
+      }
+
+      // Inicializar mapa cuando se carga la página
+      document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+      });
+    </script>
 
   </div>
 </main>

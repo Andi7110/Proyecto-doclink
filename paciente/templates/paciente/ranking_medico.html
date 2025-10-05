@@ -1,0 +1,85 @@
+{% extends "paciente/dashboard_base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Ranking de Médicos</h2>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="especialidad" class="form-label">Especialidad</label>
+                    <select name="especialidad" id="especialidad" class="form-select">
+                        <option value="">Todas las especialidades</option>
+                        {% for esp in especialidades %}
+                        <option value="{{ esp }}" {% if esp == especialidad_filter %}selected{% endif %}>{{ esp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="ubicacion" class="form-label">Ubicación (Departamento)</label>
+                    <select name="ubicacion" id="ubicacion" class="form-select">
+                        <option value="">Todas las ubicaciones</option>
+                        {% for ubi in ubicaciones %}
+                        <option value="{{ ubi }}" {% if ubi == ubicacion_filter %}selected{% endif %}>{{ ubi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <a href="{% url 'ranking_medico' %}" class="btn btn-secondary">Limpiar filtros</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de médicos -->
+    <div class="row">
+        {% for medico in medicos %}
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="card-title">{{ medico.nombre_completo }}</h5>
+                            <p class="card-text mb-1"><strong>Especialidad:</strong> {{ medico.especialidad }}</p>
+                            <p class="card-text mb-1"><strong>Clínica:</strong> {{ medico.clinica }}</p>
+                            <p class="card-text mb-1"><strong>Dirección clínica:</strong> {{ medico.ubicacion_clinica }}</p>
+                            <p class="card-text mb-1"><strong>Departamento:</strong> {{ medico.departamento }}</p>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ medico.ubicacion_clinica|urlencode }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-geo-alt"></i> Ver ubicación en mapa
+                            </a>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="mb-2">
+                                <span class="display-4 text-warning">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= medico.avg_rating %}
+                                            ★
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <p class="mb-1"><strong>Promedio:</strong> {{ medico.avg_rating }}/5</p>
+                            <p class="mb-1"><strong>Calificaciones:</strong> {{ medico.num_ratings }}</p>
+                            <p class="mb-0"><strong>Reseñas:</strong> {{ medico.num_reviews }}</p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="{% url 'agendar_cita' %}?especialidad={{ medico.especialidad }}" class="btn btn-info text-white">Agendar Cita</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                No se encontraron médicos con las calificaciones especificadas.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

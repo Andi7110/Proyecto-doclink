@@ -5,6 +5,14 @@ __pycache__/
 # Entorno virtual
 env/
 venv/
+venvjs/
 
-.env
+# Base de datos
 db.sqlite3
+
+# Variables de entorno
+.env
+
+# Archivos media (subidos por usuarios)
+media/
+consultas/db.sqlite3

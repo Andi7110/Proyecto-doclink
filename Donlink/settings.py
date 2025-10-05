@@ -122,7 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/El_Salvador'
 
 USE_I18N = True
 
@@ -135,6 +135,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files (Uploaded files)
+# https://docs.djangoproject.com/en/5.2/topics/files/
+MEDIA_URL = '/media/'
+
+# Media files se guardan en OneDrive
+MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'OneDrive', 'consultas-documentacion')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
