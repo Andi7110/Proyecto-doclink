@@ -120,6 +120,12 @@ def config_clinica(request):
         clinica.sitio_web = request.POST.get('sitio_web')
         clinica.facebook = request.POST.get('facebook')
         clinica.instagram = request.POST.get('instagram')
+        # Guardar coordenadas del mapa
+        lat = request.POST.get('latitud')
+        lng = request.POST.get('longitud')
+        if lat and lng:
+            clinica.latitud = lat
+            clinica.longitud = lng
         clinica.save()
 
         messages.success(request, "Información de la clínica actualizada correctamente.")

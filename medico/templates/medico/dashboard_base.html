@@ -150,19 +150,19 @@
           </div>
           <ul class="nav flex-column align-items-start w-100 mt-3" id="sidebarMenu">
             <li class="nav-item w-100">
-              <a class="nav-link d-flex align-items-center gap-2 active" href="#" onclick="activateMenu(this)">
+              <a class="nav-link d-flex align-items-center gap-2" href="{% url 'dashboard_doctor' %}">
                 <i class="bi bi-house-door"></i>
                 <span class="sidebar-text">Inicio</span>
               </a>
             </li>
             <li class="nav-item w-100">
-              <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">
+              <a class="nav-link d-flex align-items-center gap-2" href="{% url 'dashboard_doctor' %}">
                 <i class="bi bi-calendar-event"></i>
                 <span class="sidebar-text">Agenda</span>
               </a>
             </li>
             <li class="nav-item w-100">
-              <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">
+              <a class="nav-link d-flex align-items-center gap-2" href="{% url 'receta_medica' %}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span class="sidebar-text">Documentos</span>
               </a>
@@ -177,6 +177,7 @@
                 <li><a class="dropdown-item" href="{% url 'config_perfildoc' %}"><i class="bi bi-person"></i> Perfil Médico</a></li>
                 <li><a class="dropdown-item" href="{% url 'config_horario' %}"><i class="bi bi-clock"></i> Horario</a></li>
                 <li><a class="dropdown-item" href="{% url 'config_clinica' %}"><i class="bi bi-gear"></i> Config. Clínica</a></li>
+                <li><a class="dropdown-item" href="{% url 'ubicacion_doctor' %}"><i class="bi bi-geo-alt"></i> Ubicación</a></li>
               </ul>
             </li>
             <li class="nav-item w-100 mt-1">
@@ -208,8 +209,13 @@
         sidebar.classList.toggle('collapsed')
       })
       document.addEventListener('DOMContentLoaded', () => {
-        const firstLink = document.querySelector('#sidebarMenu .nav-link')
-        if (firstLink) firstLink.classList.add('active')
+        const currentPath = window.location.pathname;
+        const links = document.querySelectorAll('#sidebarMenu .nav-link');
+        links.forEach(link => {
+          if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+          }
+        });
       })
     </script>
   </body>
