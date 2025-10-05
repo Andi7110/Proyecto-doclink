@@ -10,6 +10,7 @@ urlpatterns = [
     path('agendar_cita/', views.agendar_cita, name='agendar_cita'),
     path('agenda/', views.ver_agenda, name='agenda'),
     path('ranking_medico/', views.ranking_medico, name='ranking_medico'),
-    path('calificar_cita/<int:cita_id>/', views.calificar_cita, name='calificar_cita'),
+    path('calificar_medico/<int:cita_id>/', views.calificar_cita, name='calificar_medico'),
+    path('ver_diagnostico/<int:cita_id>/', views.ver_diagnostico, name='ver_diagnostico'),
 
 ]

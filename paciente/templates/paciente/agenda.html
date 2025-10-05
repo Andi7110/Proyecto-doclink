@@ -33,27 +33,42 @@
               </tr>
             </thead>
             <tbody>
-              {% for cita in citas_futuras %}
+              {% for item in citas_futuras %}
                 <tr>
-                  <td>{{ cita.fecha_consulta }}</td>
-                  <td>{{ cita.hora_inicio }}</td>
-                  <td>{{ cita.fk_medico }}</td>
-                  <td>{{ cita.fk_medico.especialidad }}</td>
-                  <td>{{ cita.des_motivo_consulta_paciente }}</td>
+                  <td>{{ item.cita.fecha_consulta }}</td>
+                  <td>{{ item.cita.hora_inicio }}</td>
+                  <td>{{ item.nombre_medico }}</td>
+                  <td>{{ item.especialidad }}</td>
+                  <td>{{ item.cita.des_motivo_consulta_paciente }}</td>
                   <td>
-                    {% if cita.status_cita_medica == 'En proceso' %}
+                    {% if item.cita.status_cita_medica|lower == 'en proceso' or item.cita.status_cita_medica == 'En proceso' %}
                       <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>En proceso</span>
-                    {% elif cita.status_cita_medica == 'Pendiente' %}
+                    {% elif item.cita.status_cita_medica|lower == 'pendiente' %}
                       <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill me-1"></i>Pendiente</span>
-                    {% elif cita.status_cita_medica == 'Cancelado' %}
+                    {% elif item.cita.status_cita_medica|lower == 'cancelado' %}
                       <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Cancelado</span>
-                    {% elif cita.status_cita_medica == 'Completada' %}
-                      <span class="badge bg-primary"><i class="bi bi-check2-square me-1"></i>Completada</span>
+                    {% elif 'complet' in item.cita.status_cita_medica|lower %}
+                      <span class="badge bg-primary"><i class="bi bi-check2-square me-1"></i>{{ item.cita.status_cita_medica }}</span>
                     {% else %}
                       <span class="badge bg-secondary">Sin estado</span>
                     {% endif %}
                   </td>
-                  <td></td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <a href="{% url 'ver_diagnostico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-info" title="Ver diagnóstico médico">
+                        <i class="bi bi-clipboard-check"></i> Ver Diagnóstico
+                      </a>
+                      {% if not item.tiene_valoracion %}
+                        <a href="{% url 'calificar_medico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning" title="Calificar al médico">
+                          <i class="bi bi-star"></i> Calificar
+                        </a>
+                      {% else %}
+                        <span class="btn btn-sm btn-success disabled" title="Ya calificado">
+                          <i class="bi bi-check-circle"></i> Calificado
+                        </span>
+                      {% endif %}
+                    </div>
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -103,13 +118,20 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% if not item.tiene_valoracion %}
-                      <a href="{% url 'calificar_cita' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning">
-                        <i class="bi bi-star"></i> Calificar
+                    <div class="btn-group" role="group">
+                      <a href="{% url 'ver_diagnostico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-info" title="Ver diagnóstico médico">
+                        <i class="bi bi-clipboard-check"></i> Ver Diagnóstico
                       </a>
-                    {% else %}
-                      <span class="text-success"><i class="bi bi-check-circle"></i> Calificado</span>
-                    {% endif %}
+                      {% if not item.tiene_valoracion %}
+                        <a href="{% url 'calificar_medico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning" title="Calificar al médico">
+                          <i class="bi bi-star"></i> Calificar
+                        </a>
+                      {% else %}
+                        <span class="btn btn-sm btn-success disabled" title="Ya calificado">
+                          <i class="bi bi-check-circle"></i> Calificado
+                        </span>
+                      {% endif %}
+                    </div>
                   </td>
                 </tr>
               {% endfor %}

@@ -8,6 +8,20 @@ from .decorators import paciente_required
 
 from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta
 
+DEPARTAMENTOS_EL_SALVADOR = [
+    'Ahuachapán', 'Santa Ana', 'Sonsonate', 'Chalatenango', 'Cuscatlán',
+    'La Libertad', 'La Paz', 'San Miguel', 'San Salvador', 'San Vicente',
+    'Cabañas', 'Usulután', 'Morazán', 'La Unión'
+]
+
+def obtener_departamento_direccion(direccion):
+    if not direccion:
+        return 'No especificado'
+    for depto in DEPARTAMENTOS_EL_SALVADOR:
+        if depto.lower() in direccion.lower():
+            return depto
+    return 'No especificado'
+
 
 @login_required
 @paciente_required
@@ -143,13 +157,32 @@ def ver_agenda(request):
     hoy = date.today()
     ahora = datetime.now().time()
 
+    # Query base (sin enriquecer)
     citas = CitasMedicas.objects.filter()
-    citas_futuras = CitasMedicas.objects.filter(
+
+    # Construir lista enriquecida de citas futuras (para mostrar acciones si ya están "Completada")
+    citas_qs_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente
     ).filter(
         Q(fecha_consulta__gt=hoy) |
         Q(fecha_consulta=hoy, hora_inicio__gte=ahora)
-    ).order_by('fecha_consulta', 'hora_inicio')
+    ).order_by('fecha_consulta', 'hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
+
+    citas_futuras = []
+    for cita in citas_qs_futuras:
+        tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
+        usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+        nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+        especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
+        clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
+
+        citas_futuras.append({
+            'cita': cita,
+            'tiene_valoracion': tiene_valoracion,
+            'nombre_medico': nombre_medico,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
 
     ahora = datetime.now()
 
@@ -163,7 +196,7 @@ def ver_agenda(request):
     # Enriquecer citas pasadas con info de valoración
     citas_pasadas_con_valoracion = []
     for cita in citas_pasadas:
-        tiene_valoracion = hasattr(cita, 'valoracionconsulta') and cita.valoracionconsulta.exists()
+        tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
         usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
         especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
@@ -209,14 +242,14 @@ def ranking_medico(request):
         medicos = medicos.filter(especialidad__icontains=especialidad_filter)
 
     if ubicacion_filter:
-        medicos = medicos.filter(fk_clinica__municipio__icontains=ubicacion_filter)
+        medicos = medicos.filter(fk_clinica__direccion__icontains=ubicacion_filter)
 
     # Ordenar por promedio descendente
     medicos = medicos.order_by('-avg_rating')
 
     # Obtener opciones para filtros
     especialidades = Medico.objects.values_list('especialidad', flat=True).distinct().exclude(especialidad__isnull=True).exclude(especialidad='')
-    ubicaciones = Clinica.objects.values_list('municipio', flat=True).distinct().exclude(municipio__isnull=True).exclude(municipio='')
+    ubicaciones = DEPARTAMENTOS_EL_SALVADOR
 
     # Enriquecer con nombre del médico
     medicos_con_datos = []
@@ -230,7 +263,8 @@ def ranking_medico(request):
             'nombre_completo': nombre_completo,
             'especialidad': medico.especialidad,
             'clinica': clinica_nombre,
-            'ubicacion': medico.fk_clinica.municipio if medico.fk_clinica else '',
+            'ubicacion_clinica': medico.fk_clinica.direccion if medico.fk_clinica and medico.fk_clinica.direccion else 'No especificada',
+            'departamento': obtener_departamento_direccion(medico.fk_clinica.direccion if medico.fk_clinica else None),
             'avg_rating': round(medico.avg_rating, 1) if medico.avg_rating else 0,
             'num_ratings': medico.num_ratings,
             'num_reviews': medico.num_reviews,
@@ -263,11 +297,11 @@ def calificar_cita(request, cita_id):
         raise PermissionDenied("Cita no encontrada o no tienes permisos.")
 
     # Verificar que la cita ya pasó
-    hoy = date.today()
-    ahora = datetime.now().time()
-    if cita.fecha_consulta > hoy or (cita.fecha_consulta == hoy and cita.hora_inicio > ahora):
-        messages.error(request, "No puedes calificar una cita que aún no ha ocurrido.")
-        return redirect('agenda')
+    # hoy = date.today()
+    # ahora = datetime.now().time()
+    # if cita.fecha_consulta > hoy or (cita.fecha_consulta == hoy and cita.hora_inicio > ahora):
+    #     messages.error(request, "No puedes calificar una cita que aún no ha ocurrido.")
+    #     return redirect('agenda')
 
     # Verificar si ya tiene valoración
     if ValoracionConsulta.objects.filter(fk_cita=cita).exists():
@@ -280,7 +314,7 @@ def calificar_cita(request, cita_id):
 
         if not calificacion or not calificacion.isdigit() or not (1 <= int(calificacion) <= 5):
             messages.error(request, "Por favor selecciona una calificación válida (1-5 estrellas).")
-            return redirect('calificar_cita', cita_id=cita_id)
+            return redirect('calificar_medico', cita_id=cita_id)
 
         try:
             ValoracionConsulta.objects.create(
@@ -292,7 +326,7 @@ def calificar_cita(request, cita_id):
             return redirect('agenda')
         except Exception as e:
             messages.error(request, f"Error al guardar la calificación: {e}")
-            return redirect('calificar_cita', cita_id=cita_id)
+            return redirect('calificar_medico', cita_id=cita_id)
 
     # Información del médico
     usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
@@ -306,4 +340,44 @@ def calificar_cita(request, cita_id):
     }
 
     return render(request, 'paciente/calificar_cita.html', context)
+
+
+@login_required
+@paciente_required
+def ver_diagnostico(request, cita_id):
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para ver diagnósticos.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    # Obtener la consulta médica si existe
+    try:
+        consulta = cita.consulta_medica
+    except:
+        consulta = None
+
+    # Verificar si ya tiene valoración
+    tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
+
+    # Información del médico
+    usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+    nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+    especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
+
+    context = {
+        'cita': cita,
+        'consulta': consulta,
+        'tiene_valoracion': tiene_valoracion,
+        'nombre_medico': nombre_medico,
+        'especialidad': especialidad,
+    }
+
+    return render(request, 'paciente/ver_diagnostico.html', context)
 

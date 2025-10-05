@@ -17,7 +17,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="ubicacion" class="form-label">Ubicación (Municipio)</label>
+                    <label for="ubicacion" class="form-label">Ubicación (Departamento)</label>
                     <select name="ubicacion" id="ubicacion" class="form-select">
                         <option value="">Todas las ubicaciones</option>
                         {% for ubi in ubicaciones %}
@@ -44,7 +44,11 @@
                             <h5 class="card-title">{{ medico.nombre_completo }}</h5>
                             <p class="card-text mb-1"><strong>Especialidad:</strong> {{ medico.especialidad }}</p>
                             <p class="card-text mb-1"><strong>Clínica:</strong> {{ medico.clinica }}</p>
-                            <p class="card-text mb-1"><strong>Ubicación:</strong> {{ medico.ubicacion }}</p>
+                            <p class="card-text mb-1"><strong>Dirección clínica:</strong> {{ medico.ubicacion_clinica }}</p>
+                            <p class="card-text mb-1"><strong>Departamento:</strong> {{ medico.departamento }}</p>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ medico.ubicacion_clinica|urlencode }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-geo-alt"></i> Ver ubicación en mapa
+                            </a>
                         </div>
                         <div class="col-md-4 text-center">
                             <div class="mb-2">

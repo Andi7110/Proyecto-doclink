@@ -347,7 +347,7 @@ class ConsultaMedica(models.Model):
     diagnostico = models.TextField(blank=True, null=True)
     tratamiento = models.TextField(blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
-    documentos_adjuntos = models.FileField(upload_to='documentos_consultas/', blank=True, null=True)
+    documentos_adjuntos = models.FileField(upload_to='documentos/', blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
