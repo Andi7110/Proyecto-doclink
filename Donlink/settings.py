@@ -136,6 +136,14 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media files (Uploaded files)
+# https://docs.djangoproject.com/en/5.2/topics/files/
+MEDIA_URL = '/media/'
+# Configurar para guardar en OneDrive - puede personalizarse con variable de entorno
+# Por defecto: C:\Users\[Usuario]\OneDrive\consultas-documentacion
+# Para carpeta compartida específica, configura MEDIA_ROOT en .env
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', os.path.join(os.path.expanduser('~'), 'OneDrive', 'consultas-documentacion'))
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
