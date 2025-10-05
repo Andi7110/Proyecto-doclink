@@ -50,6 +50,48 @@
                             </div>
                         </div>
 
+                        <!-- Receta Médica -->
+                        {% if consulta.tiene_receta %}
+                        <div class="mb-4">
+                            <h5 class="text-success">📄 Receta Médica</h5>
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    {% if consulta.medicamento %}
+                                    <p><strong>Medicamento:</strong> {{ consulta.medicamento }}</p>
+                                    {% endif %}
+                                    {% if consulta.via_administracion %}
+                                    <p><strong>Vía de Administración:</strong> {{ consulta.via_administracion }}</p>
+                                    {% endif %}
+                                    {% if consulta.dosis %}
+                                    <p><strong>Dosis:</strong> {{ consulta.dosis }}</p>
+                                    {% endif %}
+                                    {% if consulta.fecha_inicio_tratamiento %}
+                                    <p><strong>Fecha Inicio:</strong> {{ consulta.fecha_inicio_tratamiento|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    {% if consulta.fecha_fin_tratamiento %}
+                                    <p><strong>Fecha Fin:</strong> {{ consulta.fecha_fin_tratamiento|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                    {% if consulta.archivos_receta %}
+                                    <p><i class="bi bi-file-earmark-pdf"></i>
+                                        <a href="{{ consulta.archivos_receta.url }}" target="_blank" class="text-decoration-none">
+                                            Ver archivo adjunto de receta
+                                        </a>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="mb-4">
+                            <h5 class="text-muted">📄 Receta Médica</h5>
+                            <div class="card border-muted">
+                                <div class="card-body">
+                                    <p class="text-muted mb-0">No se asignó una receta médica en esta consulta.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <!-- Observaciones -->
                         {% if consulta.observaciones %}
                         <div class="mb-4">

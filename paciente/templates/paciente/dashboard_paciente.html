@@ -17,16 +17,7 @@
   <button class="btn btn-info btn-custom text-white" style="background:#00b8e6;">+ Póliza de seguro medico</button>
   <a href="{% url 'agenda' %}" class="btn btn-danger btn-custom">Cancelar cita</a>
   <a href="{% url 'agendar_cita' %}" class="btn btn-info btn-custom text-white" style="background:#00b8e6;"><b>+ Agendar cita</b></a>
-  <div class="dropdown">
-    <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0099ff;" type="button"
-      data-bs-toggle="dropdown" aria-expanded="false">
-      Recetas
-    </button>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Ver recetas</a></li>
-      <li><a class="dropdown-item" href="#">Descargar PDF</a></li>
-    </ul>
-  </div>
+  <a href="{% url 'ver_recetas' %}" class="btn btn-info btn-custom text-white" style="background:#0099ff;">Ver Recetas</a>
   <div class="dropdown">
     <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0076b5;" type="button"
       data-bs-toggle="dropdown" aria-expanded="false">

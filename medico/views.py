@@ -27,23 +27,36 @@ def receta_medica(request):
         medicamento = request.POST.get('medicamento')
         via = request.POST.get('via_administracion')
         dosis = request.POST.get('dosis')
-        fecha_inicio = request.POST.get('fecha_inicio_tratamiento')
-        fecha_fin = request.POST.get('fecha_fin_tratamiento')
+        fecha_inicio = request.POST.get('fecha_inicio_tratamiento') or None
+        fecha_fin = request.POST.get('fecha_fin_tratamiento') or None
+        archivos_receta = request.FILES.get('archivos_receta')
         cita_id = request.POST.get('fk_citas_medicas')
 
         try:
             cita = CitasMedicas.objects.get(id_cita_medicas=cita_id)
 
-            RecetaMedica.objects.create(
-                medicamento=medicamento,
-                via_administracion=via,
-                dosis=dosis,
-                fecha_inicio_tratamiento=fecha_inicio,
-                fecha_fin_tratamiento=fecha_fin,
-                fk_citas_medicas=cita
-            )
+            # Buscar la consulta médica asociada a la cita
+            consulta = ConsultaMedica.objects.filter(fk_cita=cita).first()
+            if consulta:
+                # Actualizar la consulta médica con los datos de la receta
+                consulta.medicamento = medicamento
+                consulta.via_administracion = via
+                consulta.dosis = dosis
+                consulta.fecha_inicio_tratamiento = fecha_inicio
+                consulta.fecha_fin_tratamiento = fecha_fin
+                if archivos_receta:
+                    consulta.archivos_receta = archivos_receta
+                consulta.save()
 
-            messages.success(request, "Receta guardada correctamente.")
+                # Crear notificación
+                from bd.models import MensajesNotificacion
+                descripcion = f"Nueva receta médica enviada para su cita del {cita.fecha_consulta.strftime('%d/%m/%Y')}."
+                MensajesNotificacion.objects.create(descripcion=descripcion)
+
+                messages.success(request, "Receta asignada correctamente a la consulta.")
+            else:
+                messages.error(request, "No se encontró la consulta médica para esta cita.")
+
             return redirect('receta_medica')
 
         except CitasMedicas.DoesNotExist:
@@ -51,10 +64,11 @@ def receta_medica(request):
         except Exception as e:
             messages.error(request, f"Error al guardar la receta: {e}")
 
-    # Filtramos citas solo del médico actual
+    # Filtramos citas solo del médico actual y completadas
     citas = CitasMedicas.objects.filter(
         fk_medico=medico,
-        fk_paciente__isnull=False  # evita errores por pacientes nulos
+        fk_paciente__isnull=False,  # evita errores por pacientes nulos
+        status_cita_medica='Completada'  # solo citas completadas
     ).select_related('fk_paciente')
 
     # Extraemos pacientes únicos de esas citas
@@ -356,16 +370,29 @@ def realizar_consulta(request, cita_id):
         observaciones = request.POST.get('observaciones')
         hora_fin = request.POST.get('hora_fin')
         adjunto = request.FILES.get('adjunto')
+        # Campos de receta
+        medicamento = request.POST.get('medicamento')
+        via_administracion = request.POST.get('via_administracion')
+        dosis = request.POST.get('dosis')
+        fecha_inicio_tratamiento = request.POST.get('fecha_inicio_tratamiento') or None
+        fecha_fin_tratamiento = request.POST.get('fecha_fin_tratamiento') or None
+        archivos_receta = request.FILES.get('archivos_receta')
 
         try:
             # Crear la consulta médica
-            ConsultaMedica.objects.create(
+            consulta = ConsultaMedica.objects.create(
                 fk_cita=cita,
                 sintomas=cita.des_motivo_consulta_paciente,  # Usar el motivo como síntomas
                 diagnostico=diagnostico,
                 tratamiento=tratamiento or prescripcion,  # Usar tratamiento o prescripción
                 observaciones=observaciones,
-                documentos_adjuntos=adjunto
+                documentos_adjuntos=adjunto,
+                medicamento=medicamento,
+                via_administracion=via_administracion,
+                dosis=dosis,
+                fecha_inicio_tratamiento=fecha_inicio_tratamiento,
+                fecha_fin_tratamiento=fecha_fin_tratamiento,
+                archivos_receta=archivos_receta
             )
 
             # Actualizar el estado de la cita a "Completada"
@@ -375,6 +402,15 @@ def realizar_consulta(request, cita_id):
             if hora_fin:
                 cita.hora_fin = hora_fin
             cita.save()
+
+            # Crear notificación si hay receta
+            if consulta.medicamento or consulta.via_administracion or consulta.dosis:
+                from bd.models import MensajesNotificacion
+                descripcion = f"Nueva receta médica enviada para su cita del {cita.fecha_consulta.strftime('%d/%m/%Y')}."
+                MensajesNotificacion.objects.create(
+                    descripcion=descripcion
+                )
+                # Asociar a la cita si es necesario, pero el modelo no tiene fk directa, así que solo crear
 
             messages.success(request, "Consulta médica guardada correctamente.")
             return redirect('dashboard_doctor')
@@ -481,6 +517,30 @@ def ver_diagnostico_medico(request, cita_id):
         consulta = cita.consulta_medica
     except:
         consulta = None
+
+    # Si no hay consulta o no tiene receta, buscar en RecetaMedica
+    if not consulta or not consulta.tiene_receta():
+        try:
+            receta = RecetaMedica.objects.get(fk_citas_medicas=cita)
+            # Crear un objeto temporal con los datos de receta
+            if not consulta:
+                consulta = type('ConsultaTemp', (), {})()
+                consulta.diagnostico = cita.diagnostico
+                consulta.tratamiento = cita.notas_medicas
+                consulta.observaciones = None
+                consulta.documentos_adjuntos = None
+                consulta.fecha_creacion = cita.fecha_consulta
+                consulta.tiene_receta = lambda: True
+            consulta.medicamento = receta.medicamento
+            consulta.via_administracion = receta.via_administracion
+            consulta.dosis = receta.dosis
+            consulta.fecha_inicio_tratamiento = receta.fecha_inicio_tratamiento
+            consulta.fecha_fin_tratamiento = receta.fecha_fin_tratamiento
+            consulta.archivos_receta = None  # RecetaMedica no tiene archivo
+            if not hasattr(consulta, 'tiene_receta'):
+                consulta.tiene_receta = lambda: True
+        except RecetaMedica.DoesNotExist:
+            pass
 
     # Información del paciente
     usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()

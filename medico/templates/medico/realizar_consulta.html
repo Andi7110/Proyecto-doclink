@@ -50,6 +50,40 @@
           <textarea class="form-control" id="prescripcion" name="prescripcion" rows="3" placeholder="Ej. Ibuprofeno 400mg cada 8 horas por 5 días..."></textarea>
         </div>
 
+        <!-- Sección de Receta Médica -->
+        <h5 class="mt-4 mb-3">💊 Receta Médica (Opcional)</h5>
+
+        <div class="mb-3">
+          <label for="medicamento" class="form-label">Medicamento</label>
+          <input type="text" class="form-control" id="medicamento" name="medicamento" placeholder="Ej. Ibuprofeno">
+        </div>
+
+        <div class="mb-3">
+          <label for="via_administracion" class="form-label">Vía de Administración</label>
+          <input type="text" class="form-control" id="via_administracion" name="via_administracion" placeholder="Ej. Oral">
+        </div>
+
+        <div class="mb-3">
+          <label for="dosis" class="form-label">Dosis</label>
+          <input type="text" class="form-control" id="dosis" name="dosis" placeholder="Ej. 400mg cada 8 horas">
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="fecha_inicio_tratamiento" class="form-label">Fecha Inicio Tratamiento</label>
+            <input type="date" class="form-control" id="fecha_inicio_tratamiento" name="fecha_inicio_tratamiento">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="fecha_fin_tratamiento" class="form-label">Fecha Fin Tratamiento</label>
+            <input type="date" class="form-control" id="fecha_fin_tratamiento" name="fecha_fin_tratamiento">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="archivos_receta" class="form-label">Adjuntar Archivos de Receta (Opcional)</label>
+          <input type="file" class="form-control" id="archivos_receta" name="archivos_receta" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+
         <div class="mb-3">
           <label for="observaciones" class="form-label"><b>Observaciones adicionales</b></label>
           <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales que desee dejar..."></textarea>

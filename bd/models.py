@@ -351,10 +351,20 @@ class ConsultaMedica(models.Model):
     observaciones = models.TextField(blank=True, null=True)
     documentos_adjuntos = models.FileField(upload_to='documentos/', blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Campos para receta médica
+    medicamento = models.TextField(blank=True, null=True)
+    via_administracion = models.TextField(blank=True, null=True)
+    dosis = models.TextField(blank=True, null=True)
+    fecha_inicio_tratamiento = models.DateField(blank=True, null=True)
+    fecha_fin_tratamiento = models.DateField(blank=True, null=True)
+    archivos_receta = models.FileField(upload_to='recetas/', blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'consulta_medica'
 
     def __str__(self):
-        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"    
+        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"
+
+    def tiene_receta(self):
+        return bool(self.medicamento or self.via_administracion or self.dosis)

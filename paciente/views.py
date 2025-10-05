@@ -384,6 +384,31 @@ def ver_diagnostico(request, cita_id):
     except:
         consulta = None
 
+    # Si no hay consulta o no tiene receta, buscar en RecetaMedica
+    if not consulta or not consulta.tiene_receta():
+        try:
+            from bd.models import RecetaMedica
+            receta = RecetaMedica.objects.get(fk_citas_medicas=cita)
+            # Crear un objeto temporal con los datos de receta
+            if not consulta:
+                consulta = type('ConsultaTemp', (), {})()
+                consulta.diagnostico = cita.diagnostico
+                consulta.tratamiento = cita.notas_medicas
+                consulta.observaciones = None
+                consulta.documentos_adjuntos = None
+                consulta.fecha_creacion = cita.fecha_consulta
+                consulta.tiene_receta = lambda: True
+            consulta.medicamento = receta.medicamento
+            consulta.via_administracion = receta.via_administracion
+            consulta.dosis = receta.dosis
+            consulta.fecha_inicio_tratamiento = receta.fecha_inicio_tratamiento
+            consulta.fecha_fin_tratamiento = receta.fecha_fin_tratamiento
+            consulta.archivos_receta = None  # RecetaMedica no tiene archivo
+            if not hasattr(consulta, 'tiene_receta'):
+                consulta.tiene_receta = lambda: True
+        except RecetaMedica.DoesNotExist:
+            pass
+
     # Verificar si ya tiene valoración
     tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
 
@@ -431,4 +456,123 @@ def cancelar_cita(request, cita_id):
 
     messages.success(request, "Cita cancelada correctamente.")
     return redirect('agenda')
+
+@login_required
+@paciente_required
+def ver_recetas(request):
+    usuario = request.user
+    paciente = usuario.fk_paciente
+
+    # Obtener todas las citas completadas del paciente
+    citas_completadas = CitasMedicas.objects.filter(
+        fk_paciente=paciente,
+        status_cita_medica='Completada'
+    ).select_related('fk_medico')
+
+    recetas = []
+    for cita in citas_completadas:
+        # Buscar receta en ConsultaMedica o RecetaMedica
+        consulta = None
+        try:
+            consulta = cita.consulta_medica
+        except:
+            pass
+
+        if consulta and consulta.tiene_receta():
+            recetas.append({
+                'cita': cita,
+                'consulta': consulta,
+                'tipo': 'consulta'
+            })
+        else:
+            # Buscar en RecetaMedica
+            try:
+                from bd.models import RecetaMedica
+                receta_db = RecetaMedica.objects.get(fk_citas_medicas=cita)
+                # Crear objeto similar
+                consulta_temp = type('ConsultaTemp', (), {})()
+                consulta_temp.medicamento = receta_db.medicamento
+                consulta_temp.via_administracion = receta_db.via_administracion
+                consulta_temp.dosis = receta_db.dosis
+                consulta_temp.fecha_inicio_tratamiento = receta_db.fecha_inicio_tratamiento
+                consulta_temp.fecha_fin_tratamiento = receta_db.fecha_fin_tratamiento
+                consulta_temp.archivos_receta = None
+                consulta_temp.tiene_receta = lambda: True
+                recetas.append({
+                    'cita': cita,
+                    'consulta': consulta_temp,
+                    'tipo': 'receta_db'
+                })
+            except RecetaMedica.DoesNotExist:
+                pass
+
+    return render(request, 'paciente/ver_recetas.html', {
+        'recetas': recetas
+    })
+
+@login_required
+@paciente_required
+def generar_pdf_receta(request, cita_id):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from django.http import HttpResponse
+
+    usuario = request.user
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        return HttpResponse("Receta no encontrada", status=404)
+
+    # Buscar receta
+    consulta = None
+    try:
+        consulta = cita.consulta_medica
+    except:
+        pass
+
+    if not consulta or not consulta.tiene_receta():
+        try:
+            from bd.models import RecetaMedica
+            receta_db = RecetaMedica.objects.get(fk_citas_medicas=cita)
+            consulta = type('ConsultaTemp', (), {})()
+            consulta.medicamento = receta_db.medicamento
+            consulta.via_administracion = receta_db.via_administracion
+            consulta.dosis = receta_db.dosis
+            consulta.fecha_inicio_tratamiento = receta_db.fecha_inicio_tratamiento
+            consulta.fecha_fin_tratamiento = receta_db.fecha_fin_tratamiento
+        except RecetaMedica.DoesNotExist:
+            return HttpResponse("Receta no encontrada", status=404)
+
+    # Generar PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="receta_{cita_id}.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("Receta Médica", styles['Title']))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph(f"Paciente: {usuario.nombre} {usuario.apellido}", styles['Normal']))
+    story.append(Paragraph(f"Fecha de Cita: {cita.fecha_consulta.strftime('%d/%m/%Y')}", styles['Normal']))
+    story.append(Spacer(1, 12))
+
+    if consulta.medicamento:
+        story.append(Paragraph(f"Medicamento: {consulta.medicamento}", styles['Normal']))
+    if consulta.via_administracion:
+        story.append(Paragraph(f"Vía de Administración: {consulta.via_administracion}", styles['Normal']))
+    if consulta.dosis:
+        story.append(Paragraph(f"Dosis: {consulta.dosis}", styles['Normal']))
+    if consulta.fecha_inicio_tratamiento:
+        story.append(Paragraph(f"Fecha Inicio: {consulta.fecha_inicio_tratamiento.strftime('%d/%m/%Y')}", styles['Normal']))
+    if consulta.fecha_fin_tratamiento:
+        story.append(Paragraph(f"Fecha Fin: {consulta.fecha_fin_tratamiento.strftime('%d/%m/%Y')}", styles['Normal']))
+
+    doc.build(story)
+    return response
 
