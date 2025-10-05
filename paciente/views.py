@@ -381,3 +381,31 @@ def ver_diagnostico(request, cita_id):
 
     return render(request, 'paciente/ver_diagnostico.html', context)
 
+
+@login_required
+@paciente_required
+def cancelar_cita(request, cita_id):
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para cancelar citas.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    # Verificar que la cita esté pendiente o en proceso
+    if cita.status_cita_medica not in ['Pendiente', 'En proceso']:
+        messages.error(request, "Solo puedes cancelar citas pendientes o en proceso.")
+        return redirect('agenda')
+
+    # Cambiar estado a Cancelado
+    cita.status_cita_medica = 'Cancelado'
+    cita.save()
+
+    messages.success(request, "Cita cancelada correctamente.")
+    return redirect('agenda')
+

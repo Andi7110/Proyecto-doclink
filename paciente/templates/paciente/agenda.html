@@ -55,17 +55,10 @@
                   </td>
                   <td>
                     <div class="btn-group" role="group">
-                      <a href="{% url 'ver_diagnostico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-info" title="Ver diagnóstico médico">
-                        <i class="bi bi-clipboard-check"></i> Ver Diagnóstico
-                      </a>
-                      {% if not item.tiene_valoracion %}
-                        <a href="{% url 'calificar_medico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning" title="Calificar al médico">
-                          <i class="bi bi-star"></i> Calificar
-                        </a>
-                      {% else %}
-                        <span class="btn btn-sm btn-success disabled" title="Ya calificado">
-                          <i class="bi bi-check-circle"></i> Calificado
-                        </span>
+                      {% if item.cita.status_cita_medica|lower == 'pendiente' or item.cita.status_cita_medica|lower == 'en proceso' %}
+                        <button class="btn btn-sm btn-danger" onclick="showCancelModal('{% url 'cancelar_cita' item.cita.id_cita_medicas %}')" title="Cancelar cita">
+                          <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
                       {% endif %}
                     </div>
                   </td>
@@ -119,17 +112,23 @@
                   </td>
                   <td>
                     <div class="btn-group" role="group">
-                      <a href="{% url 'ver_diagnostico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-info" title="Ver diagnóstico médico">
-                        <i class="bi bi-clipboard-check"></i> Ver Diagnóstico
-                      </a>
-                      {% if not item.tiene_valoracion %}
-                        <a href="{% url 'calificar_medico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning" title="Calificar al médico">
-                          <i class="bi bi-star"></i> Calificar
+                      {% if item.cita.status_cita_medica|lower == 'pendiente' or item.cita.status_cita_medica|lower == 'en proceso' %}
+                        <button class="btn btn-sm btn-danger" onclick="showCancelModal('{% url 'cancelar_cita' item.cita.id_cita_medicas %}')" title="Cancelar cita">
+                          <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                      {% elif item.cita.status_cita_medica|lower == 'completada' %}
+                        <a href="{% url 'ver_diagnostico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-info" title="Ver diagnóstico médico">
+                          <i class="bi bi-clipboard-check"></i> Ver Diagnóstico
                         </a>
-                      {% else %}
-                        <span class="btn btn-sm btn-success disabled" title="Ya calificado">
-                          <i class="bi bi-check-circle"></i> Calificado
-                        </span>
+                        {% if not item.tiene_valoracion %}
+                          <a href="{% url 'calificar_medico' item.cita.id_cita_medicas %}" class="btn btn-sm btn-warning" title="Calificar al médico">
+                            <i class="bi bi-star"></i> Calificar
+                          </a>
+                        {% else %}
+                          <span class="btn btn-sm btn-success disabled" title="Ya calificado">
+                            <i class="bi bi-check-circle"></i> Calificado
+                          </span>
+                        {% endif %}
                       {% endif %}
                     </div>
                   </td>
@@ -144,6 +143,25 @@
       {% if not citas_futuras and not citas_pasadas %}
         <div class="text-center text-muted py-3">No hay citas agendadas.</div>
       {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación para cancelar cita -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelModalLabel">Confirmar Cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro de que desea cancelar su cita? Esta acción no se puede deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <a id="confirmCancelBtn" href="#" class="btn btn-danger">Sí, Cancelar</a>
+      </div>
     </div>
   </div>
 </div>
@@ -173,5 +191,11 @@
       }
     });
   });
+
+  function showCancelModal(url) {
+    document.getElementById('confirmCancelBtn').href = url;
+    var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    modal.show();
+  }
 </script>
 {% endblock %}
