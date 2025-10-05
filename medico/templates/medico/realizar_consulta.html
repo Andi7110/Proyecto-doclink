@@ -5,13 +5,22 @@
 <div class="container mt-4">
   <h2 class="mb-4">🩺 Realizar Consulta Médica</h2>
 
-  <!-- Información del paciente -->
+  <!-- Información de la cita -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
-      <h5 class="card-title">Información del paciente</h5>
-      <p><strong>ID Paciente:</strong> {{ paciente.id_paciente }}</p>
-      <p><strong>Nombre de emergencia:</strong> {{ paciente.contacto_emergencia }}</p>
-      <p><strong>Teléfono de emergencia:</strong> {{ paciente.tel_emergencia }}</p>
+      <h5 class="card-title">Información de la Cita</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
+          <p><strong>Hora:</strong> {{ cita.hora_inicio }} - {{ cita.hora_fin }}</p>
+          <p><strong>Motivo:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>ID Paciente:</strong> {{ paciente.id_paciente }}</p>
+          <p><strong>Nombre de emergencia:</strong> {{ paciente.contacto_emergencia }}</p>
+          <p><strong>Teléfono de emergencia:</strong> {{ paciente.tel_emergencia }}</p>
+        </div>
+      </div>
     </div>
   </div>
 

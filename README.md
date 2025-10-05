@@ -119,3 +119,10 @@ Asegúrate de configurar las variables de entorno en el archivo `.env` y montar 
 
 ### Ranking de Médicos
 Los pacientes pueden visualizar un ranking de médicos basado en las calificaciones promedio de las consultas. Incluye filtros por especialidad y ubicación (municipio de la clínica). Accesible desde el dashboard del paciente en la sección "Ranking de Médicos".
+
+### Sistema de Calificaciones y Reseñas
+- Los pacientes pueden calificar a los médicos después de completar una consulta.
+- Las calificaciones van de 1 a 5 estrellas.
+- Se pueden incluir reseñas opcionales para proporcionar feedback detallado.
+- Las calificaciones se muestran en el ranking de médicos y ayudan a otros pacientes en su elección.
+- Accesible desde la agenda del paciente, en las citas anteriores completadas.

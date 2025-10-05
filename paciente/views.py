@@ -6,7 +6,7 @@ from datetime import date, datetime, time
 from django.db.models import Q, Avg, Count
 from .decorators import paciente_required
 
-from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica
+from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta
 
 
 @login_required
@@ -158,14 +158,31 @@ def ver_agenda(request):
     ).filter(
         Q(fecha_consulta__lt=hoy) |
         Q(fecha_consulta=hoy, hora_inicio__lt=ahora)
-    ).order_by('-fecha_consulta', '-hora_inicio')
+    ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
+
+    # Enriquecer citas pasadas con info de valoración
+    citas_pasadas_con_valoracion = []
+    for cita in citas_pasadas:
+        tiene_valoracion = hasattr(cita, 'valoracionconsulta') and cita.valoracionconsulta.exists()
+        usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+        nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+        especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
+        clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
+
+        citas_pasadas_con_valoracion.append({
+            'cita': cita,
+            'tiene_valoracion': tiene_valoracion,
+            'nombre_medico': nombre_medico,
+            'especialidad': especialidad,
+            'clinica': clinica,
+        })
 
     context = {
         'paciente': paciente,
         'citas': citas,
         'ahora': ahora,
         'citas_futuras': citas_futuras,
-        'citas_pasadas': citas_pasadas,
+        'citas_pasadas': citas_pasadas_con_valoracion,
     }
 
     return render(request, 'paciente/agenda.html', context)
@@ -228,4 +245,65 @@ def ranking_medico(request):
     }
 
     return render(request, 'paciente/ranking_medico.html', context)
+
+
+@login_required
+@paciente_required
+def calificar_cita(request, cita_id):
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para calificar citas.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    # Verificar que la cita ya pasó
+    hoy = date.today()
+    ahora = datetime.now().time()
+    if cita.fecha_consulta > hoy or (cita.fecha_consulta == hoy and cita.hora_inicio > ahora):
+        messages.error(request, "No puedes calificar una cita que aún no ha ocurrido.")
+        return redirect('agenda')
+
+    # Verificar si ya tiene valoración
+    if ValoracionConsulta.objects.filter(fk_cita=cita).exists():
+        messages.warning(request, "Esta cita ya ha sido calificada.")
+        return redirect('agenda')
+
+    if request.method == 'POST':
+        calificacion = request.POST.get('calificacion')
+        resena = request.POST.get('resena', '').strip()
+
+        if not calificacion or not calificacion.isdigit() or not (1 <= int(calificacion) <= 5):
+            messages.error(request, "Por favor selecciona una calificación válida (1-5 estrellas).")
+            return redirect('calificar_cita', cita_id=cita_id)
+
+        try:
+            ValoracionConsulta.objects.create(
+                calificacion_consulta=int(calificacion),
+                resena=resena if resena else None,
+                fk_cita=cita
+            )
+            messages.success(request, "¡Gracias por tu calificación!")
+            return redirect('agenda')
+        except Exception as e:
+            messages.error(request, f"Error al guardar la calificación: {e}")
+            return redirect('calificar_cita', cita_id=cita_id)
+
+    # Información del médico
+    usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+    nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+    especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
+
+    context = {
+        'cita': cita,
+        'nombre_medico': nombre_medico,
+        'especialidad': especialidad,
+    }
+
+    return render(request, 'paciente/calificar_cita.html', context)
 
