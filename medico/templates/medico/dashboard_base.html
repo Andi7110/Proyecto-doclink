@@ -167,11 +167,17 @@
                 <span class="sidebar-text">Documentos</span>
               </a>
             </li>
-            <li class="nav-item w-100 mt-4">
-              <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">
+            <li class="nav-item w-100 mt-4 dropdown">
+              <a class="nav-link d-flex align-items-center gap-2 dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="activateMenu(this)">
                 <i class="bi bi-gear"></i>
                 <span class="sidebar-text">Configuración</span>
               </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'clinica_doctor' %}"><i class="bi bi-building"></i> Clínica</a></li>
+                <li><a class="dropdown-item" href="{% url 'config_perfildoc' %}"><i class="bi bi-person"></i> Perfil Médico</a></li>
+                <li><a class="dropdown-item" href="{% url 'config_horario' %}"><i class="bi bi-clock"></i> Horario</a></li>
+                <li><a class="dropdown-item" href="{% url 'config_clinica' %}"><i class="bi bi-gear"></i> Config. Clínica</a></li>
+              </ul>
             </li>
             <li class="nav-item w-100 mt-1">
               <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">

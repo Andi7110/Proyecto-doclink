@@ -5,12 +5,13 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
-from django.db import connection
+from django.db import connection, transaction
 from collections import namedtuple
 from django.db.models import Sum
 from django.utils import timezone
 
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta
+from .forms import PerfilMedicoForm
 
 @login_required 
 def views_home(request):
@@ -74,8 +75,23 @@ def ubicacion_doctor(request):
 def clinica_doctor(request):
     usuario = request.user
     medico = usuario.fk_medico
-    clinica = medico.fk_clinica
-    horario = medico.fk_horario_medico
+
+    # Asegurar que existan clínica y horario
+    if not medico.fk_clinica:
+        from bd.models import Clinica
+        clinica = Clinica.objects.create()
+        medico.fk_clinica = clinica
+        medico.save()
+    else:
+        clinica = medico.fk_clinica
+
+    if not medico.fk_horario_medico:
+        from bd.models import HorarioMedico
+        horario = HorarioMedico.objects.create()
+        medico.fk_horario_medico = horario
+        medico.save()
+    else:
+        horario = medico.fk_horario_medico
 
     return render(request, 'medico/clinica_doctor.html', {
         'usuario': usuario,
@@ -86,7 +102,15 @@ def clinica_doctor(request):
 
 @login_required
 def config_clinica(request):
-    clinica = request.user.fk_medico.fk_clinica
+    medico = request.user.fk_medico
+    clinica = medico.fk_clinica
+
+    # Si no existe clínica, crearla
+    if not clinica:
+        from bd.models import Clinica
+        clinica = Clinica.objects.create()
+        medico.fk_clinica = clinica
+        medico.save()
 
     if request.method == 'POST':
         clinica.nombre = request.POST.get('nombre')
@@ -108,6 +132,13 @@ def config_horario(request):
     medico = request.user.fk_medico
     horario = medico.fk_horario_medico
 
+    # Si no existe horario, crearlo
+    if not horario:
+        from bd.models import HorarioMedico
+        horario = HorarioMedico.objects.create()
+        medico.fk_horario_medico = horario
+        medico.save()
+
     if request.method == 'POST':
         hora_inicio = request.POST.get('hora_inicio')
         hora_fin = request.POST.get('hora_fin')
@@ -125,21 +156,64 @@ def config_horario(request):
 
 @login_required
 def config_perfildoc(request):
-    medico = request.user.fk_medico
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    # Si no existe perfil médico, crearlo
+    if not medico:
+        from bd.models import Medico
+        medico = Medico.objects.create()
+        usuario.fk_medico = medico
+        usuario.save()
 
     if request.method == 'POST':
-        medico.especialidad = request.POST.get('especialidad')
-        medico.sub_especialidad_1 = request.POST.get('sub_especialidad_1')
-        medico.sub_especialidad_2 = request.POST.get('sub_especialidad_2')
-        medico.no_jvpm = request.POST.get('no_jvpm')
-        medico.dui = request.POST.get('dui')
-        medico.descripcion = request.POST.get('descripcion')
-        medico.save()
+        form = PerfilMedicoForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar campos de Usuario
+                    usuario.nombre = form.cleaned_data['nombre']
+                    usuario.apellido = form.cleaned_data['apellido']
+                    usuario.correo = form.cleaned_data['correo']
+                    usuario.telefono = form.cleaned_data['telefono']
+                    usuario.departamento = form.cleaned_data['departamento']
+                    usuario.municipio = form.cleaned_data['municipio']
+                    usuario.save()
 
-        messages.success(request, "Perfil médico actualizado correctamente.")
-        return redirect('clinica_doctor')
+                    # Guardar campos de Medico
+                    medico.especialidad = form.cleaned_data['especialidad']
+                    medico.sub_especialidad_1 = form.cleaned_data['sub_especialidad_1']
+                    medico.sub_especialidad_2 = form.cleaned_data['sub_especialidad_2']
+                    medico.no_jvpm = form.cleaned_data['no_jvpm']
+                    medico.dui = form.cleaned_data['dui']
+                    medico.descripcion = form.cleaned_data['descripcion']
+                    medico.save()
 
-    return render(request, 'medico/config_perfildoc.html')
+                messages.success(request, "Perfil médico actualizado correctamente.")
+                return redirect('clinica_doctor')
+            except Exception as e:
+                messages.error(request, f"Error al guardar los cambios: {e}")
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario.")
+    else:
+        # Inicializar formulario con valores actuales
+        initial_data = {
+            'nombre': usuario.nombre or '',
+            'apellido': usuario.apellido or '',
+            'correo': usuario.correo or '',
+            'telefono': usuario.telefono or '',
+            'departamento': usuario.departamento or '',
+            'municipio': usuario.municipio or '',
+            'especialidad': medico.especialidad or '',
+            'sub_especialidad_1': medico.sub_especialidad_1 or '',
+            'sub_especialidad_2': medico.sub_especialidad_2 or '',
+            'no_jvpm': medico.no_jvpm or '',
+            'dui': medico.dui or '',
+            'descripcion': medico.descripcion or '',
+        }
+        form = PerfilMedicoForm(initial=initial_data)
+
+    return render(request, 'medico/config_perfildoc.html', {'form': form})
 
 @login_required
 def dashboard_doctor(request):
