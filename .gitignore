@@ -15,4 +15,4 @@ db.sqlite3
 
 # Archivos media (subidos por usuarios)
 media/
-consultas/
+consultas/db.sqlite3
