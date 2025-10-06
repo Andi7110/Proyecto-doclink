@@ -354,6 +354,38 @@ def actualizar_estado_cita(request, cita_id):
     cita.save()
     return redirect('agenda_medico')
 
+@require_POST
+@login_required
+def actualizar_fecha_hora_cita(request, cita_id):
+    cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
+
+    # Solo permitir editar si el estado es 'Pendiente'
+    if cita.status_cita_medica != 'Pendiente':
+        messages.error(request, "Solo se pueden editar citas con estado 'Pendiente'.")
+        return redirect('agenda_medico')
+
+    nueva_fecha = request.POST.get('fecha_consulta')
+    nueva_hora = request.POST.get('hora_inicio')
+
+    if nueva_fecha and nueva_hora:
+        from datetime import datetime
+        try:
+            # Validar formato de fecha y hora
+            fecha_dt = datetime.strptime(nueva_fecha, '%Y-%m-%d').date()
+            hora_dt = datetime.strptime(nueva_hora, '%H:%M').time()
+
+            cita.fecha_consulta = fecha_dt
+            cita.hora_inicio = hora_dt
+            cita.save()
+
+            messages.success(request, "Fecha y hora de la cita actualizadas correctamente.")
+        except ValueError:
+            messages.error(request, "Formato de fecha u hora inválido.")
+    else:
+        messages.error(request, "Debe proporcionar fecha y hora válidas.")
+
+    return redirect('agenda_medico')
+
 @login_required
 def realizar_consulta(request, cita_id):
     cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
