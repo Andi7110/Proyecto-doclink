@@ -494,11 +494,28 @@ def programar_cita_doc(request):
             des_motivo_consulta_paciente=request.POST.get('des_motivo_consulta_paciente')
         )
 
+        # Crear notificación
+        from bd.models import MensajesNotificacion
+        fecha_str = request.POST.get('fecha_consulta')
+        hora_str = request.POST.get('hora_inicio')
+        descripcion = f"Nueva cita médica programada para el {fecha_str} a las {hora_str}."
+        MensajesNotificacion.objects.create(descripcion=descripcion)
+
         messages.success(request, "✅ Cita médica programada con éxito.")
-        return redirect('dashboard_doctor')
+        return redirect('agenda_medico')
 
     else:
-        pacientes = Paciente.objects.all()
+        # Filtrar pacientes que han tenido citas con este médico
+        pacientes_ids = CitasMedicas.objects.filter(
+            fk_medico=request.user.fk_medico
+        ).values_list('fk_paciente_id', flat=True).distinct()
+
+        pacientes = Paciente.objects.filter(id_paciente__in=pacientes_ids)
+
+        # Si no hay pacientes con citas previas, mostrar todos los pacientes
+        if not pacientes.exists():
+            pacientes = Paciente.objects.all()
+
         return render(request, 'medico/programar_cita_doc.html', {
             'pacientes': pacientes
         })
