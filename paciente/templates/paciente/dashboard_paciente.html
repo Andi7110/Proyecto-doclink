@@ -12,9 +12,18 @@
     </div>
   </div>
 </div>
+
+<a href="{% url 'mapa_medicos' %}" class="btn btn-info">📍 Ver médicos en el mapa</a>
 <!-- Botones principales -->
+<!-- Botón agregar póliza -->
 <div class="d-flex flex-wrap gap-2 mb-4 mt-2">
-  <button class="btn btn-info btn-custom text-white" style="background:#00b8e6;">+ Póliza de seguro medico</button>
+  <a href="{% url 'agregar_poliza' %}" class="btn btn-primary">
+    Agregar Póliza
+</a>
+<!-- Botón para agregar/editar contacto de emergencia -->
+  <a href="{% url 'contacto_emergencia' %}" class="btn btn-warning">
+    Contacto de Emergencia
+  </a>
   <button class="btn btn-danger btn-custom">Cancelar cita</button>
   <div class="dropdown">
     <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0099ff;" type="button"
@@ -41,17 +50,23 @@
   <!-- Panel izquierdo: Buscar Medico -->
   <div class="col-12 col-lg-6 mb-4">
     <div class="card shadow-sm p-3 h-100">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="fw-bold" style="font-size:1.5rem;">Buscar Medico</span>
-        <span stye="font-size:2rem; line-height:1;">
-          <i class="bi bi-funnel"></i>
-        </span>
-        <span style="font-size:1.5rem;">&#9660;</span>
-        <div class="ms-auto" style="min-width: 250px; max-width: 320px; width: 100%;">
-          <input type="search" class="form-control" placeholder="Buscar por nombre, especialidad...">
-        </div>
-      </div>
-      <div class="row">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="fw-bold" style="font-size:1.5rem;">Buscar Médico</span>
+  <form method="get" action="{% url 'buscar_medicos' %}" class="ms-auto d-flex" style="min-width: 250px; max-width: 320px; width: 100%;">
+    <select name="tipo_filtro" class="form-select me-2">
+      <option value="todo" {% if request.GET.tipo_filtro == "todo" %}selected{% endif %}>Todo</option>
+      <option value="nombre" {% if request.GET.tipo_filtro == "nombre" %}selected{% endif %}>Nombre</option>
+      <option value="especialidad" {% if request.GET.tipo_filtro == "especialidad" %}selected{% endif %}>Especialidad</option>
+      <option value="ubicacion" {% if request.GET.tipo_filtro == "ubicacion" %}selected{% endif %}>Ubicación</option>
+    </select>
+
+    <input type="search" name="q" class="form-control me-2" placeholder="Buscar..." value="{{ request.GET.q }}">
+    <button class="btn btn-success" type="submit">🔍</button>
+  </form>
+</div>
+
+        <div class="row">
         <!-- Info médico -->
         <div class="col-md-6 border-end">
           <h6 style="font-weight: bold;"></h6>

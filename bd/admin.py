@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Admin, CitasMedicas, Clinica, Factura, HorarioMedico, Medico,
     MensajesNotificacion, MetodosPago, Paciente, RankingMedico,
-    RecetaMedica, Rol, Usuario, ValoracionConsulta
+    RecetaMedica, Rol, Usuario, ValoracionConsulta, PolizaSeguro
 )
 
 @admin.register(CitasMedicas)
@@ -29,6 +29,12 @@ class UsuarioAdmin(admin.ModelAdmin):
     list_display = ('id_usuario', 'user_name', 'nombre', 'apellido', 'correo', 'fk_rol')
     search_fields = ('user_name', 'nombre', 'apellido', 'correo')
     list_filter = ('fk_rol', 'status_plataforma')
+
+@admin.register(PolizaSeguro)
+class PolizaSeguroAdmin(admin.ModelAdmin):
+    list_display = ('paciente', 'compania_aseguradora', 'numero_poliza', 'fecha_vigencia', 'tipo_cobertura')
+    search_fields = ('compania_aseguradora', 'numero_poliza')
+    list_filter = ('tipo_cobertura', 'fecha_vigencia') 
 
 # Registro de los demás modelos con configuración básica
 admin.site.register(Admin)

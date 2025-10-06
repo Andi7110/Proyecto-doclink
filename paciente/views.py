@@ -5,6 +5,9 @@ from django.contrib import messages
 from datetime import date, datetime, time
 from django.db.models import Q
 from .decorators import paciente_required
+from django.shortcuts import render, redirect, get_object_or_404
+from bd.models import PolizaSeguro, ContactoEmergencia
+from .forms import PolizaSeguroForm, ContactoEmergenciaForm
 
 from bd.models import Usuario, Medico, Paciente, CitasMedicas
 
@@ -18,7 +21,15 @@ def views_home(request):
 @login_required
 @paciente_required
 def dashboard_paciente(request):
-    return render(request, 'paciente/dashboard_paciente.html')
+    usuario = request.user
+    paciente = getattr(usuario, 'fk_paciente', None)
+    
+    if not paciente:
+        # Si no hay paciente asociado, evita el error
+        messages.error(request, "No tienes un paciente asociado.")
+        return redirect('home')  # O a otra vista segura
+
+    return render(request, "paciente/dashboard_paciente.html", {"paciente": paciente})
 
 #Agendar cita
 @login_required
@@ -170,3 +181,91 @@ def ver_agenda(request):
 
     return render(request, 'paciente/agenda.html', context)
 
+
+@login_required
+def agregar_poliza(request):
+    # Obtener el paciente directamente desde el usuario logueado
+    paciente = getattr(request.user, 'fk_paciente', None)
+
+    if not paciente:
+        messages.error(request, "No se puede agregar póliza porque no hay paciente asignado a este usuario.")
+        return redirect('dashboard_paciente')  # Redirige al dashboard
+
+    if request.method == "POST":
+        form = PolizaSeguroForm(request.POST)
+        if form.is_valid():
+            poliza = form.save(commit=False)
+            poliza.paciente = paciente
+            poliza.save()
+            messages.success(request, "Póliza agregada correctamente.")
+            return redirect('dashboard_paciente')
+    else:
+        form = PolizaSeguroForm()
+
+    return render(request, 'paciente/agregar_poliza.html', {'form': form})
+
+
+
+@login_required
+def gestionar_contacto_emergencia(request):
+    paciente = getattr(request.user, 'fk_paciente', None)
+
+    if not paciente:
+        messages.error(request, "No hay paciente asignado a este usuario.")
+        return redirect('dashboard_paciente')
+
+    contacto = getattr(paciente, 'contactoemergencia', None)
+
+    if request.method == "POST":
+        form = ContactoEmergenciaForm(request.POST, instance=contacto)
+        if form.is_valid():
+            contacto = form.save(commit=False)
+            contacto.paciente = paciente
+            contacto.save()
+            messages.success(request, "Contacto de emergencia guardado correctamente.")
+            return redirect('contacto_emergencia')   # 👈 aquí está la magia (se limpia el form)
+    else:
+        form = ContactoEmergenciaForm(instance=contacto)
+
+    return render(request, "paciente/contacto_emergencia.html", {"form": form})
+
+def buscar_medicos(request):
+    tipo_filtro = request.GET.get("tipo_filtro", "todo")
+    q = request.GET.get("q", "").strip()
+
+    medicos = Medico.objects.all()
+
+    if q:
+        if tipo_filtro == "nombre":
+            medicos = medicos.filter(
+                Q(usuario__nombre__icontains=q) | Q(usuario__apellido__icontains=q)
+            )
+        elif tipo_filtro == "especialidad":
+            medicos = medicos.filter(especialidad__icontains=q)
+        elif tipo_filtro == "ubicacion":
+            medicos = medicos.filter(ubicacion__icontains=q)
+        # 'todo' busca en todos los campos
+        elif tipo_filtro == "todo":
+            medicos = medicos.filter(
+                Q(usuario__nombre__icontains=q) |
+                Q(usuario__apellido__icontains=q) |
+                Q(especialidad__icontains=q) |
+                Q(ubicacion__icontains=q)
+            )
+
+    context = {
+        "medicos": medicos,
+        "tipo_filtro": tipo_filtro,
+        "q": q,
+    }
+
+    return render(request, "paciente/buscar_medicos.html", context)
+
+def mapa_medicos(request):
+    # Traer todos los médicos que tengan clínica con lat/lng
+    medicos = Medico.objects.exclude(fk_clinica__latitud__isnull=True, fk_clinica__longitud__isnull=True)
+    
+    context = {
+        "medicos": medicos
+    }
+    return render(request, "paciente/mapa_medicos.html", context)

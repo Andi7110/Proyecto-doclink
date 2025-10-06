@@ -1,0 +1,37 @@
+{% extends "paciente/dashboard_base.html" %}
+{% block content %}
+
+<h2>Buscar médicos</h2>
+
+<form method="get" action="{% url 'buscar_medicos' %}" class="d-flex gap-2 mb-3">
+  <select name="tipo_filtro" class="form-select" style="width:150px;">
+    <option value="todo" {% if tipo_filtro == "todo" %}selected{% endif %}>Todo</option>
+    <option value="nombre" {% if tipo_filtro == "nombre" %}selected{% endif %}>Nombre</option>
+    <option value="especialidad" {% if tipo_filtro == "especialidad" %}selected{% endif %}>Especialidad</option>
+    <option value="ubicacion" {% if tipo_filtro == "ubicacion" %}selected{% endif %}>Ubicación</option>
+  </select>
+
+  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ q }}">
+  <button type="submit" class="btn btn-success">🔍 Buscar</button>
+</form>
+
+{% if medicos %}
+  <div class="row">
+    {% for medico in medicos %}
+      <div class="col-md-6 mb-3">
+        <div class="card p-3">
+          <h5>{{ medico.usuario.nombre }} {{ medico.usuario.apellido }}</h5>
+          <p>Especialidad: {{ medico.especialidad }}</p>
+          <p>Ubicación: {{ medico.ubicacion }}</p>
+          <a href="{% url 'agendar_cita' %}" class="btn btn-info">Agendar cita</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-warning">
+    No se encontraron médicos con los criterios de búsqueda.
+  </div>
+{% endif %}
+
+{% endblock %}
