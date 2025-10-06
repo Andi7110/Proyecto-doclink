@@ -700,11 +700,14 @@ def ver_seguimientos_paciente(request, paciente_id):
 @login_required
 def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
     medico = request.user.fk_medico
-    seguimiento_anterior = None
     paciente = None
 
     if seguimiento_id:
-        seguimiento_anterior = get_object_or_404(SeguimientoClinico, id_seguimiento_clinico=seguimiento_id, fk_medico=medico)
+        seguimiento_anterior = get_object_or_404(
+            SeguimientoClinico,
+            id_seguimiento_clinico=seguimiento_id,
+            fk_medico=medico
+        )
         paciente = seguimiento_anterior.fk_paciente
     elif paciente_id:
         paciente = get_object_or_404(Paciente, id_paciente=paciente_id)
@@ -712,8 +715,10 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
         if not CitasMedicas.objects.filter(fk_paciente=paciente, fk_medico=medico).exists():
             raise PermissionDenied("No tienes permisos para programar citas de seguimiento para este paciente.")
 
+    # -------------------------------
+    # Manejo del POST para programar cita
+    # -------------------------------
     if request.method == 'POST':
-        # Validación manual para evitar interferencias con otros formularios/campos
         fecha_str = request.POST.get('fecha_nueva_cita')
         hora_str = request.POST.get('hora_nueva_cita')
         motivo = (request.POST.get('motivo_nueva_cita') or '').strip()
@@ -721,7 +726,7 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
         errores = []
         from datetime import datetime, date as _date
 
-        # Parseo y validación de fecha
+        # Validar fecha
         fecha_dt = None
         if fecha_str:
             try:
@@ -731,11 +736,10 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
         else:
             errores.append('fecha_nueva_cita: Este campo es obligatorio')
 
-        # Validación de fecha futura
         if fecha_dt and fecha_dt < _date.today():
             errores.append('fecha_nueva_cita: La fecha debe ser futura')
 
-        # Parseo y validación de hora
+        # Validar hora
         hora_dt = None
         if hora_str:
             try:
@@ -745,7 +749,7 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
         else:
             errores.append('hora_nueva_cita: Este campo es obligatorio')
 
-        # Motivo requerido
+        # Validar motivo
         if not motivo:
             errores.append('motivo_nueva_cita: Este campo es obligatorio')
 
@@ -753,14 +757,14 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
             messages.error(request, "No se pudo programar la cita. " + " | ".join(errores))
             form = ProgramarCitaSeguimientoForm(request.POST)
         else:
-            # Crear la cita médica directamente
+            # Crear la nueva cita
             CitasMedicas.objects.create(
                 fk_paciente=paciente,
                 fk_medico=medico,
                 fecha_consulta=fecha_dt,
                 hora_inicio=hora_dt,
                 status_cita_medica='Pendiente',
-                des_motivo_consulta_paciente=f'Consulta de seguimiento - {motivo}'
+                des_motivo_consulta_paciente=motivo
             )
             messages.success(request, "Cita de seguimiento programada correctamente.")
             return redirect('agenda_medico')
@@ -769,9 +773,10 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
 
     return render(request, 'medico/crear_consulta_seguimiento.html', {
         'form': form,
-        'seguimiento_anterior': seguimiento_anterior,
-        'paciente': paciente
+        'paciente': paciente,
+        'motivo_sugerido': 'Consulta de seguimiento'
     })
+
 
 @login_required
 def ver_consultas_seguimiento(request):

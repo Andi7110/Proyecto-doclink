@@ -69,7 +69,7 @@ class ProgramarCitaSeguimientoForm(forms.Form):
     )
     motivo_nueva_cita = forms.CharField(
         label="Motivo de la Cita de Seguimiento",
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Consulta de seguimiento'}),
         required=True
     )
 
