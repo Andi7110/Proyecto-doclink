@@ -1,4 +1,5 @@
 {% extends "medico/dashboard_base.html" %}
+{% load static %}
 
 {% block content %}
 <!-- Estilos para DataTables con Bootstrap 5 -->
@@ -33,9 +34,20 @@
             </thead>
             <tbody>
               {% for item in citas_futuras %}
-                <tr>
+                <tr id="cita-row-{{ item.cita.id_cita_medicas }}">
+                  {% if item.cita.status_cita_medica == 'Pendiente' %}
+                  <td>
+                    <span id="fecha-display-{{ item.cita.id_cita_medicas }}">{{ item.cita.fecha_consulta|date:"d/m/Y" }}</span>
+                    <input type="date" class="form-control form-control-sm d-none" id="fecha-input-{{ item.cita.id_cita_medicas }}" value="{{ item.cita.fecha_consulta|date:'Y-m-d' }}">
+                  </td>
+                  <td>
+                    <span id="hora-display-{{ item.cita.id_cita_medicas }}">{{ item.cita.hora_inicio|time:"g:i a" }}</span>
+                    <input type="time" class="form-control form-control-sm d-none" id="hora-input-{{ item.cita.id_cita_medicas }}" value="{{ item.cita.hora_inicio|time:'H:i' }}">
+                  </td>
+                  {% else %}
                   <td>{{ item.cita.fecha_consulta|date:"d/m/Y" }}</td>
                   <td>{{ item.cita.hora_inicio|time:"g:i a" }}</td>
+                  {% endif %}
                   <td>{{ item.nombre_paciente }}</td>
                   <td>{{ item.cita.des_motivo_consulta_paciente }}</td>
                   <td>
@@ -49,14 +61,23 @@
                   </td>
                   <td>
                     {% if item.cita.status_cita_medica == 'Pendiente' %}
+                    <button class="btn btn-warning btn-sm me-1" id="edit-btn-{{ item.cita.id_cita_medicas }}" onclick="enableEdit({{ item.cita.id_cita_medicas }})" style="width: 90px; white-space: nowrap;">
+                      <i class="bi bi-pencil"></i> Editar
+                    </button>
+                    <button class="btn btn-info btn-sm me-1 d-none" id="save-btn-{{ item.cita.id_cita_medicas }}" onclick="saveChanges({{ item.cita.id_cita_medicas }})" style="width: 90px; white-space: nowrap;">
+                      <i class="bi bi-check"></i> Guardar
+                    </button>
+                    <button class="btn btn-secondary btn-sm me-1 d-none" id="cancel-edit-btn-{{ item.cita.id_cita_medicas }}" onclick="cancelEdit({{ item.cita.id_cita_medicas }})" style="width: 90px; white-space: nowrap;">
+                      <i class="bi bi-x"></i> Cancelar
+                    </button>
                     <form method="post" action="{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}" class="d-inline">
                       {% csrf_token %}
-                      <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm me-1" style="width: 80px;">Aceptar</button>
+                      <button type="submit" name="accion" value="aceptar" class="btn btn-success btn-sm me-1" style="width: 90px; white-space: nowrap;">Aceptar</button>
                     </form>
-                    <button class="btn btn-danger btn-sm" style="width: 80px;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" style="width: 90px; white-space: nowrap;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
                     {% elif item.cita.status_cita_medica == 'En proceso' %}
-                    <a href="{% url 'realizar_consulta' item.cita.id_cita_medicas %}" class="btn btn-primary btn-sm me-1" style="width: 80px;">Consultar</a>
-                    <button class="btn btn-danger btn-sm" style="width: 80px;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm me-1" style="width: 90px; white-space: nowrap;" onclick="window.location.href='{% url 'realizar_consulta' item.cita.id_cita_medicas %}'">Consultar</button>
+                    <button class="btn btn-danger btn-sm" style="width: 90px; white-space: nowrap;" onclick="showCancelModal('{% url 'actualizar_estado_cita' item.cita.id_cita_medicas %}?accion=cancelar')">Cancelar</button>
                     {% endif %}
                   </td>
                 </tr>
@@ -209,7 +230,7 @@
       if (!$(this).hasClass('dataTable')) {
         $(this).DataTable({
           language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            url: '{% static "js/datatables_es.json" %}'
           },
           pageLength: 5,
           lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "Todos"]],
@@ -234,6 +255,69 @@
     document.getElementById('fechaCancelacion').textContent = fecha;
     var modal = new bootstrap.Modal(document.getElementById('cancelDetailsModal'));
     modal.show();
+  }
+
+  function enableEdit(citaId) {
+    // Ocultar texto y mostrar inputs
+    document.getElementById('fecha-display-' + citaId).classList.add('d-none');
+    document.getElementById('hora-display-' + citaId).classList.add('d-none');
+    document.getElementById('fecha-input-' + citaId).classList.remove('d-none');
+    document.getElementById('hora-input-' + citaId).classList.remove('d-none');
+
+    // Ocultar botón editar y mostrar guardar/cancelar
+    document.getElementById('edit-btn-' + citaId).classList.add('d-none');
+    document.getElementById('save-btn-' + citaId).classList.remove('d-none');
+    document.getElementById('cancel-edit-btn-' + citaId).classList.remove('d-none');
+  }
+
+  function cancelEdit(citaId) {
+    // Mostrar texto y ocultar inputs
+    document.getElementById('fecha-display-' + citaId).classList.remove('d-none');
+    document.getElementById('hora-display-' + citaId).classList.remove('d-none');
+    document.getElementById('fecha-input-' + citaId).classList.add('d-none');
+    document.getElementById('hora-input-' + citaId).classList.add('d-none');
+
+    // Mostrar botón editar y ocultar guardar/cancelar
+    document.getElementById('edit-btn-' + citaId).classList.remove('d-none');
+    document.getElementById('save-btn-' + citaId).classList.add('d-none');
+    document.getElementById('cancel-edit-btn-' + citaId).classList.add('d-none');
+  }
+
+  function saveChanges(citaId) {
+    const fecha = document.getElementById('fecha-input-' + citaId).value;
+    const hora = document.getElementById('hora-input-' + citaId).value;
+
+    if (!fecha || !hora) {
+      alert('Por favor complete fecha y hora.');
+      return;
+    }
+
+    // Crear formulario y enviar
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/medico/actualizar-fecha-hora/' + citaId + '/';
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    const fechaInput = document.createElement('input');
+    fechaInput.type = 'hidden';
+    fechaInput.name = 'fecha_consulta';
+    fechaInput.value = fecha;
+    form.appendChild(fechaInput);
+
+    const horaInput = document.createElement('input');
+    horaInput.type = 'hidden';
+    horaInput.name = 'hora_inicio';
+    horaInput.value = hora;
+    form.appendChild(horaInput);
+
+    document.body.appendChild(form);
+    form.submit();
   }
 </script>
 {% endblock %}

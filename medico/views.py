@@ -11,6 +11,8 @@ from django.db.models import Sum
 from django.utils import timezone
 from datetime import date, timedelta
 
+from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica, SeguimientoClinico, ConsultaSeguimiento
+from .forms import PerfilMedicoForm, SeguimientoClinicoForm, ProgramarCitaSeguimientoForm
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica
 from .forms import PerfilMedicoForm
 
@@ -342,13 +344,47 @@ def actualizar_estado_cita(request, cita_id):
     accion = request.POST.get('accion')
     if accion == 'aceptar':
         cita.status_cita_medica = 'En proceso'
+        messages.success(request, "Cita aceptada y movida a 'En proceso'.")
     elif accion == 'cancelar':
         cita.status_cita_medica = 'Cancelado'
         cita.cancelado_por = 'medico'
         cita.fecha_cancelacion = timezone.now()
+        messages.success(request, "Cita cancelada correctamente.")
 
     cita.save()
-    return redirect('dashboard_doctor')
+    return redirect('agenda_medico')
+
+@require_POST
+@login_required
+def actualizar_fecha_hora_cita(request, cita_id):
+    cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
+
+    # Solo permitir editar si el estado es 'Pendiente'
+    if cita.status_cita_medica != 'Pendiente':
+        messages.error(request, "Solo se pueden editar citas con estado 'Pendiente'.")
+        return redirect('agenda_medico')
+
+    nueva_fecha = request.POST.get('fecha_consulta')
+    nueva_hora = request.POST.get('hora_inicio')
+
+    if nueva_fecha and nueva_hora:
+        from datetime import datetime
+        try:
+            # Validar formato de fecha y hora
+            fecha_dt = datetime.strptime(nueva_fecha, '%Y-%m-%d').date()
+            hora_dt = datetime.strptime(nueva_hora, '%H:%M').time()
+
+            cita.fecha_consulta = fecha_dt
+            cita.hora_inicio = hora_dt
+            cita.save()
+
+            messages.success(request, "Fecha y hora de la cita actualizadas correctamente.")
+        except ValueError:
+            messages.error(request, "Formato de fecha u hora inválido.")
+    else:
+        messages.error(request, "Debe proporcionar fecha y hora válidas.")
+
+    return redirect('agenda_medico')
 
 @login_required
 def realizar_consulta(request, cita_id):
@@ -490,11 +526,28 @@ def programar_cita_doc(request):
             des_motivo_consulta_paciente=request.POST.get('des_motivo_consulta_paciente')
         )
 
+        # Crear notificación
+        from bd.models import MensajesNotificacion
+        fecha_str = request.POST.get('fecha_consulta')
+        hora_str = request.POST.get('hora_inicio')
+        descripcion = f"Nueva cita médica programada para el {fecha_str} a las {hora_str}."
+        MensajesNotificacion.objects.create(descripcion=descripcion)
+
         messages.success(request, "✅ Cita médica programada con éxito.")
-        return redirect('dashboard_doctor')
+        return redirect('agenda_medico')
 
     else:
-        pacientes = Paciente.objects.all()
+        # Filtrar pacientes que han tenido citas con este médico
+        pacientes_ids = CitasMedicas.objects.filter(
+            fk_medico=request.user.fk_medico
+        ).values_list('fk_paciente_id', flat=True).distinct()
+
+        pacientes = Paciente.objects.filter(id_paciente__in=pacientes_ids)
+
+        # Si no hay pacientes con citas previas, mostrar todos los pacientes
+        if not pacientes.exists():
+            pacientes = Paciente.objects.all()
+
         return render(request, 'medico/programar_cita_doc.html', {
             'pacientes': pacientes
         })
@@ -564,11 +617,15 @@ def agenda_medico(request):
 
     hoy = date.today()
 
-    # Citas futuras (Pendiente y En proceso)
-    citas_futuras_raw = CitasMedicas.objects.filter(
-        fk_medico=medico,
-        status_cita_medica__in=['Pendiente', 'En proceso']
-    ).order_by('fecha_consulta', 'hora_inicio').select_related('fk_paciente')
+    # Citas futuras (cualquier estado distinto de Completada/Cancelado)
+    citas_futuras_raw = (
+        CitasMedicas.objects
+        .filter(fk_medico=medico)
+        .exclude(status_cita_medica__iexact='Completada')
+        .exclude(status_cita_medica__iexact='Cancelado')
+        .order_by('fecha_consulta', 'hora_inicio')
+        .select_related('fk_paciente')
+    )
 
     citas_futuras = []
     for cita in citas_futuras_raw:
@@ -632,3 +689,149 @@ def agenda_medico(request):
     }
 
     return render(request, 'medico/agenda_medico.html', context)
+
+
+@login_required
+def crear_seguimiento(request, cita_id):
+    cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
+    paciente = cita.fk_paciente
+    usuario_paciente = Usuario.objects.filter(fk_paciente=paciente).first()
+
+    if request.method == 'POST':
+        form = SeguimientoClinicoForm(request.POST, request.FILES)
+        if form.is_valid():
+            seguimiento = form.save(commit=False)
+            seguimiento.fk_cita = cita
+            seguimiento.fk_paciente = paciente
+            seguimiento.fk_medico = request.user.fk_medico
+            seguimiento.save()
+
+            # Si se marca programar nueva consulta, crear la cita
+            if seguimiento.programar_nueva_consulta and seguimiento.fecha_nueva_consulta and seguimiento.hora_nueva_consulta:
+                CitasMedicas.objects.create(
+                    fk_paciente=paciente,
+                    fk_medico=request.user.fk_medico,
+                    fecha_consulta=seguimiento.fecha_nueva_consulta,
+                    hora_inicio=seguimiento.hora_nueva_consulta,
+                    status_cita_medica='Pendiente',
+                    des_motivo_consulta_paciente=f'Seguimiento programado - {seguimiento.notas_nueva_consulta or ""}'
+                )
+
+            messages.success(request, "Seguimiento clínico creado correctamente.")
+            return redirect('ver_seguimientos_paciente', paciente_id=paciente.id_paciente)
+    else:
+        form = SeguimientoClinicoForm()
+
+    return render(request, 'medico/crear_seguimiento.html', {
+        'form': form,
+        'cita': cita,
+        'paciente': paciente,
+        'usuario_paciente': usuario_paciente
+    })
+
+@login_required
+def ver_seguimientos_paciente(request, paciente_id):
+    paciente = get_object_or_404(Paciente, id_paciente=paciente_id)
+    usuario_paciente = Usuario.objects.filter(fk_paciente=paciente).first()
+
+    # Solo el médico que atendió puede ver
+    seguimientos = SeguimientoClinico.objects.filter(
+        fk_paciente=paciente,
+        fk_medico=request.user.fk_medico
+    ).order_by('-fecha_creacion')
+
+    return render(request, 'medico/ver_seguimientos.html', {
+        'seguimientos': seguimientos,
+        'paciente': paciente,
+        'usuario_paciente': usuario_paciente
+    })
+
+@login_required
+def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
+    medico = request.user.fk_medico
+    paciente = None
+
+    if seguimiento_id:
+        seguimiento_anterior = get_object_or_404(
+            SeguimientoClinico,
+            id_seguimiento_clinico=seguimiento_id,
+            fk_medico=medico
+        )
+        paciente = seguimiento_anterior.fk_paciente
+    elif paciente_id:
+        paciente = get_object_or_404(Paciente, id_paciente=paciente_id)
+        # Verificar que el médico haya atendido a este paciente
+        if not CitasMedicas.objects.filter(fk_paciente=paciente, fk_medico=medico).exists():
+            raise PermissionDenied("No tienes permisos para programar citas de seguimiento para este paciente.")
+
+    # -------------------------------
+    # Manejo del POST para programar cita
+    # -------------------------------
+    if request.method == 'POST':
+        fecha_str = request.POST.get('fecha_nueva_cita')
+        hora_str = request.POST.get('hora_nueva_cita')
+        motivo = (request.POST.get('motivo_nueva_cita') or '').strip()
+
+        errores = []
+        from datetime import datetime, date as _date
+
+        # Validar fecha
+        fecha_dt = None
+        if fecha_str:
+            try:
+                fecha_dt = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except Exception:
+                errores.append('fecha_nueva_cita: Formato inválido (YYYY-MM-DD)')
+        else:
+            errores.append('fecha_nueva_cita: Este campo es obligatorio')
+
+        if fecha_dt and fecha_dt < _date.today():
+            errores.append('fecha_nueva_cita: La fecha debe ser futura')
+
+        # Validar hora
+        hora_dt = None
+        if hora_str:
+            try:
+                hora_dt = datetime.strptime(hora_str, '%H:%M').time()
+            except Exception:
+                errores.append('hora_nueva_cita: Formato inválido (HH:MM)')
+        else:
+            errores.append('hora_nueva_cita: Este campo es obligatorio')
+
+        # Validar motivo
+        if not motivo:
+            errores.append('motivo_nueva_cita: Este campo es obligatorio')
+
+        if errores:
+            messages.error(request, "No se pudo programar la cita. " + " | ".join(errores))
+            form = ProgramarCitaSeguimientoForm(request.POST)
+        else:
+            # Crear la nueva cita
+            CitasMedicas.objects.create(
+                fk_paciente=paciente,
+                fk_medico=medico,
+                fecha_consulta=fecha_dt,
+                hora_inicio=hora_dt,
+                status_cita_medica='Pendiente',
+                des_motivo_consulta_paciente=motivo
+            )
+            messages.success(request, "Cita de seguimiento programada correctamente.")
+            return redirect('agenda_medico')
+    else:
+        form = ProgramarCitaSeguimientoForm()
+
+    return render(request, 'medico/crear_consulta_seguimiento.html', {
+        'form': form,
+        'paciente': paciente,
+        'motivo_sugerido': 'Consulta de seguimiento'
+    })
+
+
+@login_required
+def ver_consultas_seguimiento(request):
+    medico = request.user.fk_medico
+    consultas = ConsultaSeguimiento.objects.filter(fk_medico=medico).order_by('-fecha_creacion')
+
+    return render(request, 'medico/ver_consultas_seguimiento.html', {
+        'consultas': consultas
+    })

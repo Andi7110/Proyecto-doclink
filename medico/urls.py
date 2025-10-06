@@ -20,9 +20,16 @@ urlpatterns = [
     path('config_horario/', views.config_horario, name='config_horario'),
     path('config_perfildoc/', views.config_perfildoc, name='config_perfildoc'),
     path('actualizar-cita/<int:cita_id>/', views.actualizar_estado_cita, name='actualizar_estado_cita'),
+    path('actualizar-fecha-hora/<int:cita_id>/', views.actualizar_fecha_hora_cita, name='actualizar_fecha_hora_cita'),
     path('realizar-consulta/<int:cita_id>/', views.realizar_consulta, name='realizar_consulta'),
     path('programar_cita_doc/', views.programar_cita_doc, name='programar_cita_doc'),
     path('ver-diagnostico/<int:cita_id>/', views.ver_diagnostico_medico, name='ver_diagnostico_medico'),
     path('agenda/', views.agenda_medico, name='agenda_medico'),
+    path('crear-seguimiento/<int:cita_id>/', views.crear_seguimiento, name='crear_seguimiento'),
+    path('ver-seguimientos/<int:paciente_id>/', views.ver_seguimientos_paciente, name='ver_seguimientos_paciente'),
+    path('crear-consulta-seguimiento/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento'),
+    path('crear-consulta-seguimiento/<int:seguimiento_id>/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento_con_anterior'),
+    path('crear-consulta-seguimiento-paciente/<int:paciente_id>/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento_paciente'),
+    path('ver-consultas-seguimiento/', views.ver_consultas_seguimiento, name='ver_consultas_seguimiento'),
 ]
 
