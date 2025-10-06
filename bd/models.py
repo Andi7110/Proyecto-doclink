@@ -368,3 +368,83 @@ class ConsultaMedica(models.Model):
 
     def tiene_receta(self):
         return bool(self.medicamento or self.via_administracion or self.dosis)
+
+
+class SeguimientoClinico(models.Model):
+    id_seguimiento_clinico = models.BigAutoField(primary_key=True)
+    fk_cita = models.ForeignKey(CitasMedicas, on_delete=models.CASCADE, db_column='fk_cita', related_name='seguimientos')
+    fk_paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, db_column='fk_paciente')
+    fk_medico = models.ForeignKey(Medico, on_delete=models.CASCADE, db_column='fk_medico')
+    diagnostico_final = models.TextField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    tratamiento = models.TextField(blank=True, null=True)
+    # Campos para receta médica
+    medicamento = models.TextField(blank=True, null=True)
+    dosis = models.TextField(blank=True, null=True)
+    frecuencia = models.TextField(blank=True, null=True)  # e.g., "cada 8 horas"
+    duracion = models.TextField(blank=True, null=True)  # e.g., "7 días"
+    archivos_receta = models.FileField(upload_to='recetas_seguimiento/', blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Para programar nueva consulta de seguimiento
+    programar_nueva_consulta = models.BooleanField(default=False)
+    fecha_nueva_consulta = models.DateField(blank=True, null=True)
+    hora_nueva_consulta = models.TimeField(blank=True, null=True)
+    notas_nueva_consulta = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'seguimiento_clinico'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Seguimiento {self.id_seguimiento_clinico} - Paciente: {self.fk_paciente} - Médico: {self.fk_medico}"
+
+    def tiene_receta(self):
+        return bool(self.medicamento or self.dosis or self.frecuencia or self.duracion)
+
+
+class ConsultaSeguimiento(models.Model):
+    id_consulta_seguimiento = models.BigAutoField(primary_key=True)
+    fk_paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, db_column='fk_paciente')
+    fk_medico = models.ForeignKey(Medico, on_delete=models.CASCADE, db_column='fk_medico')
+    fk_seguimiento_anterior = models.ForeignKey(SeguimientoClinico, on_delete=models.SET_NULL, blank=True, null=True, db_column='fk_seguimiento_anterior', related_name='consultas_seguimiento')
+    # Campos de la consulta de seguimiento
+    sintomas_actuales = models.TextField(blank=True, null=True)
+    diagnostico = models.TextField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    tratamiento = models.TextField(blank=True, null=True)
+    comparacion_primera_consulta = models.TextField(blank=True, null=True)
+    mejoro_salud = models.CharField(max_length=1, choices=[('S', 'Sí'), ('N', 'No'), ('P', 'Parcialmente')], blank=True, null=True)
+    necesita_receta_diferente = models.BooleanField(default=False)
+    # Campos para receta médica
+    medicamento = models.TextField(blank=True, null=True)
+    dosis = models.TextField(blank=True, null=True)
+    frecuencia = models.TextField(blank=True, null=True)
+    duracion = models.TextField(blank=True, null=True)
+    archivos_receta = models.FileField(upload_to='recetas_consulta_seguimiento/', blank=True, null=True)
+    documentos_adjuntos = models.FileField(upload_to='documentos_seguimiento/', blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Estado de la consulta
+    consulta_completada = models.BooleanField(default=False)
+    fecha_completada = models.DateTimeField(blank=True, null=True)
+    # Programar nueva cita de seguimiento
+    programar_nueva_cita = models.BooleanField(default=False)
+    fecha_nueva_cita = models.DateField(blank=True, null=True)
+    hora_nueva_cita = models.TimeField(blank=True, null=True)
+    motivo_nueva_cita = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'consulta_seguimiento'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Consulta Seguimiento {self.id_consulta_seguimiento} - Paciente: {self.fk_paciente} - Médico: {self.fk_medico}"
+
+    def tiene_receta(self):
+        return bool(self.medicamento or self.dosis or self.frecuencia or self.duracion)
+
+    def completar_consulta(self):
+        self.consulta_completada = True
+        self.fecha_completada = timezone.now()
+        self.save()

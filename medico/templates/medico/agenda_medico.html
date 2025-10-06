@@ -1,4 +1,5 @@
 {% extends "medico/dashboard_base.html" %}
+{% load static %}
 
 {% block content %}
 <!-- Estilos para DataTables con Bootstrap 5 -->
@@ -209,7 +210,7 @@
       if (!$(this).hasClass('dataTable')) {
         $(this).DataTable({
           language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            url: '{% static "js/datatables_es.json" %}'
           },
           pageLength: 5,
           lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "Todos"]],

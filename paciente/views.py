@@ -6,6 +6,7 @@ from datetime import date, datetime, time
 from django.db.models import Q, Avg, Count
 from .decorators import paciente_required
 
+from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta, SeguimientoClinico
 from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta
 
 DEPARTAMENTOS_EL_SALVADOR = [
@@ -505,6 +506,35 @@ def ver_recetas(request):
                 })
             except RecetaMedica.DoesNotExist:
                 pass
+
+    # Agregar recetas de seguimientos clínicos
+    try:
+        seguimientos = SeguimientoClinico.objects.filter(
+            fk_paciente=paciente
+        ).select_related('fk_cita', 'fk_medico')
+
+        for seguimiento in seguimientos:
+            if seguimiento.tiene_receta():
+                # Crear objeto similar a consulta
+                consulta_temp = type('ConsultaTemp', (), {})()
+                consulta_temp.medicamento = seguimiento.medicamento
+                consulta_temp.dosis = seguimiento.dosis
+                consulta_temp.fecha_inicio_tratamiento = None  # No hay en seguimiento
+                consulta_temp.fecha_fin_tratamiento = None
+                try:
+                    consulta_temp.archivos_receta = seguimiento.archivos_receta
+                except:
+                    consulta_temp.archivos_receta = None
+                consulta_temp.tiene_receta = lambda: True
+                recetas.append({
+                    'cita': seguimiento.fk_cita,
+                    'consulta': consulta_temp,
+                    'tipo': 'seguimiento',
+                    'seguimiento': seguimiento
+                })
+    except:
+        # Si hay problemas con la tabla de seguimientos, continuar sin ella
+        pass
 
     return render(request, 'paciente/ver_recetas.html', {
         'recetas': recetas

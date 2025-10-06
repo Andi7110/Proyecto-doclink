@@ -1,0 +1,65 @@
+{% extends "medico/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">📅 Programar Cita de Seguimiento</h2>
+
+  {% if paciente %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Paciente</h5>
+        <p><strong>Nombre:</strong> {{ paciente.get_nombre_display }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Formulario para programar cita de seguimiento -->
+  <form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Detalles de la Nueva Cita</h5>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.fecha_nueva_cita.id_for_label }}" class="form-label"><b>Fecha de la Cita</b></label>
+            {{ form.fecha_nueva_cita }}
+            {% if form.fecha_nueva_cita.errors %}
+              <div class="text-danger">{{ form.fecha_nueva_cita.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.hora_nueva_cita.id_for_label }}" class="form-label"><b>Hora de la Cita</b></label>
+            {{ form.hora_nueva_cita }}
+            {% if form.hora_nueva_cita.errors %}
+              <div class="text-danger">{{ form.hora_nueva_cita.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.motivo_nueva_cita.id_for_label }}" class="form-label"><b>Motivo de la Cita de Seguimiento</b></label>
+          {{ form.motivo_nueva_cita }}
+          {% if form.motivo_nueva_cita.errors %}
+            <div class="text-danger">{{ form.motivo_nueva_cita.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-success"><b>📅 Programar Cita</b></button>
+          <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
