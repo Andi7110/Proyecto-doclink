@@ -1,5 +1,6 @@
 from django import forms
 from datetime import date, datetime
+from django.core.validators import RegexValidator
 from bd.models import CitasMedicas, ConsultaMedica, Usuario, Medico, SeguimientoClinico, ConsultaSeguimiento
 from django import forms
 from bd.models import CitasMedicas, ConsultaMedica, Usuario, Medico
@@ -39,6 +40,23 @@ class PerfilMedicoForm(forms.Form):
     especialidad = forms.CharField(max_length=255, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     sub_especialidad_1 = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     sub_especialidad_2 = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    no_jvpm = forms.CharField(
+        max_length=5,
+        min_length=5,
+        required=True,
+        validators=[RegexValidator(r'^\d{5}$', 'El JVPM debe contener exactamente 5 dígitos numéricos.')],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '12345'})
+    )
+    dui = forms.CharField(
+        max_length=10,
+        required=False,
+        validators=[RegexValidator(r'^\d{8}-\d{1}$', 'El DUI debe tener el formato 12345678-9.')],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '12345678-9'})
+    )
+    descripcion = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe tu experiencia profesional...'})
+    )
 class SeguimientoClinicoForm(forms.ModelForm):
     class Meta:
         model = SeguimientoClinico
@@ -78,6 +96,3 @@ class ProgramarCitaSeguimientoForm(forms.Form):
         if fecha and fecha < date.today():
             raise forms.ValidationError("La fecha de la cita debe ser futura.")
         return fecha
-    no_jvpm = forms.CharField(max_length=255, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    dui = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    descripcion = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
