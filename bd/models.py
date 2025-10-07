@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.forms import ValidationError
 from django.utils import timezone
+from django.core.validators import RegexValidator
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, user_name, password=None, **extra_fields):
@@ -364,11 +365,42 @@ class ConsultaMedica(models.Model):
         db_table = 'consulta_medica'
 
     def __str__(self):
-        return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"
+               return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"   
+def tiene_receta(self):
+        return bool(self.medicamento or self.via_administracion or self.dosis) 
 
-    def tiene_receta(self):
-        return bool(self.medicamento or self.via_administracion or self.dosis)
+class PolizaSeguro(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='polizas')
+    compania_aseguradora = models.CharField(max_length=150)
+    numero_poliza = models.CharField(max_length=50, unique=True)
+    fecha_vigencia = models.DateField()
+    tipo_cobertura = models.CharField(max_length=100)
 
+    class Meta:
+        managed = True
+        db_table = 'bd_polizaseguro'
+        verbose_name = "Póliza de Seguro"
+        verbose_name_plural = "Pólizas de Seguros"
+
+    def __str__(self):
+        return f"{self.compania_aseguradora} - {self.numero_poliza}"
+    
+
+class ContactoEmergencia(models.Model):
+    paciente = models.ForeignKey('Paciente', on_delete=models.CASCADE, related_name='contactos_emergencia')
+    nombre_completo = models.CharField(max_length=150)
+    parentesco = models.CharField(max_length=50)
+    telefono = models.CharField(
+        max_length=15,
+        validators=[RegexValidator(r'^\+?\d{7,15}$', 'Ingrese un número de teléfono válido.')]
+    )
+    direccion = models.CharField(max_length=255, blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.nombre_completo} ({self.parentesco})"
 
 class SeguimientoClinico(models.Model):
     id_seguimiento_clinico = models.BigAutoField(primary_key=True)
@@ -448,3 +480,4 @@ class ConsultaSeguimiento(models.Model):
         self.consulta_completada = True
         self.fecha_completada = timezone.now()
         self.save()
+

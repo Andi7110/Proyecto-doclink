@@ -1,0 +1,27 @@
+{% extends "paciente/dashboard_base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h3>Médicos en el mapa</h3>
+  <div id="map" style="height: 600px; width: 100%;"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  var map = L.map('map').setView([13.7, -89.2], 8); // Centro en El Salvador
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  {% for medico in medicos %}
+    {% if medico.fk_clinica %}
+      L.marker([{{ medico.fk_clinica.latitud }}, {{ medico.fk_clinica.longitud }}])
+        .addTo(map)
+        .bindPopup("<b>{{ medico.usuario_set.first.nombre }} {{ medico.usuario_set.first.apellido }}</b><br>{{ medico.especialidad }}<br>{{ medico.fk_clinica.nombre }}");
+    {% endif %}
+  {% endfor %}
+</script>
+{% endblock %}

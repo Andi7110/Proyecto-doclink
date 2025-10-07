@@ -1,0 +1,24 @@
+<!-- paciente/templates/paciente/contacto_emergencia.html -->
+{% extends "paciente/dashboard_base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Contacto de Emergencia</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </form>
+
+    {% if contacto %}
+    <hr>
+    <h4>Contacto existente</h4>
+    <p><b>Nombre:</b> {{ contacto.nombre_completo }}</p>
+    <p><b>Parentesco:</b> {{ contacto.parentesco }}</p>
+    <p><b>Teléfono:</b> {{ contacto.telefono }}</p>
+    {% if contacto.direccion %}
+    <p><b>Dirección:</b> {{ contacto.direccion }}</p>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
