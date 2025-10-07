@@ -48,6 +48,7 @@ DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
 DATABASE_URL=sqlite:///db.sqlite3  # Para desarrollo local con SQLite
 # O para PostgreSQL: DATABASE_URL=postgresql://usuario:password@localhost:5432/doclink
+MEDIA_ROOT=C:\Users\[TuUsuario]\OneDrive\consultas-documentacion  # Ruta personalizada para archivos (opcional)
 ```
 
 ### 5. Aplicar Migraciones de Base de Datos
@@ -114,3 +115,22 @@ Asegúrate de configurar las variables de entorno en el archivo `.env` y montar 
 - `bd/`: App de base de datos y modelos
 - `static/`: Archivos estáticos
 - `templates/`: Plantillas HTML
+
+## Funcionalidades
+
+### Ranking de Médicos
+Los pacientes pueden visualizar un ranking de médicos basado en las calificaciones promedio de las consultas. Incluye filtros por especialidad y ubicación (municipio de la clínica). Accesible desde el dashboard del paciente en la sección "Ranking de Médicos".
+
+### Sistema de Calificaciones y Reseñas
+- Los pacientes pueden calificar a los médicos después de completar una consulta.
+- Las calificaciones van de 1 a 5 estrellas.
+- Se pueden incluir reseñas opcionales para proporcionar feedback detallado.
+- Las calificaciones se muestran en el ranking de médicos y ayudan a otros pacientes en su elección.
+- Accesible desde la agenda del paciente, en las citas anteriores completadas.
+
+### Almacenamiento de Documentos
+- Los documentos médicos (PDFs, imágenes) se almacenan automáticamente en OneDrive.
+- Ruta por defecto: `C:\Users\[Usuario]\OneDrive\consultas-documentacion\`
+- Se puede personalizar la ruta mediante la variable de entorno `MEDIA_ROOT` en el archivo `.env`.
+- Los archivos se sincronizan automáticamente con la nube de OneDrive.
+- **Nota**: Ya no se utiliza almacenamiento local en el proyecto.

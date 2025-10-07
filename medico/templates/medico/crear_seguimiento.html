@@ -1,0 +1,157 @@
+{% extends "medico/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">📋 Crear Seguimiento Clínico</h2>
+
+  <!-- Información de la cita -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Información de la Cita</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
+          <p><strong>Hora de inicio:</strong> {{ cita.hora_inicio }}</p>
+          <p><strong>Motivo:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Nombre del Paciente:</strong> {{ usuario_paciente.nombre }} {{ usuario_paciente.apellido }}</p>
+          <p><strong>ID Paciente:</strong> {{ paciente.id_paciente }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario de seguimiento -->
+  <form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Detalles del Seguimiento Clínico</h5>
+
+        <div class="mb-3">
+          <label for="{{ form.diagnostico_final.id_for_label }}" class="form-label"><b>Diagnóstico Final</b></label>
+          {{ form.diagnostico_final }}
+          {% if form.diagnostico_final.errors %}
+            <div class="text-danger">{{ form.diagnostico_final.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.observaciones.id_for_label }}" class="form-label"><b>Observaciones</b></label>
+          {{ form.observaciones }}
+          {% if form.observaciones.errors %}
+            <div class="text-danger">{{ form.observaciones.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.tratamiento.id_for_label }}" class="form-label"><b>Tratamiento</b></label>
+          {{ form.tratamiento }}
+          {% if form.tratamiento.errors %}
+            <div class="text-danger">{{ form.tratamiento.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Sección de Receta Médica -->
+        <h5 class="mt-4 mb-3">💊 Receta Médica (Opcional)</h5>
+
+        <div class="mb-3">
+          <label for="{{ form.medicamento.id_for_label }}" class="form-label">Medicamento</label>
+          {{ form.medicamento }}
+          {% if form.medicamento.errors %}
+            <div class="text-danger">{{ form.medicamento.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.dosis.id_for_label }}" class="form-label">Dosis</label>
+          {{ form.dosis }}
+          {% if form.dosis.errors %}
+            <div class="text-danger">{{ form.dosis.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.frecuencia.id_for_label }}" class="form-label">Frecuencia</label>
+          {{ form.frecuencia }}
+          {% if form.frecuencia.errors %}
+            <div class="text-danger">{{ form.frecuencia.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.duracion.id_for_label }}" class="form-label">Duración</label>
+          {{ form.duracion }}
+          {% if form.duracion.errors %}
+            <div class="text-danger">{{ form.duracion.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.archivos_receta.id_for_label }}" class="form-label">Adjuntar Archivos de Receta (Opcional)</label>
+          {{ form.archivos_receta }}
+          {% if form.archivos_receta.errors %}
+            <div class="text-danger">{{ form.archivos_receta.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Programar nueva consulta -->
+        <h5 class="mt-4 mb-3">📅 Programar Nueva Consulta de Seguimiento (Opcional)</h5>
+
+        <div class="mb-3 form-check">
+          {{ form.programar_nueva_consulta }}
+          <label for="{{ form.programar_nueva_consulta.id_for_label }}" class="form-check-label">
+            Programar nueva consulta de seguimiento
+          </label>
+        </div>
+
+        <div id="nueva-consulta-fields" style="display: none;">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.fecha_nueva_consulta.id_for_label }}" class="form-label">Fecha Nueva Consulta</label>
+              {{ form.fecha_nueva_consulta }}
+              {% if form.fecha_nueva_consulta.errors %}
+                <div class="text-danger">{{ form.fecha_nueva_consulta.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.hora_nueva_consulta.id_for_label }}" class="form-label">Hora Nueva Consulta</label>
+              {{ form.hora_nueva_consulta }}
+              {% if form.hora_nueva_consulta.errors %}
+                <div class="text-danger">{{ form.hora_nueva_consulta.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.notas_nueva_consulta.id_for_label }}" class="form-label">Notas Nueva Consulta</label>
+            {{ form.notas_nueva_consulta }}
+            {% if form.notas_nueva_consulta.errors %}
+              <div class="text-danger">{{ form.notas_nueva_consulta.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-success"><b>💾 Guardar Seguimiento</b></button>
+          <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('{{ form.programar_nueva_consulta.id_for_label }}').addEventListener('change', function() {
+  var fields = document.getElementById('nueva-consulta-fields');
+  if (this.checked) {
+    fields.style.display = 'block';
+  } else {
+    fields.style.display = 'none';
+  }
+});
+</script>
+{% endblock %}

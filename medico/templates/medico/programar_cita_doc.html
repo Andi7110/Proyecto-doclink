@@ -23,7 +23,7 @@
       <select name="fk_paciente" id="fk_paciente" class="form-select">
         <option value="">-- Seleccione un paciente existente --</option>
         {% for paciente in pacientes %}
-          <option value="{{ paciente.id_paciente }}">{{ paciente.nombre }} {{ paciente.apellido }}</option>
+          <option value="{{ paciente.id_paciente }}">{{ paciente.get_nombre_display }}</option>
         {% endfor %}
       </select>
     </div>
@@ -67,18 +67,12 @@
         <label for="hora_inicio" class="form-label">Hora Inicio</label>
         <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
       </div>
-      <div class="col-md-4 mb-3">
-        <label for="hora_fin" class="form-label">Hora Fin</label>
-        <input type="time" name="hora_fin" id="hora_fin" class="form-control" required>
-      </div>
     </div>
 
     <div class="mb-3">
       <label for="status_cita_medica" class="form-label">Estado</label>
       <select name="status_cita_medica" id="status_cita_medica" class="form-select" required>
-        <option value="Programada" selected>Programada</option>
-        <option value="Cancelada">Cancelada</option>
-        <option value="Finalizada">Finalizada</option>
+        <option value="Pendiente" selected>Pendiente</option>
       </select>
     </div>
 
@@ -92,3 +86,4 @@
   </form>
 </div>
 {% endblock %}
+

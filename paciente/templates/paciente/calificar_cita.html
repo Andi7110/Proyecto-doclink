@@ -1,0 +1,53 @@
+{% extends 'paciente/dashboard_base.html' %}
+
+{% block title %}Calificar Médico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="fas fa-star"></i> Calificar Médico</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Información de la cita</h5>
+                        <p><strong>Médico:</strong> {{ nombre_medico }}</p>
+                        <p><strong>Especialidad:</strong> {{ especialidad }}</p>
+                        <p><strong>Fecha:</strong> {{ cita.fecha_consulta|date:"d/m/Y" }}</p>
+                        <p><strong>Hora:</strong> {{ cita.hora_inicio|time:"H:i" }}</p>
+                        <p><strong>Motivo:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="calificacion" class="form-label"><strong>Calificación (1-5 estrellas) *</strong></label>
+                            <select class="form-select" id="calificacion" name="calificacion" required>
+                                <option value="">Selecciona una calificación</option>
+                                <option value="5">⭐⭐⭐⭐⭐ - Excelente</option>
+                                <option value="4">⭐⭐⭐⭐ - Muy bueno</option>
+                                <option value="3">⭐⭐⭐ - Bueno</option>
+                                <option value="2">⭐⭐ - Regular</option>
+                                <option value="1">⭐ - Deficiente</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="resena" class="form-label"><strong>Reseña (opcional)</strong></label>
+                            <textarea class="form-control" id="resena" name="resena" rows="4" placeholder="Comparte tu experiencia con este médico..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'agenda' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-warning">Enviar Calificación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -88,21 +88,11 @@
     </div>
   </div>
   <!-- Panel derecho: Ranking de Médicos -->
-  <div class="col-12 col-lg-6 mb-4">
+  <div class="col-12 mb-4">
     <div class="card shadow-sm p-3 h-100">
       <h6 class="mb-3" style="font-weight:bold;">Ranking de Medicos</h6>
-      <div>
-        <!-- Puedes cambiar esta imagen por una gráfica real si lo deseas -->
-        <img src="https://i.ibb.co/S5bXBgc/bar-placeholder.png" alt="Ranking de Medicos" class="w-100 rounded"
-          style="min-height:200px;max-height:250px;object-fit:contain;" />
-      </div>
-      <!-- Opcional: Leyenda de especialidades debajo de la gráfica -->
-      <div class="mt-2">
-        <small>
-          <b>Dentista</b> &bull; <b>Dermatologo</b> &bull; <b>Cirujano</b> &bull; <b>Cardiologo</b> &bull;
-          <b>Ginecologo</b> &bull; <b>Neurologo</b>
-        </small>
-      </div>
+      <p class="mb-3">Consulta el ranking completo de médicos basado en calificaciones de pacientes.</p>
+      <a href="{% url 'ranking_medico' %}" class="btn btn-primary w-100">Ver Ranking Completo</a>
     </div>
   </div>
 </div>
