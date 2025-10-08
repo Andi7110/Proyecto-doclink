@@ -479,7 +479,7 @@ def ver_diagnostico(request, cita_id):
     # Obtener la consulta médica si existe
     try:
         consulta = cita.consulta_medica
-    except:
+    except ConsultaMedica.DoesNotExist:
         consulta = None
 
     # Si no hay consulta o no tiene receta, buscar en RecetaMedica

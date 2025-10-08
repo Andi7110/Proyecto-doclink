@@ -19,10 +19,13 @@
 <div class="d-flex flex-wrap gap-2 mb-4 mt-2">
   <a href="{% url 'agregar_poliza' %}" class="btn btn-primary">
     Agregar Póliza
-</a>
+  </a>
 <!-- Botón para agregar/editar contacto de emergencia -->
   <a href="{% url 'contacto_emergencia' %}" class="btn btn-warning">
     Contacto de Emergencia
+  </a>
+  <a href="{% url 'agenda' %}" class="btn btn-success">
+    📅 Ver Agenda y Diagnósticos
   </a>
   <button class="btn btn-danger btn-custom">Cancelar cita</button>
   <div class="dropdown">
@@ -31,7 +34,7 @@
       Recetas
     </button>
     <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Ver recetas</a></li>
+      <li><a class="dropdown-item" href="{% url 'ver_recetas' %}">Ver recetas</a></li>
       <li><a class="dropdown-item" href="#">Descargar PDF</a></li>
     </ul>
   </div>
