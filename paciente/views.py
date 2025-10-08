@@ -4,13 +4,13 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from datetime import date, datetime, time
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 from .decorators import paciente_required
 from django.shortcuts import render, redirect, get_object_or_404
 from bd.models import PolizaSeguro, ContactoEmergencia
 from .forms import PolizaSeguroForm, ContactoEmergenciaForm
 
 from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta, SeguimientoClinico
-from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta
 
 DEPARTAMENTOS_EL_SALVADOR = [
     'Ahuachapán', 'Santa Ana', 'Sonsonate', 'Chalatenango', 'Cuscatlán',
