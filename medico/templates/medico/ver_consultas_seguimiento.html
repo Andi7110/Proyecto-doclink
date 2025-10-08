@@ -44,7 +44,7 @@
                 <p><em>No se prescribió medicamento</em></p>
               {% endif %}
               {% if consulta.documentos_adjuntos %}
-                <p><strong>Documentos Adjuntos:</strong> <a href="{{ consulta.documentos_adjuntos.url }}" target="_blank">Ver archivo</a></p>
+                <p><strong>Documentos Adjuntos:</strong> <a href="{{ consulta.documentos_adjuntos.url }}" download>Descargar archivo</a></p>
               {% endif %}
             </div>
           </div>
