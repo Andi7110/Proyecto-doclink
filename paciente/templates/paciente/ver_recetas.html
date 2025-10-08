@@ -32,8 +32,8 @@
                                 {% endif %}
                                 {% if receta.consulta.archivos_receta %}
                                 <p><i class="bi bi-file-earmark-pdf"></i>
-                                    <a href="{{ receta.consulta.archivos_receta.url }}" target="_blank" class="text-decoration-none">
-                                        Ver archivo adjunto
+                                    <a href="{{ receta.consulta.archivos_receta.url }}" download class="text-decoration-none">
+                                        Descargar archivo adjunto
                                     </a>
                                 </p>
                                 {% endif %}
