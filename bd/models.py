@@ -365,9 +365,10 @@ class ConsultaMedica(models.Model):
         db_table = 'consulta_medica'
 
     def __str__(self):
-               return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"   
-def tiene_receta(self):
-        return bool(self.medicamento or self.via_administracion or self.dosis) 
+               return f"Consulta asociada a cita {self.fk_cita.id_cita_medicas}"
+
+    def tiene_receta(self):
+        return bool(self.medicamento or self.via_administracion or self.dosis)
 
 class PolizaSeguro(models.Model):
     id = models.BigAutoField(primary_key=True)
