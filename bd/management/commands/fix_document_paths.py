@@ -6,9 +6,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         updated_count = 0
-        for consulta in ConsultaMedica.objects.filter(documentos_adjuntos__startswith='consultas/'):
+        for consulta in ConsultaMedica.objects.exclude(documentos_adjuntos__startswith='consultas/').exclude(documentos_adjuntos__isnull=True).exclude(documentos_adjuntos=''):
             old_path = consulta.documentos_adjuntos.name
-            new_path = old_path.replace('consultas/', '', 1)
+            new_path = f"consultas/{old_path}"
             consulta.documentos_adjuntos.name = new_path
             consulta.save()
             self.stdout.write(f"Updated {old_path} to {new_path}")

@@ -350,7 +350,7 @@ class ConsultaMedica(models.Model):
     diagnostico = models.TextField(blank=True, null=True)
     tratamiento = models.TextField(blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
-    documentos_adjuntos = models.FileField(upload_to='documentos/', blank=True, null=True)
+    documentos_adjuntos = models.FileField(upload_to='consultas/documentos/', blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     # Campos para receta médica
     medicamento = models.TextField(blank=True, null=True)
