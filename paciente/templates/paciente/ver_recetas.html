@@ -32,7 +32,7 @@
                                 {% endif %}
                                 {% if receta.consulta.archivos_receta %}
                                 <p><i class="bi bi-file-earmark-pdf"></i>
-                                    <a href="{{ receta.consulta.archivos_receta.url }}" download class="text-decoration-none">
+                                    <a href="{% url 'descargar_archivo_base64' receta.consulta.id_consulta_medica 'receta' %}" download class="text-decoration-none">
                                         Descargar archivo adjunto
                                     </a>
                                 </p>

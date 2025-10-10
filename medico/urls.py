@@ -31,5 +31,6 @@ urlpatterns = [
     path('crear-consulta-seguimiento/<int:seguimiento_id>/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento_con_anterior'),
     path('crear-consulta-seguimiento-paciente/<int:paciente_id>/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento_paciente'),
     path('ver-consultas-seguimiento/', views.ver_consultas_seguimiento, name='ver_consultas_seguimiento'),
+    path('descargar-archivo/<int:consulta_id>/<str:tipo>/', views.descargar_archivo_base64, name='descargar_archivo_base64'),
 ]
 

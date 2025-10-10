@@ -68,7 +68,7 @@
                             <div class="card border-secondary">
                                 <div class="card-body">
                                     <p><i class="bi bi-file-earmark-pdf"></i>
-                                        <a href="{{ consulta.documentos_adjuntos.url }}" download class="text-decoration-none">
+                                        <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}" download class="text-decoration-none">
                                             Descargar documento adjunto
                                         </a>
                                     </p>
@@ -100,7 +100,7 @@
                                     {% endif %}
                                     {% if consulta.archivos_receta %}
                                     <p><i class="bi bi-file-earmark-pdf"></i>
-                                        <a href="{{ consulta.archivos_receta.url }}" download class="text-decoration-none">
+                                        <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}" download class="text-decoration-none">
                                             Descargar archivo adjunto de receta
                                         </a>
                                     </p>

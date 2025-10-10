@@ -29,7 +29,7 @@
                 <p><strong>Frecuencia:</strong> {{ seguimiento.frecuencia }}</p>
                 <p><strong>Duración:</strong> {{ seguimiento.duracion }}</p>
                 {% if seguimiento.archivos_receta %}
-                  <p><strong>Receta:</strong> <a href="{{ seguimiento.archivos_receta.url }}" download>Descargar archivo</a></p>
+                  <p><strong>Receta:</strong> <a href="{% url 'descargar_archivo_base64' seguimiento.fk_cita.consulta_medica.id_consulta_medica 'receta' %}" download>Descargar archivo</a></p>
                 {% endif %}
               {% else %}
                 <p><em>No se prescribió medicamento</em></p>
