@@ -871,7 +871,7 @@ def descargar_archivo_base64(request, consulta_id, tipo):
         import base64
         file_data = base64.b64decode(base64_data)
         response = HttpResponse(file_data, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         return response
     except Exception as e:
         return HttpResponse(f"Error al procesar archivo: {e}", status=500)
