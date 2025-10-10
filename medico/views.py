@@ -418,11 +418,13 @@ def realizar_consulta(request, cita_id):
         documentos_adjuntos_base64 = None
         if adjunto:
             import base64
+            adjunto.seek(0)  # Asegurar que esté al inicio
             documentos_adjuntos_base64 = base64.b64encode(adjunto.read()).decode('utf-8')
 
         archivos_receta_base64 = None
         if archivos_receta:
             import base64
+            archivos_receta.seek(0)  # Asegurar que esté al inicio
             archivos_receta_base64 = base64.b64encode(archivos_receta.read()).decode('utf-8')
 
         try:
