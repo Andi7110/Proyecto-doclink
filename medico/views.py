@@ -414,32 +414,18 @@ def realizar_consulta(request, cita_id):
         fecha_fin_tratamiento = request.POST.get('fecha_fin_tratamiento') or None
         archivos_receta = request.FILES.get('archivos_receta')
 
-        # Subir archivos al fileserver
-        documentos_adjuntos_url = None
+        # Codificar archivos a base64
+        documentos_adjuntos_base64 = None
         if adjunto:
-            import requests
-            import uuid
-            filename = f"{uuid.uuid4()}_{adjunto.name}"
-            files = {'file': (filename, adjunto, adjunto.content_type)}
-            try:
-                response = requests.post('http://fileserver:8080/upload', files=files)
-                if response.status_code == 201:
-                    documentos_adjuntos_url = f"http://fileserver:8080/{filename}"
-            except:
-                pass  # Si falla, dejar None
+            import base64
+            adjunto.seek(0)
+            documentos_adjuntos_base64 = base64.b64encode(adjunto.read()).decode('utf-8')
 
-        archivos_receta_url = None
+        archivos_receta_base64 = None
         if archivos_receta:
-            import requests
-            import uuid
-            filename = f"{uuid.uuid4()}_{archivos_receta.name}"
-            files = {'file': (filename, archivos_receta, archivos_receta.content_type)}
-            try:
-                response = requests.post('http://fileserver:8080/upload', files=files)
-                if response.status_code == 201:
-                    archivos_receta_url = f"http://fileserver:8080/{filename}"
-            except:
-                pass
+            import base64
+            archivos_receta.seek(0)
+            archivos_receta_base64 = base64.b64encode(archivos_receta.read()).decode('utf-8')
 
         try:
             # Crear la consulta médica
@@ -449,13 +435,13 @@ def realizar_consulta(request, cita_id):
                 diagnostico=diagnostico,
                 tratamiento=tratamiento or prescripcion,  # Usar tratamiento o prescripción
                 observaciones=observaciones,
-                documentos_adjuntos=documentos_adjuntos_url,
+                documentos_adjuntos=documentos_adjuntos_base64,
                 medicamento=medicamento,
                 via_administracion=via_administracion,
                 dosis=dosis,
                 fecha_inicio_tratamiento=fecha_inicio_tratamiento,
                 fecha_fin_tratamiento=fecha_fin_tratamiento,
-                archivos_receta=archivos_receta_url
+                archivos_receta=archivos_receta_base64
             )
 
             # Actualizar el estado de la cita a "Completada"
@@ -866,19 +852,28 @@ def ver_consultas_seguimiento(request):
 @login_required
 def descargar_archivo_base64(request, consulta_id, tipo):
     """
-    Vista para redirigir a archivos en fileserver
+    Vista para servir archivos desde base64
     tipo: 'documentos' o 'receta'
     """
     consulta = get_object_or_404(ConsultaMedica, id_consulta_medica=consulta_id)
 
     if tipo == 'documentos':
-        url = consulta.documentos_adjuntos
+        base64_data = consulta.documentos_adjuntos
+        filename = 'documento_adjunto.pdf'
     elif tipo == 'receta':
-        url = consulta.archivos_receta
+        base64_data = consulta.archivos_receta
+        filename = 'receta_medica.pdf'
     else:
         return HttpResponse("Tipo de archivo inválido", status=400)
 
-    if not url:
+    if not base64_data:
         return HttpResponse("Archivo no encontrado", status=404)
 
-    return redirect(url)
+    try:
+        import base64
+        file_data = base64.b64decode(base64_data)
+        response = HttpResponse(file_data, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error al procesar archivo: {e}", status=500)
