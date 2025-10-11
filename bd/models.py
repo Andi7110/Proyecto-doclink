@@ -47,6 +47,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     # Campos para autenticación de dos factores
     two_factor_enabled = models.BooleanField(default=False)
     two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
+
+    # Campo para foto de perfil
+    foto_perfil = models.ImageField(upload_to='perfiles/', blank=True, null=True)
     
     # Relaciones
     fk_rol = models.ForeignKey('Rol', models.DO_NOTHING, db_column='fk_rol', blank=True, null=True)

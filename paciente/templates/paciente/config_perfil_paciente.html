@@ -1,4 +1,4 @@
-{% extends 'medico/dashboard_base.html' %}
+{% extends 'paciente/dashboard_base.html' %}
 {% load static %}
 
 {% block content %}
@@ -6,9 +6,9 @@
   <div class="container">
 
     <div class="text-center mb-4">
-      <h2 class="mb-3">👨‍⚕️ Configuración del Perfil Médico</h2>
+      <h2 class="mb-3">👤 Configuración del Perfil Paciente</h2>
       <img src="{% static 'img/logo.png' %}" alt="Logo DocLink" width="60" class="mb-3">
-      <p class="text-muted">Edita tu información profesional y de atención médica.</p>
+      <p class="text-muted">Edita tu información personal.</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
@@ -92,62 +92,8 @@
         </div>
       </div>
 
-      <h4 class="mb-3 mt-4">Información Profesional</h4>
-
-      <div class="mb-3">
-        {{ form.especialidad.label_tag }}
-        {{ form.especialidad }}
-        {% if form.especialidad.errors %}
-          <div class="text-danger">{{ form.especialidad.errors }}</div>
-        {% endif %}
-      </div>
-
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          {{ form.sub_especialidad_1.label_tag }}
-          {{ form.sub_especialidad_1 }}
-          {% if form.sub_especialidad_1.errors %}
-            <div class="text-danger">{{ form.sub_especialidad_1.errors }}</div>
-          {% endif %}
-        </div>
-
-        <div class="col-md-6 mb-3">
-          {{ form.sub_especialidad_2.label_tag }}
-          {{ form.sub_especialidad_2 }}
-          {% if form.sub_especialidad_2.errors %}
-            <div class="text-danger">{{ form.sub_especialidad_2.errors }}</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          {{ form.no_jvpm.label_tag }}
-          {{ form.no_jvpm }}
-          {% if form.no_jvpm.errors %}
-            <div class="text-danger">{{ form.no_jvpm.errors }}</div>
-          {% endif %}
-        </div>
-
-        <div class="col-md-6 mb-3">
-          {{ form.dui.label_tag }}
-          {{ form.dui }}
-          {% if form.dui.errors %}
-            <div class="text-danger">{{ form.dui.errors }}</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="mb-3">
-        {{ form.descripcion.label_tag }}
-        {{ form.descripcion }}
-        {% if form.descripcion.errors %}
-          <div class="text-danger">{{ form.descripcion.errors }}</div>
-        {% endif %}
-      </div>
-
       <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
+        <a href="{% url 'dashboard_paciente' %}" class="btn btn-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
       </div>
     </form>

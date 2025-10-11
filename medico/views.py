@@ -190,7 +190,7 @@ def config_perfildoc(request):
         usuario.save()
 
     if request.method == 'POST':
-        form = PerfilMedicoForm(request.POST)
+        form = PerfilMedicoForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 with transaction.atomic():
@@ -201,6 +201,8 @@ def config_perfildoc(request):
                     usuario.telefono = form.cleaned_data['telefono']
                     usuario.departamento = form.cleaned_data['departamento']
                     usuario.municipio = form.cleaned_data['municipio']
+                    if form.cleaned_data['foto_perfil']:
+                        usuario.foto_perfil = form.cleaned_data['foto_perfil']
                     usuario.save()
 
                     # Guardar campos de Medico
@@ -233,6 +235,7 @@ def config_perfildoc(request):
             'no_jvpm': medico.no_jvpm or '',
             'dui': medico.dui or '',
             'descripcion': medico.descripcion or '',
+            'foto_perfil': usuario.foto_perfil,
         }
         form = PerfilMedicoForm(initial=initial_data)
 

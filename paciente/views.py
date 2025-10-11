@@ -5,10 +5,11 @@ from django.contrib import messages
 from datetime import date, datetime, time
 from django.db.models import Q, Avg, Count
 from django.utils import timezone
+from django.db import transaction
 from .decorators import paciente_required
 from django.shortcuts import render, redirect, get_object_or_404
 from bd.models import PolizaSeguro, ContactoEmergencia
-from .forms import PolizaSeguroForm, ContactoEmergenciaForm
+from .forms import PolizaSeguroForm, ContactoEmergenciaForm, PerfilPacienteForm
 
 from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta, SeguimientoClinico
 
@@ -702,4 +703,54 @@ def generar_pdf_receta(request, cita_id):
 
     doc.build(story)
     return response
+
+@login_required
+@paciente_required
+def config_perfil_paciente(request):
+    usuario = request.user
+    paciente = getattr(usuario, 'fk_paciente', None)
+
+    # Si no existe perfil paciente, crearlo
+    if not paciente:
+        from bd.models import Paciente
+        paciente = Paciente.objects.create()
+        usuario.fk_paciente = paciente
+        usuario.save()
+
+    if request.method == 'POST':
+        form = PerfilPacienteForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar campos de Usuario
+                    usuario.nombre = form.cleaned_data['nombre']
+                    usuario.apellido = form.cleaned_data['apellido']
+                    usuario.correo = form.cleaned_data['correo']
+                    usuario.telefono = form.cleaned_data['telefono']
+                    usuario.departamento = form.cleaned_data['departamento']
+                    usuario.municipio = form.cleaned_data['municipio']
+                    if form.cleaned_data['foto_perfil']:
+                        usuario.foto_perfil = form.cleaned_data['foto_perfil']
+                    usuario.save()
+
+                messages.success(request, "Perfil paciente actualizado correctamente.")
+                return redirect('dashboard_paciente')
+            except Exception as e:
+                messages.error(request, f"Error al guardar los cambios: {e}")
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario.")
+    else:
+        # Inicializar formulario con valores actuales
+        initial_data = {
+            'nombre': usuario.nombre or '',
+            'apellido': usuario.apellido or '',
+            'correo': usuario.correo or '',
+            'telefono': usuario.telefono or '',
+            'departamento': usuario.departamento or '',
+            'municipio': usuario.municipio or '',
+            'foto_perfil': usuario.foto_perfil,
+        }
+        form = PerfilPacienteForm(initial=initial_data)
+
+    return render(request, 'paciente/config_perfil_paciente.html', {'form': form})
 

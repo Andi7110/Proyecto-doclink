@@ -57,6 +57,12 @@ class PerfilMedicoForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe tu experiencia profesional...'})
     )
+
+    # Campo para foto de perfil
+    foto_perfil = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
 class SeguimientoClinicoForm(forms.ModelForm):
     class Meta:
         model = SeguimientoClinico

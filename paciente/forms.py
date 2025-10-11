@@ -1,6 +1,5 @@
 from django import forms
-from bd.models import PolizaSeguro
-from bd.models import ContactoEmergencia
+from bd.models import PolizaSeguro, ContactoEmergencia, Usuario
 
 class PolizaSeguroForm(forms.ModelForm):
     fecha_vigencia = forms.DateField(
@@ -28,3 +27,18 @@ class ContactoEmergenciaForm(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+503XXXXXXXX'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+class PerfilPacienteForm(forms.Form):
+    # Campos de Usuario
+    nombre = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    apellido = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    correo = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    telefono = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    departamento = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    municipio = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    # Campo para foto de perfil
+    foto_perfil = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
