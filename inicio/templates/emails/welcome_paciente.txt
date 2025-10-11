@@ -1,0 +1,25 @@
+Bienvenido a DocLink - Paciente
+
+Hola {{ user_name }},
+
+¡Felicitaciones! Has completado exitosamente tu registro como Paciente en DocLink.
+
+Tu cuenta ha sido verificada y ahora puedes acceder a todos los servicios médicos.
+
+¿Qué puedes hacer ahora?
+- Agendar Citas: Programa citas con médicos de manera fácil
+- Buscar Médicos: Encuentra especialistas calificados
+- Historial Médico: Accede a tu historial completo
+- Recetas Digitales: Recibe y administra tus recetas
+- Notificaciones: Recibe recordatorios de citas
+- Seguimiento: Monitorea tu progreso de salud
+
+Inicia sesión ahora: http://127.0.0.1:8000/login/
+
+En DocLink nos comprometemos a proporcionarte la mejor experiencia en el cuidado de tu salud.
+
+¡Comienza tu viaje hacia una mejor salud con DocLink!
+
+DocLink - Tu salud, nuestra prioridad
+Si tienes preguntas, contactanos a: sistemadoclink@gmail.com
+© 2025 DocLink. Todos los derechos reservados.

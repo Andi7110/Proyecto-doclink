@@ -43,6 +43,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     telefono = models.CharField(max_length=20, blank=True, null=True)
     status_plataforma = models.CharField(max_length=1, blank=True, null=True)
     fecha_registro = models.DateField(default=timezone.now)
+
+    # Campos para autenticación de dos factores
+    two_factor_enabled = models.BooleanField(default=False)
+    two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
     
     # Relaciones
     fk_rol = models.ForeignKey('Rol', models.DO_NOTHING, db_column='fk_rol', blank=True, null=True)
@@ -66,17 +70,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         managed = True
         db_table = 'usuario'
 
-    def get_rol(self):
-        if self.fk_medico:
-            return 'medico'
-        elif self.fk_paciente:
-            return 'paciente'
-        elif self.fk_admin:
-            return 'admin'
-        return None
-
-    def __str__(self):
-        return f"{self.nombre} {self.apellido}" if self.nombre and self.apellido else self.user_name
 
     def get_rol(self):
         if self.fk_medico:
@@ -481,4 +474,16 @@ class ConsultaSeguimiento(models.Model):
         self.consulta_completada = True
         self.fecha_completada = timezone.now()
         self.save()
+
+class EmailVerificationToken(models.Model):
+    user = models.OneToOneField(Usuario, on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Token for {self.user.correo}"
 

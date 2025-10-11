@@ -1,0 +1,33 @@
+Bienvenido a DocLink - Médico
+
+Estimado Dr./Dra. {{ user_name }},
+
+¡Felicitaciones! Has completado exitosamente tu registro como Médico en DocLink.
+
+Tu cuenta profesional ha sido verificada y ahora puedes acceder a todas las herramientas profesionales.
+
+Información Profesional Registrada:
+Especialidad: {{ especialidad }}
+Junta Vocacional: {{ licencia }}
+
+Herramientas Profesionales Disponibles:
+- Gestión de Agenda: Administra citas y horarios
+- Pacientes: Accede a perfiles y historiales
+- Consultas Digitales: Registra diagnósticos y tratamientos
+- Recetas Médicas: Genera recetas digitales
+- Clínicas: Gestiona múltiples clínicas
+- Reportes: Estadísticas de tu práctica
+- Seguridad: Información protegida con altos estándares
+- Acceso Móvil: Gestiona desde cualquier dispositivo
+
+Acceder a mi Panel Médico: http://127.0.0.1:8000/login/
+
+Como profesional de la salud registrado en DocLink, te comprometes a mantener los más altos estándares éticos.
+
+Si necesitas configurar tu perfil, puedes hacerlo desde tu panel de médico.
+
+¡Bienvenido a la comunidad médica de DocLink!
+
+DocLink - Excelencia en el cuidado de la salud
+Para soporte técnico médico: sistemadoclink@gmail.com
+© 2025 DocLink. Todos los derechos reservados.

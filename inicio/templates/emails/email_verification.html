@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica tu cuenta en DocLink</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            margin: 20px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        .welcome-text {
+            font-size: 24px;
+            color: #007bff;
+            margin: 20px 0;
+        }
+        .verification-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 14px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{% static 'img/logo.png' %}" alt="DocLink Logo" class="logo">
+            <h1 class="welcome-text">¡Bienvenido a DocLink!</h1>
+        </div>
+
+        <p>Hola <strong>{{ user_name }}</strong>,</p>
+
+        <p>Gracias por registrarte en <strong>DocLink</strong>, tu plataforma de gestión médica confiable.</p>
+
+        <div class="verification-section">
+            <h3>Verifica tu cuenta</h3>
+            <p>Para completar tu registro y comenzar a usar todos los servicios de DocLink, necesitas verificar tu dirección de correo electrónico.</p>
+
+            <p>Haz clic en el botón de abajo para verificar tu cuenta:</p>
+
+            <a href="{{ verification_url }}" class="btn">Verificar mi cuenta</a>
+
+            <p><small>Si el botón no funciona, copia y pega esta URL en tu navegador:</small></p>
+            <p><code>{{ verification_url }}</code></p>
+        </div>
+
+        <div class="warning">
+            <strong>Importante:</strong> Este enlace expirará en 24 horas por seguridad.
+        </div>
+
+        <p>Una vez verificada tu cuenta, podrás:</p>
+        <ul>
+            {% if user_type == 'medico' %}
+            <li>Gestionar tus citas médicas</li>
+            <li>Acceder a perfiles de pacientes</li>
+            <li>Crear y gestionar consultas</li>
+            <li>Generar recetas médicas</li>
+            {% else %}
+            <li>Agendar citas con médicos</li>
+            <li>Acceder a tu historial médico</li>
+            <li>Recibir notificaciones de consultas</li>
+            <li>Gestionar tu información personal</li>
+            {% endif %}
+        </ul>
+
+        <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+
+        <p>¡Esperamos que DocLink te ayude a mejorar tu experiencia en el cuidado de la salud!</p>
+
+        <div class="footer">
+            <p><strong>DocLink - Tu salud, nuestra prioridad</strong></p>
+            <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+            <p>&copy; 2025 DocLink. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

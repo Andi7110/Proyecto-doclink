@@ -35,31 +35,19 @@
       
       <!-- Encabezado -->
       <div class="text-center mb-4">
-        <h4 class="fw-bold text-primary">Autenticación</h4>
-        <p class="text-muted mt-3">Se ha enviado un código de autenticación a su correo electrónico</p>
+        <h4 class="fw-bold text-primary">Completar Registro</h4>
+        <p class="text-muted mt-3">Haz clic en "Completar Registro" para finalizar tu cuenta. Recibirás un email para verificarla.</p>
       </div>
-      
+
       <div class="divider"></div>
-      
+
       <!-- Formulario -->
       <form method="POST" class="mt-4">
         {% csrf_token %}
-        
-        <!-- Campo ignorado pero requerido para validar -->
-        <div class="mb-4">
-          <label class="form-label fw-medium d-block text-center mb-3">Ingrese el código enviado a su correo:</label>
-          <input type="text" 
-                 class="form-control form-control-lg py-3 code-input" 
-                 placeholder="Ej123456"
-                 name="codigo"
-                 maxlength="8"
-                 required>
-          <div class="form-text text-center mt-2">Código de 8 dígitos</div>
-        </div>
-        
+
         <!-- Botones -->
         <div class="d-grid gap-3 mt-4">
-          <button type="submit" class="btn btn-info btn-lg fw-bold">Siguiente</button>
+          <button type="submit" class="btn btn-success btn-lg fw-bold">Completar Registro</button>
           <a href="{% url 'registro_paciente3' %}" class="btn btn-danger btn-lg">Atrás</a>
           <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>
         </div>
@@ -68,10 +56,5 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.querySelector('.code-input').addEventListener('input', function(e) {
-      this.value = this.value.toUpperCase();
-    });
-  </script>
 </body>
 </html>

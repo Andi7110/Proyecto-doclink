@@ -3,55 +3,74 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>DOCLINK - Registro Doctor</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <title>Recuperar Contraseña - DocLink</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-light d-flex flex-column min-vh-100">
-  <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
-    <!-- Logo con más espacio abajo -->
-    <div class="text-center mb-5">  <!-- Cambiado mb-4 a mb-5 -->
-      <a class="navbar-brand fw-bold" href="/">
-           <img src="{% static 'img/logo.png' %}" alt="Donlink Logo" width="300" class="me-2"> 
-        </a>
-    </div>
-    
-    <!-- Contenedor del formulario con más padding -->
-    <div class="bg-white rounded shadow-sm p-5 w-100" style="max-width: 600px;">  <!-- Cambiado p-4 a p-5 -->
-      
-      <!-- Progreso con más espacio -->
-      <div class="text-center mb-4">  <!-- Añadido contenedor y mb-4 -->
-        <p class="text-primary fw-bold mb-2">Paso 1 de 2</p>  <!-- mb-3 a mb-2 -->
-        <p class="text-muted">Ingresa todos los datos solicitados</p>
-      </div>
-      
-      <!-- Formulario -->
-      <form class="mt-4">  <!-- Añadido mt-4 -->
-        <!-- Nombre completo con más espacio -->
-        <div class="mb-4">  <!-- Cambiado mb-3 a mb-4 -->
-          <label class="form-label fw-medium d-block text-center mb-3">Correo Electronico</label>  <!-- Añadido mb-3 -->
-          <input type="text" class="form-control form-control-lg py-3 text-center" placeholder="Corre@ejemplo.com">  <!-- Añadido py-3 -->
+<body class="bg-light">
+    <div class="container d-flex flex-column justify-content-center align-items-center min-vh-100 py-5">
+        <!-- Logo -->
+        <div class="text-center mb-4">
+            <a class="navbar-brand fw-bold" href="/">
+                <img src="{% static 'img/logo.png' %}" alt="DocLink Logo" width="250" class="me-2">
+            </a>
         </div>
-        
-        
-        
-        
-        <!-- Botones con más espacio -->
-        <div class="d-grid gap-3 smt-4">  <!-- Cambiado gap-2 a gap-3 y añadido mt-4 -->
-           <div class="d-flex flex-column mt-3 gap-3">
-            <a href="{% url 'autenticacion' %}" class="btn btn-info btn-lg fw-bold">
-              Siguiente
-        </a>  <!-- Añadido py-3 -->
-          <a href="/" class="btn btn-danger btn-lg">
-             Cancelar
-        </a>  
-          <a href="#" class="text-center text-muted small mt-3">¿Necesitas ayuda?</a>  <!-- Añadido mt-3 -->
-        </div>
-      </form>
-    </div>
-  </div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Recuperar Contraseña</h4>
+                </div>
+                <div class="card-body">        
+                    {% if reset_code %}
+                    <div class="alert alert-success">
+                        <strong>¡Código generado!</strong> Tu código de recuperación es: <code class="fs-5">{{ reset_code }}</code>
+                        <br><small>Cópialo y pégalo abajo para cambiar tu contraseña.</small>
+                    </div>
+                    {% endif %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if not reset_code %}
+                        <!-- Paso 1: Generar código -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" name="email" class="form-control" id="email" placeholder="correo@ejemplo.com" required>
+                        </div>
+                        <div class="d-grid mb-3">
+                            <button type="submit" name="action" value="generate" class="btn btn-info">Generar Código de Recuperación</button>
+                        </div>
+                        {% else %}
+                        <!-- Paso 2: Cambiar contraseña -->
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Código de Recuperación</label>
+                            <input type="text" name="code" class="form-control" id="code" placeholder="Ingresa el código de 6 dígitos" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password1" class="form-label">Nueva Contraseña</label>
+                            <input type="password" name="new_password1" class="form-control" id="new_password1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password2" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" name="new_password2" class="form-control" id="new_password2" required>
+                        </div>
+                        <div class="d-grid mb-3">
+                            <button type="submit" name="action" value="reset" class="btn btn-success">Cambiar Contraseña</button>
+                        </div>
+                        {% endif %}
+
+                        <div class="text-center">
+                            <a href="{% url 'login' %}" class="text-decoration-none">Volver al inicio de sesión</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

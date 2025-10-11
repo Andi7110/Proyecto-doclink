@@ -1,0 +1,20 @@
+Verifica tu cuenta en DocLink
+
+Hola {{ user_name }},
+
+Gracias por registrarte en DocLink, tu plataforma de gestión médica confiable.
+
+Para completar tu registro, necesitas verificar tu dirección de correo electrónico.
+
+Haz clic en el siguiente enlace para verificar tu cuenta:
+{{ verification_url }}
+
+Este enlace expirará en 24 horas por seguridad.
+
+Una vez verificada tu cuenta, podrás acceder a todos los servicios de DocLink.
+
+Si tienes alguna pregunta, contactanos.
+
+DocLink - Tu salud, nuestra prioridad
+Este es un correo automático, por favor no respondas a este mensaje.
+© 2025 DocLink. Todos los derechos reservados.

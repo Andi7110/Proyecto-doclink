@@ -25,10 +25,10 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'sRXK8updw2ptErwCIWUhyahb7JlSVQPZ9Clp_c2gHQS2pZUKn0FFucrkZ2jCSkv8ERE')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True  # Para probar emails en consola
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,doclink-djangoapp.softwar.me').split(',')
 
@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'bd',
     'medico',
     'paciente',
+    'captcha',
+    # 'sendgrid',  # No necesario para django-sendgrid-v5
 ]
 
 MIDDLEWARE = [
@@ -167,6 +169,16 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'django.core.mail': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.core.mail.backends.smtp': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 
@@ -177,4 +189,37 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = '/login/'                  # obligatorio
 LOGIN_REDIRECT_URL = '/dashboard_doctor/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Email settings - SendGrid para producción, Console para desarrollo
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend' if os.environ.get('SENDGRID_API_KEY') else os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
+
+# SendGrid settings
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
+
+# reCAPTCHA settings
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI')  # Fallback to test key
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe')  # Fallback to test key
+
+# Only silence test key warning if using test keys
+if RECAPTCHA_PUBLIC_KEY == '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI':
+    SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+else:
+    SILENCED_SYSTEM_CHECKS = []
 
