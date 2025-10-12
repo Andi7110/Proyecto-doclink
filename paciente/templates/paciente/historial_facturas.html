@@ -66,22 +66,50 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>N° Factura</th>
+                                <th>Código Generación</th>
+                                <th>Número Control</th>
+                                <th>Sello Recepción</th>
                                 <th>Fecha Emisión</th>
                                 <th>Médico</th>
                                 <th>Fecha Cita</th>
-                                <th>Método Pago</th>
-                                <th>Estado Pago</th>
-                                <th class="text-end">Monto</th>
+                                <th>Método Pago Consulta</th>
+                                <th class="text-end">Monto Consulta</th>
+                                <th class="text-end">Gastos Adicionales</th>
+                                <th class="text-end">Total</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in facturas %}
                             <tr>
                                 <td>
-                                    {% if item.factura.numero_factura %}
+                                    {% if item.factura.documento_interno %}
+                                        {{ item.factura.documento_interno }}
+                                    {% elif item.factura.numero_factura %}
                                         {{ item.factura.numero_factura }}
                                     {% else %}
                                         <span class="text-muted">Sin número</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.factura.codigo_generacion %}
+                                        <small>{{ item.factura.codigo_generacion }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.factura.numero_control %}
+                                        <small>{{ item.factura.numero_control }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.factura.sello_recepcion %}
+                                        <small>{{ item.factura.sello_recepcion }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ item.factura.fecha_emision|date:"d/m/Y" }}</td>
@@ -107,21 +135,77 @@
                                         {% endif %}
                                     </span>
                                 </td>
-                                <td>
-                                    <span class="badge
-                                        {% if item.status_pago == 'Confirmado' %}bg-success
-                                        {% else %}bg-warning text-dark{% endif %}">
-                                        {{ item.status_pago }}
-                                    </span>
+                                <td class="text-end">${{ item.monto_consulta|floatformat:2 }}</td>
+                                <td class="text-end">
+                                    {% if item.gastos_adicionales %}
+                                        <span class="text-info">${{ item.total_gastos_adicionales|floatformat:2 }}</span>
+                                        <button class="btn btn-sm btn-outline-info ms-1" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#gastos-{{ item.factura.id_factura }}"
+                                                aria-expanded="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">$0.00</span>
+                                    {% endif %}
                                 </td>
-                                <td class="text-end fw-bold">${{ item.monto|floatformat:2 }}</td>
+                                <td class="text-end fw-bold">${{ item.total_factura|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'generar_pdf_factura_paciente' item.factura.id_factura %}" class="btn btn-sm btn-danger" target="_blank">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    </a>
+                                </td>
                             </tr>
+                            {% if item.gastos_adicionales %}
+                            <tr>
+                                <td colspan="12" class="p-0">
+                                    <div class="collapse" id="gastos-{{ item.factura.id_factura }}">
+                                        <div class="card card-body m-2 bg-light">
+                                            <h6 class="text-primary mb-2">Detalle de Gastos Adicionales:</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Descripción</th>
+                                                            <th>Método de Pago</th>
+                                                            <th class="text-end">Monto</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for gasto in item.gastos_adicionales %}
+                                                        <tr>
+                                                            <td>{{ gasto.descripcion }}</td>
+                                                            <td>
+                                                                <span class="badge
+                                                                    {% if gasto.metodo_pago == 'efectivo' %}bg-warning text-dark
+                                                                    {% elif gasto.metodo_pago == 'tarjeta' %}bg-info
+                                                                    {% else %}bg-secondary{% endif %}">
+                                                                    {% if gasto.metodo_pago == 'efectivo' %}
+                                                                        <i class="fas fa-money-bill-wave me-1"></i>Efectivo
+                                                                    {% elif gasto.metodo_pago == 'tarjeta' %}
+                                                                        <i class="fas fa-credit-card me-1"></i>Tarjeta
+                                                                    {% else %}
+                                                                        {{ gasto.metodo_pago }}
+                                                                    {% endif %}
+                                                                </span>
+                                                            </td>
+                                                            <td class="text-end fw-bold">${{ gasto.monto|floatformat:2 }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                         <tfoot class="table-dark">
                             <tr>
-                                <td colspan="6" class="text-end fw-bold">Total Pagado:</td>
+                                <td colspan="10" class="text-end fw-bold">Total:</td>
                                 <td class="text-end fw-bold fs-5">${{ total_monto|floatformat:2 }}</td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>

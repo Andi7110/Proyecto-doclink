@@ -22,6 +22,7 @@ urlpatterns = [
     path('generar_pdf_receta/<int:cita_id>/', views.generar_pdf_receta, name='generar_pdf_receta'),
     path('config_perfil_paciente/', views.config_perfil_paciente, name='config_perfil_paciente'),
     path('historial-facturas/', views.historial_facturas_paciente, name='historial_facturas_paciente'),
+    path('generar-pdf/<int:factura_id>/', views.generar_pdf_factura_paciente, name='generar_pdf_factura_paciente'),
     path('historial-pagos/', views.historial_pagos_paciente, name='historial_pagos_paciente'),
 
 ]
