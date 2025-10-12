@@ -866,6 +866,7 @@ def historial_facturas_paciente(request):
     # Filtros
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
+    numero_factura = request.GET.get('numero_factura')
 
     # Query base - facturas del paciente
     facturas = Factura.objects.filter(
@@ -881,6 +882,11 @@ def historial_facturas_paciente(request):
         facturas = facturas.filter(fecha_emision__gte=fecha_desde)
     if fecha_hasta:
         facturas = facturas.filter(fecha_emision__lte=fecha_hasta)
+    if numero_factura:
+        facturas = facturas.filter(
+            Q(documento_interno__icontains=numero_factura) |
+            Q(numero_factura__icontains=numero_factura)
+        )
 
     # Enriquecer datos
     facturas_enriquecidas = []
@@ -912,6 +918,7 @@ def historial_facturas_paciente(request):
         'facturas': facturas_enriquecidas,
         'fecha_desde': fecha_desde,
         'fecha_hasta': fecha_hasta,
+        'numero_factura': numero_factura,
         'total_facturas': len(facturas_enriquecidas),
         'total_monto': sum(f['total_factura'] for f in facturas_enriquecidas if f['total_factura']),
     }

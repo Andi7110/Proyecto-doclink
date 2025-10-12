@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.db import connection, transaction
 from collections import namedtuple
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from datetime import date, timedelta
 
@@ -1053,6 +1053,7 @@ def historial_facturas(request):
     # Filtros
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
+    numero_factura = request.GET.get('numero_factura')
 
     # Query base
     facturas = Factura.objects.filter(
@@ -1067,6 +1068,11 @@ def historial_facturas(request):
         facturas = facturas.filter(fecha_emision__gte=fecha_desde)
     if fecha_hasta:
         facturas = facturas.filter(fecha_emision__lte=fecha_hasta)
+    if numero_factura:
+        facturas = facturas.filter(
+            Q(documento_interno__icontains=numero_factura) |
+            Q(numero_factura__icontains=numero_factura)
+        )
 
     # Enriquecer datos
     facturas_enriquecidas = []
@@ -1097,6 +1103,7 @@ def historial_facturas(request):
         'facturas': facturas_enriquecidas,
         'fecha_desde': fecha_desde,
         'fecha_hasta': fecha_hasta,
+        'numero_factura': numero_factura,
         'total_facturas': len(facturas_enriquecidas),
         'total_monto': sum(f['total_factura'] for f in facturas_enriquecidas if f['total_factura']),
     }
