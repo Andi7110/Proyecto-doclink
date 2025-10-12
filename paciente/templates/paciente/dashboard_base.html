@@ -182,21 +182,19 @@
           </a>
         </li>
           <li class="nav-item w-100">
-            <a class="nav-link d-flex align-items-center gap-2" href="#" onclick="activateMenu(this)">
+            <a class="nav-link d-flex align-items-center gap-2 documentos-toggle" href="#" onclick="toggleDocumentosMenu()">
               <i class="bi bi-file-earmark-text"></i>
               <span class="sidebar-text">Documentos</span>
             </a>
+            <ul class="documentos-submenu" id="documentosSubmenu" style="display: none; list-style: none; padding-left: 1rem; margin-top: 0.5rem;">
+              <li><a class="nav-link" href="{% url 'historial_facturas_paciente' %}"><i class="bi bi-file-earmark-text"></i> <span class="sidebar-text">Historial de Facturas</span></a></li>
+              <li><a class="nav-link" href="{% url 'ver_recetas' %}"><i class="bi bi-capsule"></i> <span class="sidebar-text">Recetas</span></a></li>
+            </ul>
           </li>
           <li class="nav-item w-100">
             <a class="nav-link d-flex align-items-center gap-2" href="{% url 'historial_pagos_paciente' %}">
               <i class="bi bi-receipt"></i>
               <span class="sidebar-text">Historial de Pagos</span>
-            </a>
-          </li>
-          <li class="nav-item w-100">
-            <a class="nav-link d-flex align-items-center gap-2" href="{% url 'historial_facturas_paciente' %}">
-              <i class="bi bi-file-earmark-text"></i>
-              <span class="sidebar-text">Historial de Facturas</span>
             </a>
           </li>
           <li class="nav-item w-100 mt-4">
@@ -235,6 +233,11 @@
     }
     function toggleConfigMenu() {
       const submenu = document.getElementById('configSubmenu');
+      submenu.style.display = submenu.style.display === 'none' ? 'block' : 'none';
+      activateMenu(event.target.closest('.nav-link'));
+    }
+    function toggleDocumentosMenu() {
+      const submenu = document.getElementById('documentosSubmenu');
       submenu.style.display = submenu.style.display === 'none' ? 'block' : 'none';
       activateMenu(event.target.closest('.nav-link'));
     }
