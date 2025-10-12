@@ -1,0 +1,122 @@
+{% extends "paciente/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">💰 Historial de Pagos</h2>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="fecha_desde" class="form-label">Fecha Desde</label>
+                    <input type="date" class="form-control" id="fecha_desde" name="fecha_desde"
+                           value="{{ fecha_desde }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="fecha_hasta" class="form-label">Fecha Hasta</label>
+                    <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta"
+                           value="{{ fecha_hasta }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <a href="{% url 'historial_pagos_paciente' %}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">${{ total_consultas|floatformat:2 }}</h5>
+                    <p class="card-text">Consultas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">${{ total_gastos|floatformat:2 }}</h5>
+                    <p class="card-text">Gastos Adicionales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">${{ total_general|floatformat:2 }}</h5>
+                    <p class="card-text">Total General</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">{{ total_pagos }}</h5>
+                    <p class="card-text">Total Pagos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de pagos -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Pagos Realizados</h5>
+        </div>
+        <div class="card-body">
+            {% if pagos %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Médico</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Método de Pago</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in pagos %}
+                                <tr>
+                                    <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ pago.medico }}</td>
+                                    <td>
+                                        {% if pago.tipo == 'consulta' %}
+                                            <span class="badge bg-primary">Consulta</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Gasto Adicional</span>
+                                        {% endif %}
+                                        {{ pago.descripcion }}
+                                    </td>
+                                    <td>${{ pago.monto|floatformat:2 }}</td>
+                                    <td>{{ pago.metodo_pago }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ pago.estado }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">No hay pagos registrados</h5>
+                    <p class="text-muted">Los pagos realizados aparecerán aquí una vez que sean completados.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'dashboard_paciente' %}" class="btn btn-secondary">Volver al Dashboard</a>
+    </div>
+</div>
+{% endblock %}

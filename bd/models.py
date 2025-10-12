@@ -3,6 +3,9 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.forms import ValidationError
 from django.utils import timezone
 from django.core.validators import RegexValidator
+import uuid
+import random
+import string
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, user_name, password=None, **extra_fields):
@@ -168,10 +171,46 @@ class Factura(models.Model):
     fk_metodopago = models.ForeignKey('MetodosPago', models.DO_NOTHING, db_column='fk_metodopago', blank=True, null=True)
     monto = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
+    # Campos para generación automática de números de factura
+    codigo_generacion = models.CharField(max_length=36, blank=True, null=True, help_text="Código de generación UUID")
+    sello_recepcion = models.CharField(max_length=50, blank=True, null=True, help_text="Sello de recepción con año + números/letras aleatorias")
+    numero_control = models.CharField(max_length=50, blank=True, null=True, help_text="Número de control DTE-01- + letras/números aleatorios")
+    documento_interno = models.CharField(max_length=10, blank=True, null=True, help_text="Documento interno secuencial")
+
     class Meta:
         managed = True
         db_table = 'factura'
-    
+
+    def save(self, *args, **kwargs):
+        # Generar valores automáticamente si no existen
+        if not self.codigo_generacion:
+            self.codigo_generacion = str(uuid.uuid4()).upper()
+
+        if not self.sello_recepcion:
+            year = timezone.now().year
+            random_chars = ''.join(random.choices(string.ascii_uppercase + string.digits, k=45))
+            self.sello_recepcion = f"{year}{random_chars}"
+
+        if not self.numero_control:
+            random_part1 = ''.join(random.choices(string.ascii_uppercase, k=3))
+            random_part2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            self.numero_control = f"DTE-01-{random_part1}{random_part2}"
+
+        if not self.documento_interno:
+            # Generar número secuencial basado en el ID
+            # Para nuevos registros, usaremos un contador simple
+            last_factura = Factura.objects.order_by('-id_factura').first()
+            if last_factura and last_factura.documento_interno:
+                try:
+                    last_num = int(last_factura.documento_interno)
+                    self.documento_interno = str(last_num + 1).zfill(5)
+                except ValueError:
+                    self.documento_interno = "00001"
+            else:
+                self.documento_interno = "00001"
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         num_fact = f" - N° {self.numero_factura}" if self.numero_factura else ""
         fecha = f" - {self.fecha_emision}" if self.fecha_emision else ""
@@ -241,7 +280,7 @@ class MensajesNotificacion(models.Model):
 
 class MetodosPago(models.Model):
     id_metodopago = models.BigAutoField(primary_key=True)
-    tipometodopago = models.TextField(blank=True, null=True)
+    tipometodopago = models.CharField(max_length=20, choices=[('efectivo', 'Efectivo'), ('tarjeta', 'Tarjeta')], blank=True, null=True)
     # Campos adicionales para datos de tarjeta
     numero_tarjeta = models.CharField(max_length=16, blank=True, null=True)
     fecha_expiracion = models.CharField(max_length=5, blank=True, null=True)  # MM/YY

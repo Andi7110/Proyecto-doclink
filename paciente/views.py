@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from datetime import date, datetime, time
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from django.db import transaction
 from .decorators import paciente_required
@@ -588,9 +588,13 @@ def ver_diagnostico(request, cita_id):
     # Verificar si ya tiene valoración
     tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
 
-    # Obtener gastos adicionales
-    gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita)
-    total_gastos_adicionales = gastos_adicionales.aggregate(total=models.Sum('monto'))['total'] or 0
+    # Obtener gastos adicionales no pagados con tarjeta (para mostrar y pagar)
+    gastos_adicionales_pendientes = GastosAdicionales.objects.filter(fk_cita=cita, pagado=False, metodo_pago='tarjeta')
+    total_gastos_pendientes = gastos_adicionales_pendientes.aggregate(total=Sum('monto'))['total'] or 0
+
+    # Obtener TODOS los gastos adicionales (para el total general)
+    todos_gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita)
+    total_todos_gastos = todos_gastos_adicionales.aggregate(total=Sum('monto'))['total'] or 0
 
     # Información del médico
     usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
@@ -601,9 +605,12 @@ def ver_diagnostico(request, cita_id):
         'cita': cita,
         'consulta': consulta,
         'tiene_valoracion': tiene_valoracion,
-        'gastos_adicionales': gastos_adicionales,
-        'total_gastos_adicionales': total_gastos_adicionales,
-        'total_consulta': (cita.monto_consulta or 0) + total_gastos_adicionales,
+        'gastos_adicionales': gastos_adicionales_pendientes,  # Solo pendientes con tarjeta para el modal
+        'todos_gastos_adicionales': todos_gastos_adicionales,  # Todos los gastos para mostrar
+        'total_gastos_adicionales': total_gastos_pendientes,  # Total de pendientes
+        'total_todos_gastos': total_todos_gastos,  # Total de todos los gastos
+        'total_a_pagar': (cita.monto_consulta or 0) + total_todos_gastos,  # Consulta + todos los gastos
+        'hay_gastos_pendientes': gastos_adicionales_pendientes.exists(),
         'nombre_medico': nombre_medico,
         'especialidad': especialidad,
     }
@@ -893,7 +900,7 @@ def historial_facturas_paciente(request):
             'factura': factura,
             'medico': medico.get_full_name() if medico else "Médico desconocido",
             'fecha_cita': cita.fecha_consulta if cita else None,
-            'metodo_pago': factura.fk_metodopago.tipometodopago if factura.fk_metodopago else "No especificado",
+            'metodo_pago': factura.fk_metodopago.get_tipometodopago_display() if factura.fk_metodopago else "No especificado",
             'monto_consulta': factura.monto,
             'gastos_adicionales': gastos_adicionales,
             'total_gastos_adicionales': total_gastos,
@@ -910,4 +917,177 @@ def historial_facturas_paciente(request):
     }
 
     return render(request, 'paciente/historial_facturas.html', context)
+
+@login_required
+@paciente_required
+def historial_pagos_paciente(request):
+    usuario = request.user
+    paciente = usuario.fk_paciente
+
+    if not paciente:
+        messages.error(request, "No tienes un perfil de paciente asociado.")
+        return redirect('dashboard_paciente')
+
+    # Filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+
+    # Obtener todas las citas pagadas del paciente
+    citas_pagadas = CitasMedicas.objects.filter(
+        fk_paciente=paciente,
+        fk_factura__isnull=False
+    ).select_related('fk_medico', 'fk_factura').order_by('-fecha_consulta')
+
+    # Aplicar filtros de fecha
+    if fecha_desde:
+        citas_pagadas = citas_pagadas.filter(fecha_consulta__gte=fecha_desde)
+    if fecha_hasta:
+        citas_pagadas = citas_pagadas.filter(fecha_consulta__lte=fecha_hasta)
+
+    # Obtener gastos adicionales pagados
+    gastos_pagados = GastosAdicionales.objects.filter(
+        fk_cita__fk_paciente=paciente,
+        pagado=True
+    ).select_related('fk_cita__fk_medico').order_by('-fecha_creacion')
+
+    # Aplicar filtros de fecha a gastos
+    if fecha_desde:
+        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__gte=fecha_desde)
+    if fecha_hasta:
+        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__lte=fecha_hasta)
+
+    # Preparar datos para el template
+    pagos = []
+
+    # Agregar consultas pagadas
+    for cita in citas_pagadas:
+        usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+        nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Médico desconocido"
+
+        pagos.append({
+            'tipo': 'consulta',
+            'fecha': cita.fecha_consulta,
+            'medico': nombre_medico,
+            'descripcion': f"Consulta médica - {cita.des_motivo_consulta_paciente or 'Sin motivo especificado'}",
+            'monto': cita.fk_factura.monto,
+            'metodo_pago': cita.fk_factura.fk_metodopago.get_tipometodopago_display() if cita.fk_factura.fk_metodopago else "No especificado",
+            'estado': 'Completado'
+        })
+
+    # Agregar gastos adicionales pagados
+    for gasto in gastos_pagados:
+        usuario_medico = Usuario.objects.filter(fk_medico=gasto.fk_cita.fk_medico).first()
+        nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Médico desconocido"
+
+        pagos.append({
+            'tipo': 'gasto_adicional',
+            'fecha': gasto.fecha_creacion.date(),
+            'medico': nombre_medico,
+            'descripcion': gasto.descripcion,
+            'monto': gasto.monto,
+            'metodo_pago': gasto.get_metodo_pago_display(),
+            'estado': 'Completado'
+        })
+
+    # Ordenar por fecha descendente
+    pagos.sort(key=lambda x: x['fecha'], reverse=True)
+
+    # Calcular totales
+    total_consultas = sum(p['monto'] for p in pagos if p['tipo'] == 'consulta')
+    total_gastos = sum(p['monto'] for p in pagos if p['tipo'] == 'gasto_adicional')
+    total_general = total_consultas + total_gastos
+
+    context = {
+        'pagos': pagos,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'total_consultas': total_consultas,
+        'total_gastos': total_gastos,
+        'total_general': total_general,
+        'total_pagos': len(pagos),
+    }
+
+    return render(request, 'paciente/historial_pagos.html', context)
+
+
+@login_required
+@paciente_required
+def pagar_gastos_adicionales(request, cita_id):
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para pagar gastos adicionales.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    # Obtener gastos adicionales no pagados con tarjeta
+    gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita, pagado=False, metodo_pago='tarjeta')
+
+    if not gastos_adicionales.exists():
+        messages.warning(request, "No hay gastos adicionales pendientes de pago con tarjeta.")
+        return redirect('ver_diagnostico', cita_id=cita_id)
+
+    if request.method == 'POST':
+        # Procesar datos de la tarjeta
+        numero_tarjeta = request.POST.get('numero_tarjeta')
+        fecha_expiracion = request.POST.get('fecha_expiracion')
+        cvv = request.POST.get('cvv')
+        nombre_titular = request.POST.get('nombre_titular')
+        tipo_tarjeta = request.POST.get('tipo_tarjeta')
+
+        # Validar campos
+        if not all([numero_tarjeta, fecha_expiracion, cvv, nombre_titular, tipo_tarjeta]):
+            messages.error(request, "Por favor completa todos los campos.")
+            return redirect('ver_diagnostico', cita_id=cita_id)
+
+        # Validar formato de número de tarjeta
+        if not numero_tarjeta.isdigit() or len(numero_tarjeta) != 16:
+            messages.error(request, "El número de tarjeta debe tener 16 dígitos.")
+            return redirect('ver_diagnostico', cita_id=cita_id)
+
+        # Validar formato de fecha de expiración
+        import re
+        if not re.match(r'^\d{2}/\d{2}$', fecha_expiracion):
+            messages.error(request, "Formato de fecha de expiración inválido (MM/YY).")
+            return redirect('ver_diagnostico', cita_id=cita_id)
+
+        try:
+            with transaction.atomic():
+                # Crear método de pago
+                metodo_pago_obj = MetodosPago.objects.create(
+                    tipometodopago='tarjeta',
+                    numero_tarjeta=numero_tarjeta,
+                    fecha_expiracion=fecha_expiracion,
+                    cvv=cvv,
+                    nombre_titular=nombre_titular,
+                    tipo_tarjeta=tipo_tarjeta
+                )
+
+                # Marcar gastos adicionales como pagados
+                gastos_adicionales.update(pagado=True)
+
+                # Crear factura para los gastos adicionales
+                total_gastos = gastos_adicionales.aggregate(total=Sum('monto'))['total'] or 0
+                factura = Factura.objects.create(
+                    fecha_emision=timezone.now().date(),
+                    monto=total_gastos,
+                    fk_metodopago=metodo_pago_obj
+                )
+
+                messages.success(request, f"¡Pago procesado correctamente! Se han pagado ${total_gastos} por gastos adicionales.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
+                return redirect('ver_diagnostico', cita_id=cita_id)
+
+        except Exception as e:
+            messages.error(request, f"Error al procesar el pago: {e}")
+            return redirect('ver_diagnostico', cita_id=cita_id)
+
+    # Si no es POST, redirigir a la vista de diagnóstico
+    return redirect('ver_diagnostico', cita_id=cita_id)
 

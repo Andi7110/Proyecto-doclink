@@ -1059,8 +1059,7 @@ def historial_facturas(request):
         citasmedicas__fk_medico=medico,
         citasmedicas__fk_factura__isnull=False
     ).select_related(
-        'fk_metodopago',
-        'citasmedicas__fk_paciente'
+        'fk_metodopago'
     ).order_by('-fecha_emision')
 
     # Aplicar filtros de fecha
@@ -1087,7 +1086,7 @@ def historial_facturas(request):
             'factura': factura,
             'paciente': paciente.get_full_name() if paciente else "Paciente desconocido",
             'fecha_cita': cita.fecha_consulta if cita else None,
-            'metodo_pago': factura.fk_metodopago.tipometodopago if factura.fk_metodopago else "No especificado",
+            'metodo_pago': factura.fk_metodopago.get_tipometodopago_display() if factura.fk_metodopago else "No especificado",
             'monto_consulta': factura.monto,
             'gastos_adicionales': gastos_adicionales,
             'total_gastos_adicionales': total_gastos,
@@ -1128,15 +1127,121 @@ def gestionar_gastos_adicionales(request, cita_id):
             messages.error(request, "Por favor complete todos los campos.")
 
     gastos = GastosAdicionales.objects.filter(fk_cita=cita)
-    total_gastos = gastos.aggregate(total=models.Sum('monto'))['total'] or 0
+    total_gastos = gastos.aggregate(total=Sum('monto'))['total'] or 0
+
+    # Obtener nombre del paciente
+    usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+    nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
 
     context = {
         'cita': cita,
         'gastos': gastos,
         'total_gastos': total_gastos,
+        'nombre_paciente': nombre_paciente,
     }
 
     return render(request, 'medico/gestionar_gastos_adicionales.html', context)
+
+@login_required
+def historial_pagos(request):
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    if not medico:
+        return render(request, 'medico/no_es_medico.html')
+
+    # Filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    paciente_id = request.GET.get('paciente')
+
+    # Obtener todas las citas pagadas del médico
+    citas_pagadas = CitasMedicas.objects.filter(
+        fk_medico=medico,
+        fk_factura__isnull=False
+    ).select_related('fk_paciente', 'fk_factura').order_by('-fecha_consulta')
+
+    # Aplicar filtros de fecha
+    if fecha_desde:
+        citas_pagadas = citas_pagadas.filter(fecha_consulta__gte=fecha_desde)
+    if fecha_hasta:
+        citas_pagadas = citas_pagadas.filter(fecha_consulta__lte=fecha_hasta)
+    if paciente_id:
+        citas_pagadas = citas_pagadas.filter(fk_paciente_id=paciente_id)
+
+    # Obtener gastos adicionales pagados
+    gastos_pagados = GastosAdicionales.objects.filter(
+        fk_cita__fk_medico=medico,
+        pagado=True
+    ).select_related('fk_cita__fk_paciente').order_by('-fecha_creacion')
+
+    # Aplicar filtros de fecha a gastos
+    if fecha_desde:
+        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__gte=fecha_desde)
+    if fecha_hasta:
+        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__lte=fecha_hasta)
+    if paciente_id:
+        gastos_pagados = gastos_pagados.filter(fk_cita__fk_paciente_id=paciente_id)
+
+    # Preparar datos para el template
+    pagos = []
+
+    # Agregar consultas pagadas
+    for cita in citas_pagadas:
+        usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+        nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
+
+        pagos.append({
+            'tipo': 'consulta',
+            'fecha': cita.fecha_consulta,
+            'paciente': nombre_paciente,
+            'descripcion': f"Consulta médica - {cita.des_motivo_consulta_paciente or 'Sin motivo especificado'}",
+            'monto': cita.fk_factura.monto,
+            'metodo_pago': cita.fk_factura.fk_metodopago.get_tipometodopago_display() if cita.fk_factura.fk_metodopago else "No especificado",
+            'estado': 'Completado'
+        })
+
+    # Agregar gastos adicionales pagados
+    for gasto in gastos_pagados:
+        usuario_paciente = Usuario.objects.filter(fk_paciente=gasto.fk_cita.fk_paciente).first()
+        nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
+
+        pagos.append({
+            'tipo': 'gasto_adicional',
+            'fecha': gasto.fecha_creacion.date(),
+            'paciente': nombre_paciente,
+            'descripcion': gasto.descripcion,
+            'monto': gasto.monto,
+            'metodo_pago': gasto.get_metodo_pago_display(),
+            'estado': 'Completado'
+        })
+
+    # Ordenar por fecha descendente
+    pagos.sort(key=lambda x: x['fecha'], reverse=True)
+
+    # Calcular totales
+    total_consultas = sum(p['monto'] for p in pagos if p['tipo'] == 'consulta')
+    total_gastos = sum(p['monto'] for p in pagos if p['tipo'] == 'gasto_adicional')
+    total_general = total_consultas + total_gastos
+
+    # Obtener lista de pacientes para el filtro
+    pacientes = Paciente.objects.filter(
+        citasmedicas__fk_medico=medico
+    ).distinct().order_by('id_paciente')
+
+    context = {
+        'pagos': pagos,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'paciente': paciente_id,
+        'pacientes': pacientes,
+        'total_consultas': total_consultas,
+        'total_gastos': total_gastos,
+        'total_general': total_general,
+        'total_pagos': len(pagos),
+    }
+
+    return render(request, 'medico/historial_pagos.html', context)
 
 @require_POST
 @login_required
@@ -1148,3 +1253,311 @@ def eliminar_gasto_adicional(request, gasto_id):
     # Consumir mensajes para que no aparezcan en otras páginas
     list(messages.get_messages(request))
     return redirect('gestionar_gastos_adicionales', cita_id=cita_id)
+
+@login_required
+def editar_gasto_adicional(request, gasto_id):
+    gasto = get_object_or_404(GastosAdicionales, id_gastos_adicionales=gasto_id, fk_cita__fk_medico=request.user.fk_medico)
+    cita_id = gasto.fk_cita.id_cita_medicas
+
+    if request.method == 'POST':
+        descripcion = request.POST.get('descripcion')
+        monto = request.POST.get('monto')
+        metodo_pago = request.POST.get('metodo_pago')
+
+        if descripcion and monto:
+            gasto.descripcion = descripcion
+            gasto.monto = monto
+            gasto.metodo_pago = metodo_pago
+            gasto.save()
+            messages.success(request, "Gasto adicional actualizado correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
+            return redirect('gestionar_gastos_adicionales', cita_id=cita_id)
+        else:
+            messages.error(request, "Por favor complete todos los campos.")
+
+    context = {
+        'gasto': gasto,
+        'cita': gasto.fk_cita,
+    }
+
+    return render(request, 'medico/editar_gasto_adicional.html', context)
+
+@require_POST
+@login_required
+def marcar_gasto_pagado(request, gasto_id):
+    gasto = get_object_or_404(GastosAdicionales, id_gastos_adicionales=gasto_id, fk_cita__fk_medico=request.user.fk_medico)
+    cita_id = gasto.fk_cita.id_cita_medicas
+
+    # Solo permitir marcar como pagado si es efectivo y no está pagado
+    if gasto.metodo_pago == 'efectivo' and not gasto.pagado:
+        gasto.pagado = True
+        gasto.save()
+        messages.success(request, "Gasto adicional marcado como completado.")
+    else:
+        messages.error(request, "No se puede marcar este gasto como completado.")
+
+    # Consumir mensajes para que no aparezcan en otras páginas
+    list(messages.get_messages(request))
+    return redirect('gestionar_gastos_adicionales', cita_id=cita_id)
+
+@login_required
+def generar_pdf_factura(request, factura_id):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch, cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from io import BytesIO
+    from django.http import HttpResponse
+    import os
+    from num2words import num2words  # Para convertir números a letras
+
+    # Obtener la factura
+    factura = get_object_or_404(Factura, id_factura=factura_id)
+    cita = CitasMedicas.objects.filter(fk_factura=factura).first()
+
+    if not cita or cita.fk_medico != request.user.fk_medico:
+        raise PermissionDenied("No tienes permisos para ver esta factura.")
+
+    # Obtener datos del paciente
+    usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+    nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
+
+    # Obtener gastos adicionales
+    gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita, pagado=True)
+
+    # Obtener datos de la clínica
+    clinica = cita.fk_medico.fk_clinica
+    medico = cita.fk_medico
+    usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+
+    # Crear el PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+
+    # Estilos
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='Center', alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='Right', alignment=TA_RIGHT))
+    styles.add(ParagraphStyle(name='Left', alignment=TA_LEFT))
+    styles.add(ParagraphStyle(name='Small', fontSize=8))
+
+    # Contenido del PDF
+    story = []
+
+    # Logo más pequeño y más arriba
+    try:
+        logo_path = os.path.join('inicio', 'static', 'img', 'logo.png')
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, 1*inch, 0.5*inch)
+            logo.hAlign = 'CENTER'
+            story.append(logo)
+        else:
+            # Intentar con static directo
+            logo_path = os.path.join('static', 'img', 'logo.png')
+            if os.path.exists(logo_path):
+                logo = Image(logo_path, 1*inch, 0.5*inch)
+                logo.hAlign = 'CENTER'
+                story.append(logo)
+    except:
+        pass
+
+    story.append(Spacer(1, 3))
+
+    # Información del documento tributario (primero)
+    doc_info = [
+        ["DOCUMENTO TRIBUTARIO ELECTRÓNICO"],
+        ["FACTURA"],
+        [f"Código de generación: {factura.codigo_generacion or 'N/A'}"],
+        [f"Sello de recepción: {factura.sello_recepcion or 'N/A'}"],
+        [f"Número de control: {factura.numero_control or 'N/A'}"],
+        ["Modelo de facturación: Previo Versión de JSON: 1"],
+        ["Tipo de transmisión: Normal"],
+        [f"Fecha de emisión: {factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A'}"],
+        [f"Hora de emisión: {timezone.now().strftime('%I:%M:%S %p')}"],
+        [f"Documento interno: {factura.documento_interno or 'N/A'}"],
+    ]
+
+    # Información de la clínica (después)
+    if clinica:
+        clinica_info = [
+            [clinica.nombre or "CLÍNICA MÉDICA"],
+            ["Servicios Médicos y Consultas"],
+            ["Categoría: Centro Médico"],
+            [clinica.direccion or "Dirección no especificada"],
+            [f"Teléfono: {clinica.telefono_clinica or 'N/A'}"],
+            [f"Correo: {clinica.correo_electronico_clinica or 'N/A'}"],
+            ["Tipo Establecimiento: Clínica"],
+            [f"NIT: {medico.dui or 'N/A'}"],
+            [f"NRC: {medico.no_jvpm or 'N/A'}"],
+        ]
+    else:
+        clinica_info = [
+            ["CLÍNICA MÉDICA"],
+            ["Servicios Médicos y Consultas"],
+            ["Categoría: Centro Médico"],
+            ["Dirección no especificada"],
+            ["Teléfono: N/A"],
+            ["Correo: N/A"],
+            ["Tipo Establecimiento: Clínica"],
+            ["NIT: N/A"],
+            ["NRC: 12345"],
+        ]
+
+    # Combinar ambas secciones en una sola tabla vertical
+    header_info = doc_info + clinica_info
+
+    header_table = Table(header_info, colWidths=[15*cm])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),   # Todo alineado a la izquierda
+        ('FONTSIZE', (0, 0), (-1, -1), 6),     # Fuente más pequeña
+        ('FONTNAME', (0, 0), (-1, 1), 'Helvetica-Bold'),  # Títulos en negrita
+        ('FONTNAME', (0, 2), (-1, 9), 'Helvetica'),       # Detalles del documento normal
+        ('FONTNAME', (0, 10), (-1, 10), 'Helvetica-Bold'), # Título de clínica en negrita
+        ('FONTNAME', (0, 11), (-1, -1), 'Helvetica'),      # Detalles de clínica normal
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('WORDWRAP', (0, 0), (-1, -1), True),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 6))
+
+    # Información del paciente (cliente)
+    paciente_info = [
+        [f"Nombre: {nombre_paciente}", f"DUI: {cita.fk_paciente.dui if cita.fk_paciente and cita.fk_paciente.dui else 'N/A'}"],
+        [f"Correo Electrónico: {usuario_paciente.correo if usuario_paciente else 'N/A'}", f"Teléfono: {usuario_paciente.telefono if usuario_paciente else 'N/A'}"],
+        [f"Dirección: {usuario_paciente.departamento or ''}, {usuario_paciente.municipio or ''}, El Salvador", ""],
+        ["Condición de la operación: Contado", f"Moneda: USD"],
+        [f"Municipio: {usuario_paciente.municipio or 'N/A'}", f"Departamento: {usuario_paciente.departamento or 'N/A'}"],
+    ]
+
+    paciente_table = Table(paciente_info, colWidths=[8*cm, 5*cm])
+    paciente_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 6),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ]))
+    story.append(paciente_table)
+    story.append(Spacer(1, 6))
+
+    # VENTA A CUENTA DE TERCEROS (adaptado para médico)
+    venta_terceros = [
+        ["VENTA DE SERVICIOS MÉDICOS", ""],
+        [f"NIT: {medico.dui or 'N/A'}", f"Nombre: {usuario_medico.get_full_name() if usuario_medico else str(medico)}"],
+    ]
+
+    venta_table = Table(venta_terceros, colWidths=[8*cm, 5*cm])
+    venta_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 6),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ]))
+    story.append(venta_table)
+    story.append(Spacer(1, 6))
+
+    # CUERPO DEL DOCUMENTO
+    cuerpo_title = Paragraph("<b>CUERPO DEL DOCUMENTO</b>", styles['Left'])
+    story.append(cuerpo_title)
+    story.append(Spacer(1, 6))
+
+    # Tabla de ítems
+    header = ['No.', 'Código', 'Descripción', 'Precio Unitario', 'Ventas gravadas']
+    data = [header]
+
+    # Consulta médica
+    total_gastos = sum(gasto.monto for gasto in gastos_adicionales)
+    total_factura = factura.monto + total_gastos
+
+    data.append([
+        '1', 'CONS001', 'Consulta médica especializada',
+        f"${factura.monto:.2f}", f"${factura.monto:.2f}"
+    ])
+
+    # Gastos adicionales
+    for i, gasto in enumerate(gastos_adicionales, 2):
+        data.append([
+            str(i), f'GAST{i-1:03d}', gasto.descripcion,
+            f"${gasto.monto:.2f}", f"${gasto.monto:.2f}"
+        ])
+
+    cuerpo_table = Table(data, colWidths=[0.5*cm, 2*cm, 5*cm, 2.5*cm, 2.5*cm])
+    cuerpo_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ALIGN', (6, 1), (11, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    story.append(cuerpo_table)
+    story.append(Spacer(1, 6))
+
+    # Sumas más compactas
+    sumas_info = [
+        ["Subtotal Consulta:", f"${factura.monto:.2f}"],
+        ["Gastos Adicionales:", f"${total_gastos:.2f}"],
+        ["TOTAL:", f"${total_factura:.2f}"],
+    ]
+
+    sumas_table = Table(sumas_info, colWidths=[4*cm, 3*cm])
+    sumas_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (-1, -1), (-1, -1), colors.lightgrey),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    story.append(sumas_table)
+    story.append(Spacer(1, 6))
+
+    # Total simple
+    total_simple = [
+        ["TOTAL A PAGAR:", f"${total_factura:.2f}"],
+    ]
+
+    total_simple_table = Table(total_simple, colWidths=[4*cm, 9*cm])
+    total_simple_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.lightgreen),
+    ]))
+    story.append(total_simple_table)
+    story.append(Spacer(1, 6))
+
+    # Valor en letras (al final)
+    try:
+        valor_letras = num2words(total_factura, lang='es').upper() + " DOLARES"
+    except:
+        valor_letras = "N/A"
+
+    valor_info = [
+        [f"Valor en Letras: {valor_letras}"],
+    ]
+
+    valor_table = Table(valor_info, colWidths=[13*cm])
+    valor_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+    ]))
+    story.append(valor_table)
+
+    # Generar PDF
+    doc.build(story)
+
+    # Preparar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="factura_{factura.documento_interno or factura_id}.pdf"'
+
+    return response

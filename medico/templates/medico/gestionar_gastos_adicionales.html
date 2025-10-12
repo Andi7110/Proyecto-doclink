@@ -12,7 +12,8 @@
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
-                    <p><strong>Paciente:</strong> {{ cita.fk_paciente }}</p>
+                    <p><strong>Paciente:</strong> {{ nombre_paciente }}</p>
+                    <p><strong>Motivo consulta:</strong> {{ cita.des_motivo_consulta_paciente }}</p>
                 </div>
                 <div class="col-md-6">
                     <p><strong>Monto consulta:</strong> ${{ cita.monto_consulta }}</p>
@@ -83,17 +84,38 @@
                                     <td>{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</td>
                                     <td>
                                         {% if gasto.pagado %}
-                                            <span class="badge bg-success">Pagado</span>
+                                            <span class="badge bg-success">Completado</span>
                                         {% else %}
-                                            <span class="badge bg-warning">Pendiente</span>
+                                            {% if gasto.metodo_pago == 'tarjeta' %}
+                                                <span class="badge bg-info">Pendiente (Pago por paciente)</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <form method="post" action="{% url 'eliminar_gasto_adicional' gasto.id_gastos_adicionales %}" class="d-inline"
-                                              onsubmit="return confirm('¿Está seguro de eliminar este gasto?')">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                                        </form>
+                                        {% if gasto.pagado %}
+                                            <!-- Gasto completado: mostrar botón "Hecho" solo visual -->
+                                            <button type="button" class="btn btn-sm btn-success" disabled>
+                                                <i class="bi bi-check-circle"></i> Hecho
+                                            </button>
+                                        {% else %}
+                                            <!-- Gasto pendiente: mostrar botones Editar y Eliminar -->
+                                            {% if gasto.metodo_pago == 'efectivo' %}
+                                                <form method="post" action="{% url 'marcar_gasto_pagado' gasto.id_gastos_adicionales %}" class="d-inline me-1">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-success">Efectuar</button>
+                                                </form>
+                                            {% endif %}
+                                            <a href="{% url 'editar_gasto_adicional' gasto.id_gastos_adicionales %}" class="btn btn-sm btn-warning me-1">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </a>
+                                            <form method="post" action="{% url 'eliminar_gasto_adicional' gasto.id_gastos_adicionales %}" class="d-inline"
+                                                  onsubmit="return confirm('¿Está seguro de eliminar este gasto?')">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                            </form>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

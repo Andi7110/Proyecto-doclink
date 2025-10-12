@@ -16,10 +16,12 @@ urlpatterns = [
     path('ranking_medico/', views.ranking_medico, name='ranking_medico'),
     path('calificar_medico/<int:cita_id>/', views.calificar_cita, name='calificar_medico'),
     path('ver_diagnostico/<int:cita_id>/', views.ver_diagnostico, name='ver_diagnostico'),
+    path('pagar_gastos_adicionales/<int:cita_id>/', views.pagar_gastos_adicionales, name='pagar_gastos_adicionales'),
     path('cancelar_cita/<int:cita_id>/', views.cancelar_cita, name='cancelar_cita'),
     path('ver_recetas/', views.ver_recetas, name='ver_recetas'),
     path('generar_pdf_receta/<int:cita_id>/', views.generar_pdf_receta, name='generar_pdf_receta'),
     path('config_perfil_paciente/', views.config_perfil_paciente, name='config_perfil_paciente'),
     path('historial-facturas/', views.historial_facturas_paciente, name='historial_facturas_paciente'),
+    path('historial-pagos/', views.historial_pagos_paciente, name='historial_pagos_paciente'),
 
 ]

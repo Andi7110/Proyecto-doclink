@@ -12,6 +12,7 @@ db.sqlite3
 
 # Variables de entorno
 .env
+Formato.pdf
 
 # Archivos media (subidos por usuarios)
 media/

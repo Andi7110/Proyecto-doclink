@@ -11,3 +11,4 @@ django-recaptcha==3.0.0
 pyotp==2.9.0
 qrcode[pil]==7.4.2
 django-sendgrid-v5==1.3.0
+num2words==0.5.12

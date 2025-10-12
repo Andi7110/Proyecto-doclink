@@ -33,7 +33,11 @@ urlpatterns = [
     path('ver-consultas-seguimiento/', views.ver_consultas_seguimiento, name='ver_consultas_seguimiento'),
     path('descargar-archivo/<int:consulta_id>/<str:tipo>/', views.descargar_archivo_base64, name='descargar_archivo_base64'),
     path('historial-facturas/', views.historial_facturas, name='historial_facturas'),
+    path('historial-pagos/', views.historial_pagos, name='historial_pagos'),
     path('gastos-adicionales/<int:cita_id>/', views.gestionar_gastos_adicionales, name='gestionar_gastos_adicionales'),
+    path('editar-gasto/<int:gasto_id>/', views.editar_gasto_adicional, name='editar_gasto_adicional'),
     path('eliminar-gasto/<int:gasto_id>/', views.eliminar_gasto_adicional, name='eliminar_gasto_adicional'),
+    path('marcar-gasto-pagado/<int:gasto_id>/', views.marcar_gasto_pagado, name='marcar_gasto_pagado'),
+    path('generar-pdf/<int:factura_id>/', views.generar_pdf_factura, name='generar_pdf_factura'),
 ]
 

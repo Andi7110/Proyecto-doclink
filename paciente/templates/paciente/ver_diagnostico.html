@@ -37,22 +37,32 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <p><strong>Costo de consulta:</strong> ${{ cita.monto_consulta|default:0 }}</p>
-                                        {% if gastos_adicionales %}
+                                        {% if total_todos_gastos %}
                                             <p><strong>Gastos adicionales:</strong></p>
                                             <ul class="list-unstyled ms-3">
-                                                {% for gasto in gastos_adicionales %}
-                                                    <li>• {{ gasto.descripcion }}: ${{ gasto.monto }}</li>
+                                                {% for gasto in todos_gastos_adicionales %}
+                                                    <li>• {{ gasto.descripcion }}: ${{ gasto.monto }} {% if gasto.pagado %}<span class="badge bg-success">Pagado</span>{% else %}<span class="badge bg-warning">Pendiente</span>{% endif %}</li>
                                                 {% endfor %}
                                             </ul>
-                                            <p><strong>Total gastos adicionales:</strong> ${{ total_gastos_adicionales }}</p>
+                                            <p><strong>Total gastos adicionales:</strong> ${{ total_todos_gastos }}</p>
+                                            {% if hay_gastos_pendientes %}
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#pagarGastosModal">
+                                                    <i class="bi bi-credit-card"></i> Pagar con Tarjeta
+                                                </button>
+                                            </div>
+                                            {% endif %}
                                         {% else %}
                                             <p><strong>Gastos adicionales:</strong> No hay gastos adicionales</p>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-6">
                                         <div class="alert alert-info">
-                                            <h6><strong>Total a pagar: ${{ total_consulta }}</strong></h6>
-                                            <p class="mb-0 small">Método de pago: {{ cita.get_metodo_pago_display }}</p>
+                                            {% if hay_gastos_pendientes %}
+                                                <h6><strong>Total a pagar: ${{ total_a_pagar }}</strong></h6>
+                                            {% else %}
+                                                <h6><strong>Total cancelado</strong></h6>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -187,5 +197,64 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para pagar gastos adicionales -->
+    {% if gastos_adicionales %}
+    <div class="modal fade" id="pagarGastosModal" tabindex="-1" aria-labelledby="pagarGastosModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pagarGastosModalLabel">Pagar Gastos Adicionales</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'pagar_gastos_adicionales' cita.id_cita_medicas %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p>Va a pagar <strong>${{ total_gastos_adicionales }}</strong> por los siguientes gastos adicionales:</p>
+                        <ul>
+                            {% for gasto in gastos_adicionales %}
+                                <li>{{ gasto.descripcion }}: ${{ gasto.monto }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="mb-3">
+                            <label for="numero_tarjeta" class="form-label">Número de Tarjeta</label>
+                            <input type="text" class="form-control" id="numero_tarjeta" name="numero_tarjeta" placeholder="1234 5678 9012 3456" required maxlength="16" pattern="\d{16}">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha_expiracion" class="form-label">Fecha de Expiración</label>
+                                <input type="text" class="form-control" id="fecha_expiracion" name="fecha_expiracion" placeholder="03/25" required pattern="(0[1-9]|1[0-2])\/\d{2}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required maxlength="4" pattern="\d{3,4}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nombre_titular" class="form-label">Nombre del Titular</label>
+                            <input type="text" class="form-control" id="nombre_titular" name="nombre_titular" placeholder="Como aparece en la tarjeta" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipo_tarjeta" class="form-label">Tipo de Tarjeta</label>
+                            <select class="form-select" id="tipo_tarjeta" name="tipo_tarjeta" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="debito">Débito</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Pagar ${{ total_gastos_adicionales }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
