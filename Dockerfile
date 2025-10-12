@@ -17,6 +17,9 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+
 # Copy requirements and install Python dependencies
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip \
@@ -25,8 +28,14 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy project
 COPY . /app/
 
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appuser /app
+
 # Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
