@@ -29,6 +29,37 @@
                         </div>
                     </div>
 
+                    <!-- Información de Costos -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">💰 Información de Costos</h5>
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Costo de consulta:</strong> ${{ cita.monto_consulta|default:0 }}</p>
+                                        {% if gastos_adicionales %}
+                                            <p><strong>Gastos adicionales:</strong></p>
+                                            <ul class="list-unstyled ms-3">
+                                                {% for gasto in gastos_adicionales %}
+                                                    <li>• {{ gasto.descripcion }}: ${{ gasto.monto }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            <p><strong>Total gastos adicionales:</strong> ${{ total_gastos_adicionales }}</p>
+                                        {% else %}
+                                            <p><strong>Gastos adicionales:</strong> No hay gastos adicionales</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <h6><strong>Total a pagar: ${{ total_consulta }}</strong></h6>
+                                            <p class="mb-0 small">Método de pago: {{ cita.get_metodo_pago_display }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {% if consulta %}
                         <!-- Diagnóstico Médico -->
                         <div class="mb-4">

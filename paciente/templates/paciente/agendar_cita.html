@@ -40,10 +40,17 @@
                     <div class="list-group" style="max-height: 300px; overflow-y: auto;">
                         {% for medico in medicos %}
                         <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
-                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}">
+                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}" data-precio="{{ medico.precio_consulta }}">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
-                                <small class="text-primary">{{ medico.especialidad }}</small>
+                                <div>
+                                    <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
+                                    <small class="text-muted">{{ medico.especialidad }}</small>
+                                </div>
+                                {% if medico.precio_consulta %}
+                                <small class="text-success fw-bold">${{ medico.precio_consulta }}</small>
+                                {% else %}
+                                <small class="text-warning">Precio no definido</small>
+                                {% endif %}
                             </div>
                         </a>
                         {% empty %}
@@ -70,11 +77,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Edad</label>
-                            <input type="text" class="form-control" value="{{ edad }}" readonly>
+                            <input type="text" class="form-control" value="{% if edad %}{{ edad }} años{% else %}No especificada{% endif %}" readonly>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Sexo</label>
-                            <input type="text" class="form-control" value="{{ sexo }}" readonly>
+                            <input type="text" class="form-control" value="{% if sexo %}{{ sexo }}{% else %}No especificado{% endif %}" readonly>
                         </div>
                     </div>
                 </div>
@@ -117,9 +124,76 @@
                         <label for="motivo" class="form-label">Motivo de consulta</label>
                         <textarea name="motivo" id="motivo" class="form-control" rows="5" required></textarea>
                     </div>
+                </div>
+            </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2" id="btn-confirmar">
-                        <i class="fas fa-calendar-check me-2"></i> Confirmar Cita
+            <!-- Método de Pago -->
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Método de Pago</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="monto_consulta" class="form-label">Monto de la consulta ($)</label>
+                            <input type="number" name="monto_consulta" id="monto_consulta" class="form-control" step="0.01" min="0" readonly required>
+                            <small class="form-text text-muted">El monto se determina por el precio establecido por el médico.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Método de pago</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="efectivo" value="efectivo" required>
+                                <label class="form-check-label" for="efectivo">
+                                    Efectivo
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="tarjeta" value="tarjeta" required>
+                                <label class="form-check-label" for="tarjeta">
+                                    Tarjeta de crédito/débito
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de tarjeta (ocultos por defecto) -->
+                    <div id="campos-tarjeta" class="mt-4" style="display: none;">
+                        <h6 class="text-primary mb-3">Datos de la tarjeta</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="numero_tarjeta" class="form-label">Número de tarjeta</label>
+                                <input type="text" name="numero_tarjeta" id="numero_tarjeta" class="form-control" maxlength="16" placeholder="1234567890123456">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="fecha_expiracion" class="form-label">Fecha expiración</label>
+                                <input type="text" name="fecha_expiracion" id="fecha_expiracion" class="form-control" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" name="cvv" id="cvv" class="form-control" maxlength="4" placeholder="123">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nombre_titular" class="form-label">Nombre del titular</label>
+                                <input type="text" name="nombre_titular" id="nombre_titular" class="form-control" placeholder="Como aparece en la tarjeta">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipo_tarjeta" class="form-label">Tipo de tarjeta</label>
+                                <select name="tipo_tarjeta" id="tipo_tarjeta" class="form-control">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="debito">Débito</option>
+                                    <option value="credito">Crédito</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3" id="info-efectivo" style="display: none;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Para pago en efectivo, deberá realizar el pago al momento de la cita médica.
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 py-2 mt-3" id="btn-confirmar">
+                        <i class="fas fa-calendar-check me-2"></i> Confirmar Cita y Pago
                     </button>
                 </div>
             </div>
@@ -137,9 +211,19 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             const medicoId = this.dataset.id;
             const medicoNombre = this.dataset.nombre;
+            const precio = this.dataset.precio;
 
             medicoInput.value = medicoId;
             medicoSeleccionadoTexto.innerHTML = `<strong>${medicoNombre}</strong>`;
+
+            // Actualizar el monto de la consulta
+            const montoInput = document.getElementById('monto_consulta');
+            if (precio) {
+                montoInput.value = precio;
+            } else {
+                montoInput.value = '';
+                alert('Este médico no ha configurado un precio de consulta. No podrás agendar la cita hasta que lo haga.');
+            }
         });
     });
 
@@ -166,6 +250,49 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === 'Enter') {
             document.getElementById('btn-buscar').click();
         }
+    });
+
+    // Manejar cambio de método de pago
+    document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const camposTarjeta = document.getElementById('campos-tarjeta');
+            const infoEfectivo = document.getElementById('info-efectivo');
+
+            if (this.value === 'tarjeta') {
+                camposTarjeta.style.display = 'block';
+                infoEfectivo.style.display = 'none';
+                // Hacer campos de tarjeta requeridos
+                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(field => {
+                    field.setAttribute('required', 'required');
+                });
+            } else if (this.value === 'efectivo') {
+                camposTarjeta.style.display = 'none';
+                infoEfectivo.style.display = 'block';
+                // Quitar required de campos de tarjeta
+                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(field => {
+                    field.removeAttribute('required');
+                });
+            }
+        });
+    });
+
+    // Formatear fecha de expiración
+    document.getElementById('fecha_expiracion').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+
+    // Validar número de tarjeta (solo números)
+    document.getElementById('numero_tarjeta').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    // Validar CVV (solo números)
+    document.getElementById('cvv').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
     });
 });
 </script>

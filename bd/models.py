@@ -112,6 +112,10 @@ class CitasMedicas(models.Model):
     fk_factura = models.ForeignKey('Factura', models.DO_NOTHING, db_column='fk_factura', blank=True, null=True)
     fk_paciente = models.ForeignKey('Paciente', models.DO_NOTHING, db_column='fk_paciente', blank=True, null=True)
     fk_medico = models.ForeignKey('Medico', models.DO_NOTHING, db_column='fk_medico', blank=True, null=True)
+    # Campos para método de pago
+    metodo_pago = models.CharField(max_length=20, choices=[('efectivo', 'Efectivo'), ('tarjeta', 'Tarjeta')], blank=True, null=True)
+    monto_consulta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    pago_confirmado = models.BooleanField(default=False)
 
     class Meta:
         managed = True
@@ -196,6 +200,7 @@ class Medico(models.Model):
     sub_especialidad_1 = models.TextField(blank=True, null=True)
     sub_especialidad_2 = models.TextField(blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
+    precio_consulta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Precio base de la consulta médica")
     fk_horario_medico = models.ForeignKey(HorarioMedico, models.DO_NOTHING, db_column='fk_horario_medico', blank=True, null=True)
     fk_clinica = models.ForeignKey(Clinica, models.DO_NOTHING, db_column='fk_clinica', blank=True, null=True)
     fk_ranking_medico = models.ForeignKey('RankingMedico', models.DO_NOTHING, db_column='fk_ranking_medico', blank=True, null=True)
@@ -237,11 +242,17 @@ class MensajesNotificacion(models.Model):
 class MetodosPago(models.Model):
     id_metodopago = models.BigAutoField(primary_key=True)
     tipometodopago = models.TextField(blank=True, null=True)
+    # Campos adicionales para datos de tarjeta
+    numero_tarjeta = models.CharField(max_length=16, blank=True, null=True)
+    fecha_expiracion = models.CharField(max_length=5, blank=True, null=True)  # MM/YY
+    cvv = models.CharField(max_length=4, blank=True, null=True)
+    nombre_titular = models.CharField(max_length=100, blank=True, null=True)
+    tipo_tarjeta = models.CharField(max_length=20, choices=[('debito', 'Débito'), ('credito', 'Crédito')], blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'metodos_pago'
-    
+
     def __str__(self):
         return self.tipometodopago if self.tipometodopago else f"Método pago {self.id_metodopago}"
 
@@ -354,7 +365,7 @@ class ConsultaMedica(models.Model):
     dosis = models.TextField(blank=True, null=True)
     fecha_inicio_tratamiento = models.DateField(blank=True, null=True)
     fecha_fin_tratamiento = models.DateField(blank=True, null=True)
-    archivos_receta = models.FileField(upload_to='recetas/', blank=True, null=True)
+    archivos_receta = models.TextField(blank=True, null=True)  # Base64 del archivo de receta
 
     class Meta:
         managed = True
@@ -489,4 +500,21 @@ class EmailVerificationToken(models.Model):
 
     def __str__(self):
         return f"Token for {self.user.correo}"
+
+class GastosAdicionales(models.Model):
+    id_gastos_adicionales = models.BigAutoField(primary_key=True)
+    fk_cita = models.ForeignKey(CitasMedicas, on_delete=models.CASCADE, db_column='fk_cita', related_name='gastos_adicionales')
+    descripcion = models.TextField(help_text="Descripción del gasto adicional (ej: Examen de sangre, Medicamento, etc.)")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, help_text="Monto del gasto adicional")
+    metodo_pago = models.CharField(max_length=20, choices=[('efectivo', 'Efectivo'), ('tarjeta', 'Tarjeta')], blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    pagado = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
+        db_table = 'gastos_adicionales'
+        ordering = ['fecha_creacion']
+
+    def __str__(self):
+        return f"Gasto adicional: {self.descripcion[:50]} - ${self.monto}"
 

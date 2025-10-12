@@ -146,6 +146,17 @@
         {% endif %}
       </div>
 
+      <div class="mb-3">
+        {{ form.precio_consulta.label_tag }}
+        {{ form.precio_consulta }}
+        {% if form.precio_consulta.errors %}
+          <div class="text-danger">{{ form.precio_consulta.errors }}</div>
+        {% endif %}
+        {% if form.precio_consulta.help_text %}
+          <small class="form-text text-muted">{{ form.precio_consulta.help_text }}</small>
+        {% endif %}
+      </div>
+
       <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'clinica_doctor' %}" class="btn btn-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>

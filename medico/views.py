@@ -11,10 +11,55 @@ from django.db.models import Sum
 from django.utils import timezone
 from datetime import date, timedelta
 
-from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica, SeguimientoClinico, ConsultaSeguimiento
+from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica, SeguimientoClinico, ConsultaSeguimiento, GastosAdicionales
 from .forms import PerfilMedicoForm, SeguimientoClinicoForm, ProgramarCitaSeguimientoForm
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica
 from .forms import PerfilMedicoForm
+
+def detectar_tipo_archivo_base64(base64_data):
+    """
+    Detecta el tipo de archivo desde datos base64
+    """
+    try:
+        import base64
+        file_data = base64.b64decode(base64_data)
+
+        # Detectar por magic bytes
+        if file_data.startswith(b'\xff\xd8\xff'):  # JPEG
+            return {'tipo': 'imagen', 'formato': 'JPEG', 'icono': 'bi-file-earmark-image', 'clase': 'text-primary'}
+        elif file_data.startswith(b'\x89PNG'):  # PNG
+            return {'tipo': 'imagen', 'formato': 'PNG', 'icono': 'bi-file-earmark-image', 'clase': 'text-primary'}
+        elif file_data.startswith(b'GIF87a') or file_data.startswith(b'GIF89a'):  # GIF
+            return {'tipo': 'imagen', 'formato': 'GIF', 'icono': 'bi-file-earmark-image', 'clase': 'text-primary'}
+        elif file_data.startswith(b'BM'):  # BMP
+            return {'tipo': 'imagen', 'formato': 'BMP', 'icono': 'bi-file-earmark-image', 'clase': 'text-primary'}
+        elif file_data.startswith(b'RIFF') and file_data[8:12] == b'WEBP':  # WebP
+            return {'tipo': 'imagen', 'formato': 'WebP', 'icono': 'bi-file-earmark-image', 'clase': 'text-primary'}
+        elif file_data.startswith(b'%PDF'):  # PDF
+            return {'tipo': 'documento', 'formato': 'PDF', 'icono': 'bi-file-earmark-pdf', 'clase': 'text-danger'}
+        elif file_data.startswith(b'PK\x03\x04'):  # ZIP/DOCX/XLSX
+            # Verificar contenido interno para determinar tipo específico
+            file_content = file_data.decode('latin-1', errors='ignore')
+            if '[Content_Types].xml' in file_content:
+                if 'word/' in file_content:
+                    return {'tipo': 'documento', 'formato': 'Word', 'icono': 'bi-file-earmark-word', 'clase': 'text-primary'}
+                elif 'xl/' in file_content or 'worksheets' in file_content:
+                    return {'tipo': 'documento', 'formato': 'Excel', 'icono': 'bi-file-earmark-excel', 'clase': 'text-success'}
+                elif 'ppt/' in file_content:
+                    return {'tipo': 'documento', 'formato': 'PowerPoint', 'icono': 'bi-file-earmark-ppt', 'clase': 'text-warning'}
+            return {'tipo': 'archivo', 'formato': 'ZIP', 'icono': 'bi-file-earmark-zip', 'clase': 'text-muted'}
+        elif file_data.startswith(b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'):  # DOC/XLS antiguos (OLE2)
+            # Intentar identificar por contenido
+            if b'WordDocument' in file_data:
+                return {'tipo': 'documento', 'formato': 'Word', 'icono': 'bi-file-earmark-word', 'clase': 'text-primary'}
+            elif b'Workbook' in file_data or b'Worksheet' in file_data:
+                return {'tipo': 'documento', 'formato': 'Excel', 'icono': 'bi-file-earmark-excel', 'clase': 'text-success'}
+            else:
+                return {'tipo': 'documento', 'formato': 'Office', 'icono': 'bi-file-earmark-binary', 'clase': 'text-secondary'}
+        else:
+            return {'tipo': 'archivo', 'formato': 'Archivo', 'icono': 'bi-file-earmark', 'clase': 'text-muted'}
+    except:
+        return {'tipo': 'archivo', 'formato': 'Archivo', 'icono': 'bi-file-earmark-x', 'clase': 'text-danger'}
 
 @login_required 
 def views_home(request):
@@ -56,6 +101,8 @@ def receta_medica(request):
                 MensajesNotificacion.objects.create(descripcion=descripcion)
 
                 messages.success(request, "Receta asignada correctamente a la consulta.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
             else:
                 messages.error(request, "No se encontró la consulta médica para esta cita.")
 
@@ -146,6 +193,8 @@ def config_clinica(request):
         clinica.save()
 
         messages.success(request, "Información de la clínica actualizada correctamente.")
+        # Consumir mensajes para que no aparezcan en otras páginas
+        list(messages.get_messages(request))
         return redirect('clinica_doctor')
 
     return render(request, 'medico/config_clinica.html')
@@ -173,6 +222,8 @@ def config_horario(request):
         horario.save()
 
         messages.success(request, "Horario actualizado correctamente.")
+        # Consumir mensajes para que no aparezcan en otras páginas
+        list(messages.get_messages(request))
         return redirect('dashboard_doctor')
 
     return render(request, 'medico/config_horario.html')
@@ -212,9 +263,12 @@ def config_perfildoc(request):
                     medico.no_jvpm = form.cleaned_data['no_jvpm']
                     medico.dui = form.cleaned_data['dui']
                     medico.descripcion = form.cleaned_data['descripcion']
+                    medico.precio_consulta = form.cleaned_data.get('precio_consulta')
                     medico.save()
 
                 messages.success(request, "Perfil médico actualizado correctamente.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
                 return redirect('clinica_doctor')
             except Exception as e:
                 messages.error(request, f"Error al guardar los cambios: {e}")
@@ -235,6 +289,7 @@ def config_perfildoc(request):
             'no_jvpm': medico.no_jvpm or '',
             'dui': medico.dui or '',
             'descripcion': medico.descripcion or '',
+            'precio_consulta': medico.precio_consulta,
             'foto_perfil': usuario.foto_perfil,
         }
         form = PerfilMedicoForm(initial=initial_data)
@@ -348,11 +403,15 @@ def actualizar_estado_cita(request, cita_id):
     if accion == 'aceptar':
         cita.status_cita_medica = 'En proceso'
         messages.success(request, "Cita aceptada y movida a 'En proceso'.")
+        # Consumir mensajes para que no aparezcan en otras páginas
+        list(messages.get_messages(request))
     elif accion == 'cancelar':
         cita.status_cita_medica = 'Cancelado'
         cita.cancelado_por = 'medico'
         cita.fecha_cancelacion = timezone.now()
         messages.success(request, "Cita cancelada correctamente.")
+        # Consumir mensajes para que no aparezcan en otras páginas
+        list(messages.get_messages(request))
 
     cita.save()
     return redirect('agenda_medico')
@@ -382,6 +441,8 @@ def actualizar_fecha_hora_cita(request, cita_id):
             cita.save()
 
             messages.success(request, "Fecha y hora de la cita actualizadas correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
         except ValueError:
             messages.error(request, "Formato de fecha u hora inválido.")
     else:
@@ -465,6 +526,8 @@ def realizar_consulta(request, cita_id):
                 # Asociar a la cita si es necesario, pero el modelo no tiene fk directa, así que solo crear
 
             messages.success(request, "Consulta médica guardada correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('dashboard_doctor')
 
         except Exception as e:
@@ -550,6 +613,8 @@ def programar_cita_doc(request):
         MensajesNotificacion.objects.create(descripcion=descripcion)
 
         messages.success(request, "✅ Cita médica programada con éxito.")
+        # Consumir mensajes para que no aparezcan en otras páginas
+        list(messages.get_messages(request))
         return redirect('agenda_medico')
 
     else:
@@ -615,10 +680,24 @@ def ver_diagnostico_medico(request, cita_id):
     usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
     nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
 
+    # Información de archivos adjuntos
+    archivos_info = {}
+    if consulta:
+        try:
+            if consulta.documentos_adjuntos:
+                archivos_info['documentos'] = detectar_tipo_archivo_base64(consulta.documentos_adjuntos)
+            if consulta.archivos_receta:
+                archivos_info['receta'] = detectar_tipo_archivo_base64(consulta.archivos_receta)
+        except:
+            # En caso de error, usar valores por defecto
+            archivos_info['documentos'] = {'tipo': 'archivo', 'formato': 'Archivo', 'icono': 'bi-file-earmark', 'clase': 'text-muted'}
+            archivos_info['receta'] = {'tipo': 'archivo', 'formato': 'Archivo', 'icono': 'bi-file-earmark', 'clase': 'text-muted'}
+
     context = {
         'cita': cita,
         'consulta': consulta,
         'nombre_paciente': nombre_paciente,
+        'archivos_info': archivos_info,
     }
 
     return render(request, 'medico/ver_diagnostico_medico.html', context)
@@ -734,6 +813,8 @@ def crear_seguimiento(request, cita_id):
                 )
 
             messages.success(request, "Seguimiento clínico creado correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('ver_seguimientos_paciente', paciente_id=paciente.id_paciente)
     else:
         form = SeguimientoClinicoForm()
@@ -832,6 +913,8 @@ def crear_consulta_seguimiento(request, seguimiento_id=None, paciente_id=None):
                 des_motivo_consulta_paciente=motivo
             )
             messages.success(request, "Cita de seguimiento programada correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('agenda_medico')
     else:
         form = ProgramarCitaSeguimientoForm()
@@ -855,28 +938,213 @@ def ver_consultas_seguimiento(request):
 @login_required
 def descargar_archivo_base64(request, consulta_id, tipo):
     """
-    Vista para servir archivos desde base64
+    Vista para servir archivos desde base64 o FieldFile
     tipo: 'documentos' o 'receta'
+    Parámetro GET 'download=true' fuerza descarga
     """
+    force_download = request.GET.get('download') == 'true'
     consulta = get_object_or_404(ConsultaMedica, id_consulta_medica=consulta_id)
 
     if tipo == 'documentos':
-        base64_data = consulta.documentos_adjuntos
-        filename = 'documento_adjunto.pdf'
+        archivo_data = consulta.documentos_adjuntos
+        tipo_archivo = 'documento'
     elif tipo == 'receta':
-        base64_data = consulta.archivos_receta
-        filename = 'receta_medica.pdf'
+        archivo_data = consulta.archivos_receta
+        tipo_archivo = 'receta'
     else:
         return HttpResponse("Tipo de archivo inválido", status=400)
 
-    if not base64_data:
+    if not archivo_data:
         return HttpResponse("Archivo no encontrado", status=404)
 
     try:
         import base64
-        file_data = base64.b64decode(base64_data)
-        response = HttpResponse(file_data, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        import mimetypes
+        from django.core.files.base import ContentFile
+
+        # Verificar si es un string base64 o un FieldFile
+        if isinstance(archivo_data, str):
+            # Es un string base64
+            file_data = base64.b64decode(archivo_data)
+        elif hasattr(archivo_data, 'read'):
+            # Es un FieldFile, leer el contenido
+            archivo_data.seek(0)
+            file_data = archivo_data.read()
+        else:
+            return HttpResponse("Formato de archivo no soportado", status=400)
+
+        # Detectar tipo MIME basado en el contenido del archivo
+        content_type, _ = mimetypes.guess_type(f'{tipo_archivo}_archivo')
+
+        # Si no se puede detectar por nombre, intentar por contenido
+        if not content_type:
+            if file_data.startswith(b'\xff\xd8\xff'):  # JPEG
+                content_type = 'image/jpeg'
+            elif file_data.startswith(b'\x89PNG'):  # PNG
+                content_type = 'image/png'
+            elif file_data.startswith(b'GIF87a') or file_data.startswith(b'GIF89a'):  # GIF
+                content_type = 'image/gif'
+            elif file_data.startswith(b'BM'):  # BMP
+                content_type = 'image/bmp'
+            elif file_data.startswith(b'RIFF') and file_data[8:12] == b'WEBP':  # WebP
+                content_type = 'image/webp'
+            elif file_data.startswith(b'%PDF'):  # PDF
+                content_type = 'application/pdf'
+            elif file_data.startswith(b'PK\x03\x04'):  # ZIP/DOCX/XLSX
+                # Verificar si es DOCX o XLSX por contenido interno
+                if b'word/' in file_data:
+                    content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                elif b'xl/' in file_data:
+                    content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                else:
+                    content_type = 'application/zip'
+            elif file_data.startswith(b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'):  # DOC/XLS antiguos
+                content_type = 'application/msword'  # o 'application/vnd.ms-excel'
+            else:
+                content_type = 'application/octet-stream'
+
+        # Determinar si mostrar inline o attachment
+        if force_download:
+            disposition = 'attachment'
+        elif content_type.startswith('image/'):
+            disposition = 'inline'
+        elif content_type == 'application/pdf':
+            disposition = 'inline'
+        else:
+            # Para documentos Office, intentar mostrar inline primero
+            disposition = 'inline'
+
+        # Crear nombre de archivo basado en tipo y contenido
+        if content_type == 'image/jpeg':
+            filename = f'{tipo_archivo}_imagen.jpg'
+        elif content_type == 'image/png':
+            filename = f'{tipo_archivo}_imagen.png'
+        elif content_type == 'image/gif':
+            filename = f'{tipo_archivo}_imagen.gif'
+        elif content_type == 'image/bmp':
+            filename = f'{tipo_archivo}_imagen.bmp'
+        elif content_type == 'image/webp':
+            filename = f'{tipo_archivo}_imagen.webp'
+        elif content_type == 'application/pdf':
+            filename = f'{tipo_archivo}.pdf'
+        elif content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            filename = f'{tipo_archivo}.docx'
+        elif content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            filename = f'{tipo_archivo}.xlsx'
+        elif content_type == 'application/msword':
+            filename = f'{tipo_archivo}.doc'
+        else:
+            filename = f'{tipo_archivo}_archivo'
+
+        response = HttpResponse(file_data, content_type=content_type)
+        response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
         return response
     except Exception as e:
         return HttpResponse(f"Error al procesar archivo: {e}", status=500)
+
+@login_required
+def historial_facturas(request):
+    usuario = request.user
+    medico = usuario.fk_medico
+
+    if not medico:
+        return render(request, 'medico/no_es_medico.html')
+
+    # Filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+
+    # Query base
+    facturas = Factura.objects.filter(
+        citasmedicas__fk_medico=medico,
+        citasmedicas__fk_factura__isnull=False
+    ).select_related(
+        'fk_metodopago',
+        'citasmedicas__fk_paciente'
+    ).order_by('-fecha_emision')
+
+    # Aplicar filtros de fecha
+    if fecha_desde:
+        facturas = facturas.filter(fecha_emision__gte=fecha_desde)
+    if fecha_hasta:
+        facturas = facturas.filter(fecha_emision__lte=fecha_hasta)
+
+    # Enriquecer datos
+    facturas_enriquecidas = []
+    for factura in facturas:
+        # Obtener la cita asociada
+        cita = CitasMedicas.objects.filter(fk_factura=factura).first()
+        paciente = None
+        if cita and cita.fk_paciente:
+            paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
+
+        # Calcular gastos adicionales
+        gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita) if cita else []
+        total_gastos = sum(gasto.monto for gasto in gastos_adicionales)
+        total_factura = factura.monto + total_gastos
+
+        facturas_enriquecidas.append({
+            'factura': factura,
+            'paciente': paciente.get_full_name() if paciente else "Paciente desconocido",
+            'fecha_cita': cita.fecha_consulta if cita else None,
+            'metodo_pago': factura.fk_metodopago.tipometodopago if factura.fk_metodopago else "No especificado",
+            'monto_consulta': factura.monto,
+            'gastos_adicionales': gastos_adicionales,
+            'total_gastos_adicionales': total_gastos,
+            'total_factura': total_factura,
+        })
+
+    context = {
+        'facturas': facturas_enriquecidas,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'total_facturas': len(facturas_enriquecidas),
+        'total_monto': sum(f['total_factura'] for f in facturas_enriquecidas if f['total_factura']),
+    }
+
+    return render(request, 'medico/historial_facturas.html', context)
+
+@login_required
+def gestionar_gastos_adicionales(request, cita_id):
+    cita = get_object_or_404(CitasMedicas, id_cita_medicas=cita_id, fk_medico=request.user.fk_medico)
+
+    if request.method == 'POST':
+        descripcion = request.POST.get('descripcion')
+        monto = request.POST.get('monto')
+        metodo_pago = request.POST.get('metodo_pago')
+
+        if descripcion and monto:
+            GastosAdicionales.objects.create(
+                fk_cita=cita,
+                descripcion=descripcion,
+                monto=monto,
+                metodo_pago=metodo_pago
+            )
+            messages.success(request, "Gasto adicional agregado correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
+            return redirect('gestionar_gastos_adicionales', cita_id=cita_id)
+        else:
+            messages.error(request, "Por favor complete todos los campos.")
+
+    gastos = GastosAdicionales.objects.filter(fk_cita=cita)
+    total_gastos = gastos.aggregate(total=models.Sum('monto'))['total'] or 0
+
+    context = {
+        'cita': cita,
+        'gastos': gastos,
+        'total_gastos': total_gastos,
+    }
+
+    return render(request, 'medico/gestionar_gastos_adicionales.html', context)
+
+@require_POST
+@login_required
+def eliminar_gasto_adicional(request, gasto_id):
+    gasto = get_object_or_404(GastosAdicionales, id_gastos_adicionales=gasto_id, fk_cita__fk_medico=request.user.fk_medico)
+    cita_id = gasto.fk_cita.id_cita_medicas
+    gasto.delete()
+    messages.success(request, "Gasto adicional eliminado correctamente.")
+    # Consumir mensajes para que no aparezcan en otras páginas
+    list(messages.get_messages(request))
+    return redirect('gestionar_gastos_adicionales', cita_id=cita_id)

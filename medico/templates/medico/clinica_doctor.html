@@ -36,6 +36,14 @@
           <p><strong>Número JVPM:</strong> {{ request.user.fk_medico.no_jvpm }}</p>
           <p><strong>DUI:</strong> {{ request.user.fk_medico.dui }}</p>
           <p><strong>Descripción:</strong> {{ request.user.fk_medico.descripcion|default:"No registrada." }}</p>
+          <p><strong>Precio de Consulta:</strong>
+            {% if request.user.fk_medico.precio_consulta %}
+              ${{ request.user.fk_medico.precio_consulta }}
+            {% else %}
+              <span class="text-warning">No configurado</span>
+              <small class="text-muted">(Configúralo en tu perfil médico)</small>
+            {% endif %}
+          </p>
         </div>
         <div class="col-md-6">
           <p><strong>Clínica:</strong> {{ request.user.fk_medico.fk_clinica.nombre }}</p>

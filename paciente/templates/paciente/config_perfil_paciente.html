@@ -70,6 +70,24 @@
         </div>
       </div>
 
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          {{ form.fecha_nacimiento.label_tag }}
+          {{ form.fecha_nacimiento }}
+          {% if form.fecha_nacimiento.errors %}
+            <div class="text-danger">{{ form.fecha_nacimiento.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          {{ form.sexo.label_tag }}
+          {{ form.sexo }}
+          {% if form.sexo.errors %}
+            <div class="text-danger">{{ form.sexo.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
       <h4 class="mb-3 mt-4">Foto de Perfil</h4>
 
       <div class="mb-3 text-center">

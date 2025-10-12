@@ -1,0 +1,114 @@
+{% extends "medico/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">💰 Gestionar Gastos Adicionales</h2>
+
+    <!-- Información de la cita -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Información de la Cita</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Fecha:</strong> {{ cita.fecha_consulta }}</p>
+                    <p><strong>Paciente:</strong> {{ cita.fk_paciente }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Monto consulta:</strong> ${{ cita.monto_consulta }}</p>
+                    <p><strong>Método pago consulta:</strong> {{ cita.get_metodo_pago_display }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario para agregar gasto adicional -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Agregar Gasto Adicional</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <input type="text" class="form-control" id="descripcion" name="descripcion"
+                               placeholder="Ej: Examen de sangre, Medicamento, etc." required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="monto" class="form-label">Monto ($)</label>
+                        <input type="number" class="form-control" id="monto" name="monto"
+                               step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="metodo_pago" class="form-label">Método de Pago</label>
+                        <select class="form-control" id="metodo_pago" name="metodo_pago">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">Agregar Gasto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de gastos adicionales -->
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Gastos Adicionales</h5>
+            <h6 class="mb-0 text-primary">Total: ${{ total_gastos }}</h6>
+        </div>
+        <div class="card-body">
+            {% if gastos %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Método Pago</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos %}
+                                <tr>
+                                    <td>{{ gasto.descripcion }}</td>
+                                    <td>${{ gasto.monto }}</td>
+                                    <td>{{ gasto.get_metodo_pago_display }}</td>
+                                    <td>{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if gasto.pagado %}
+                                            <span class="badge bg-success">Pagado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" action="{% url 'eliminar_gasto_adicional' gasto.id_gastos_adicionales %}" class="d-inline"
+                                              onsubmit="return confirm('¿Está seguro de eliminar este gasto?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No hay gastos adicionales registrados para esta cita.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'ver_diagnostico_medico' cita.id_cita_medicas %}" class="btn btn-secondary">Volver al Diagnóstico</a>
+        <a href="{% url 'dashboard_doctor' %}" class="btn btn-primary">Ir al Dashboard</a>
+    </div>
+</div>
+{% endblock %}

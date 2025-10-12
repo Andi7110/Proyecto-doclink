@@ -67,11 +67,69 @@
                             <h5 class="text-secondary">📎 Documentos Adjuntos</h5>
                             <div class="card border-secondary">
                                 <div class="card-body">
-                                    <p><i class="bi bi-file-earmark-pdf"></i>
-                                        <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}" target="_blank" class="text-decoration-none">
-                                            Ver documento adjunto
-                                        </a>
+                                    {% with archivo_info=archivos_info.documentos|default:archivos_info.receta %}
+                                    <p>
+                                        <i class="bi {{ archivo_info.icono|default:'bi-file-earmark' }} {{ archivo_info.clase|default:'text-muted' }}"></i>
+                                        {% if archivo_info.tipo|default:'archivo' == 'imagen' %}
+                                            <!-- Mostrar imagen directamente usando data URI -->
+                                            {% if archivo_info.formato|default:'Archivo' == 'JPEG' %}
+                                                <a href="data:image/jpeg;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'PNG' %}
+                                                <a href="data:image/png;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'GIF' %}
+                                                <a href="data:image/gif;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'BMP' %}
+                                                <a href="data:image/bmp;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'WebP' %}
+                                                <a href="data:image/webp;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% else %}
+                                                <a href="data:image/png;base64,{{ consulta.documentos_adjuntos }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% endif %}
+                                            <br>
+                                            <small>
+                                                <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}?download=true" class="text-muted">
+                                                    <i class="bi bi-download"></i> Descargar imagen
+                                                </a>
+                                            </small>
+                                        {% elif archivo_info.formato|default:'Archivo' == 'Word' or archivo_info.formato|default:'Archivo' == 'Excel' %}
+                                            <!-- Para documentos Office, mostrar inline en el navegador -->
+                                            <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}"
+                                               target="_blank" class="text-decoration-none">
+                                                Ver {{ archivo_info.formato|default:'Archivo' }} en línea
+                                            </a>
+                                            <br>
+                                            <small>
+                                                <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}?download=true" class="text-muted">
+                                                    <i class="bi bi-download"></i> Descargar archivo
+                                                </a>
+                                            </small>
+                                        {% else %}
+                                            <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'documentos' %}"
+                                               target="_blank" class="text-decoration-none">
+                                                Ver {{ archivo_info.formato|default:'Archivo' }}
+                                            </a>
+                                        {% endif %}
                                     </p>
+                                    {% endwith %}
+                                    <small class="text-muted">Formatos permitidos: PDF, imágenes (JPG, PNG), documentos Word (.doc, .docx), Excel (.xls, .xlsx)</small>
                                 </div>
                             </div>
                         </div>
@@ -99,11 +157,68 @@
                                     <p><strong>Fecha Fin:</strong> {{ consulta.fecha_fin_tratamiento|date:"d/m/Y" }}</p>
                                     {% endif %}
                                     {% if consulta.archivos_receta %}
-                                    <p><i class="bi bi-file-earmark-pdf"></i>
-                                        <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}" target="_blank" class="text-decoration-none">
-                                            Ver archivo adjunto de receta
-                                        </a>
+                                    {% with archivo_info=archivos_info.receta|default:archivos_info.documentos %}
+                                    <p>
+                                        <i class="bi {{ archivo_info.icono|default:'bi-file-earmark' }} {{ archivo_info.clase|default:'text-muted' }}"></i>
+                                        {% if archivo_info.tipo|default:'archivo' == 'imagen' %}
+                                            <!-- Mostrar imagen directamente usando data URI -->
+                                            {% if archivo_info.formato|default:'Archivo' == 'JPEG' %}
+                                                <a href="data:image/jpeg;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'PNG' %}
+                                                <a href="data:image/png;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'GIF' %}
+                                                <a href="data:image/gif;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'BMP' %}
+                                                <a href="data:image/bmp;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% elif archivo_info.formato|default:'Archivo' == 'WebP' %}
+                                                <a href="data:image/webp;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% else %}
+                                                <a href="data:image/png;base64,{{ consulta.archivos_receta }}"
+                                                   target="_blank" class="text-decoration-none">
+                                                    Ver imagen de receta ({{ archivo_info.formato|default:'Archivo' }})
+                                                </a>
+                                            {% endif %}
+                                            <br>
+                                            <small>
+                                                <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}?download=true" class="text-muted">
+                                                    <i class="bi bi-download"></i> Descargar imagen
+                                                </a>
+                                            </small>
+                                        {% elif archivo_info.formato|default:'Archivo' == 'Word' or archivo_info.formato|default:'Archivo' == 'Excel' %}
+                                            <!-- Para documentos Office, mostrar inline en el navegador -->
+                                            <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}"
+                                               target="_blank" class="text-decoration-none">
+                                                Ver receta ({{ archivo_info.formato|default:'Archivo' }}) en línea
+                                            </a>
+                                            <br>
+                                            <small>
+                                                <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}?download=true" class="text-muted">
+                                                    <i class="bi bi-download"></i> Descargar archivo
+                                                </a>
+                                            </small>
+                                        {% else %}
+                                            <a href="{% url 'descargar_archivo_base64' consulta.id_consulta_medica 'receta' %}"
+                                               target="_blank" class="text-decoration-none">
+                                                Ver receta ({{ archivo_info.formato|default:'Archivo' }})
+                                            </a>
+                                        {% endif %}
                                     </p>
+                                    {% endwith %}
                                     {% endif %}
                                 </div>
                             </div>
@@ -139,9 +254,14 @@
                         <a href="{% url 'dashboard_doctor' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Volver al Dashboard
                         </a>
-                        <a href="{% url 'crear_consulta_seguimiento_paciente' paciente_id=cita.fk_paciente.id_paciente %}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Crear Consulta de Seguimiento
-                        </a>
+                        <div>
+                            <a href="{% url 'gestionar_gastos_adicionales' cita.id_cita_medicas %}" class="btn btn-warning me-2">
+                                <i class="bi bi-cash"></i> Gestionar Gastos Adicionales
+                            </a>
+                            <a href="{% url 'crear_consulta_seguimiento_paciente' paciente_id=cita.fk_paciente.id_paciente %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Crear Consulta de Seguimiento
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

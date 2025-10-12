@@ -8,10 +8,10 @@ from django.utils import timezone
 from django.db import transaction
 from .decorators import paciente_required
 from django.shortcuts import render, redirect, get_object_or_404
-from bd.models import PolizaSeguro, ContactoEmergencia
-from .forms import PolizaSeguroForm, ContactoEmergenciaForm, PerfilPacienteForm
+from bd.models import PolizaSeguro, ContactoEmergencia, GastosAdicionales
+from .forms import PolizaSeguroForm, ContactoEmergenciaForm, PerfilPacienteForm, MetodoPagoForm
 
-from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta, SeguimientoClinico
+from bd.models import Usuario, Medico, Paciente, CitasMedicas, Clinica, ValoracionConsulta, SeguimientoClinico, MetodosPago, Factura
 
 DEPARTAMENTOS_EL_SALVADOR = [
     'Ahuachapán', 'Santa Ana', 'Sonsonate', 'Chalatenango', 'Cuscatlán',
@@ -64,6 +64,8 @@ def agendar_cita(request):
         hoy = date.today()
         nacimiento = usuario.fecha_nacimiento
         edad = hoy.year - nacimiento.year - ((hoy.month, hoy.day) < (nacimiento.month, nacimiento.day))
+    else:
+        edad = ""
 
     # Filtro por especialidad
     especialidad = request.GET.get('especialidad')
@@ -83,23 +85,68 @@ def agendar_cita(request):
             'id_medico': medico.id_medico,
             'especialidad': medico.especialidad,
             'nombre_completo': nombre_completo,
+            'precio_consulta': medico.precio_consulta,
         })
 
     if request.method == 'POST':
+        # Procesar formulario de cita y pago
         medico_id = request.POST.get('medico_id')
         fecha_str = request.POST.get('fecha_cita')
         hora_str = request.POST.get('hora_cita')
         motivo = request.POST.get('motivo')
 
+        # Datos del pago
+        metodo_pago = request.POST.get('metodo_pago')
+        numero_tarjeta = request.POST.get('numero_tarjeta')
+        fecha_expiracion = request.POST.get('fecha_expiracion')
+        cvv = request.POST.get('cvv')
+        nombre_titular = request.POST.get('nombre_titular')
+        tipo_tarjeta = request.POST.get('tipo_tarjeta')
+
+        # Validar campos básicos de la cita
         if not (medico_id and fecha_str and hora_str and motivo):
-            messages.error(request, "Por favor completa todos los campos.")
+            messages.error(request, "Por favor completa todos los campos de la cita.")
             return redirect('agendar_cita')
+
+        # Validar campos de pago
+        if not metodo_pago:
+            messages.error(request, "Por favor selecciona un método de pago.")
+            return redirect('agendar_cita')
+
+        # Obtener el precio de consulta del médico
+        try:
+            medico = Medico.objects.get(id_medico=medico_id)
+            monto_consulta = medico.precio_consulta
+            if not monto_consulta:
+                messages.error(request, "El médico no ha configurado un precio de consulta. Contacta al médico.")
+                return redirect('agendar_cita')
+        except Medico.DoesNotExist:
+            messages.error(request, "Médico no encontrado.")
+            return redirect('agendar_cita')
+
+        # Validar campos de tarjeta si es necesario
+        if metodo_pago == 'tarjeta':
+            if not all([numero_tarjeta, fecha_expiracion, cvv, nombre_titular, tipo_tarjeta]):
+                messages.error(request, "Por favor completa todos los campos de la tarjeta.")
+                return redirect('agendar_cita')
+
+            # Validar formato de número de tarjeta
+            if not numero_tarjeta.isdigit() or len(numero_tarjeta) != 16:
+                messages.error(request, "El número de tarjeta debe tener 16 dígitos.")
+                return redirect('agendar_cita')
+
+            # Validar formato de fecha de expiración
+            import re
+            if not re.match(r'^\d{2}/\d{2}$', fecha_expiracion):
+                messages.error(request, "Formato de fecha de expiración inválido (MM/YY).")
+                return redirect('agendar_cita')
 
         try:
             fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
             hora = datetime.strptime(hora_str, '%H:%M').time()
+            monto = float(monto_consulta)
         except ValueError:
-            messages.error(request, "Formato de fecha u hora inválido.")
+            messages.error(request, "Formato de fecha, hora o monto inválido.")
             return redirect('agendar_cita')
 
         try:
@@ -108,39 +155,63 @@ def agendar_cita(request):
             messages.error(request, "Médico no encontrado.")
             return redirect('agendar_cita')
 
-        try:
-            CitasMedicas.objects.create(
-                fecha_consulta=fecha,
-                hora_inicio=hora,
-                status_cita_medica="Pendiente",
-                des_motivo_consulta_paciente=motivo,
-                fk_paciente=paciente,
-                fk_medico=medico
-            )
-        except Exception as e:
-            messages.error(request, f"Error al guardar la cita: {e}")
-            return redirect('agendar_cita')
-
-        messages.success(request, "Cita agendada correctamente.")
-        # Prevenir duplicado
+        # Verificar que no haya cita duplicada
         if CitasMedicas.objects.filter(
             fk_medico=medico,
             fecha_consulta=fecha,
             hora_inicio=hora
         ).exists():
-            # messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
+            messages.error(request, "Ya hay una cita agendada con este médico en esa fecha y hora.")
             return redirect('agendar_cita')
 
-        CitasMedicas.objects.create(
-            fecha_consulta=fecha,
-            hora_inicio=hora,
-            status_cita_medica="Pendiente",
-            des_motivo_consulta_paciente=motivo,
-            fk_paciente=paciente,
-            fk_medico=medico
-        )
-        messages.success(request, "¡Cita agendada correctamente!")
-        return redirect('agenda')
+        try:
+            with transaction.atomic():
+                # Crear método de pago si es tarjeta
+                metodo_pago_obj = None
+                if metodo_pago == 'tarjeta':
+                    metodo_pago_obj = MetodosPago.objects.create(
+                        tipometodopago='tarjeta',
+                        numero_tarjeta=numero_tarjeta,
+                        fecha_expiracion=fecha_expiracion,
+                        cvv=cvv,
+                        nombre_titular=nombre_titular,
+                        tipo_tarjeta=tipo_tarjeta
+                    )
+                else:
+                    # Para efectivo, crear registro básico
+                    metodo_pago_obj = MetodosPago.objects.create(
+                        tipometodopago='efectivo'
+                    )
+
+                # Crear factura
+                factura = Factura.objects.create(
+                    fecha_emision=timezone.now().date(),
+                    monto=monto,
+                    fk_metodopago=metodo_pago_obj
+                )
+
+                # Crear cita médica
+                cita = CitasMedicas.objects.create(
+                    fecha_consulta=fecha,
+                    hora_inicio=hora,
+                    status_cita_medica="Pendiente",
+                    des_motivo_consulta_paciente=motivo,
+                    fk_paciente=paciente,
+                    fk_medico=medico,
+                    fk_factura=factura,
+                    metodo_pago=metodo_pago,
+                    monto_consulta=monto,
+                    pago_confirmado=False  # Se confirma cuando la cita se pone en proceso
+                )
+
+            messages.success(request, "¡Cita agendada correctamente!")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
+            return redirect('agenda')
+
+        except Exception as e:
+            messages.error(request, f"Error al guardar la cita: {e}")
+            return redirect('agendar_cita')
 
     context = {
         'edad': edad,
@@ -148,7 +219,7 @@ def agendar_cita(request):
         'medicos': medicos_con_nombre,
         'especialidad_seleccionada': especialidad,
         'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
-        'sexo': getattr(usuario, 'sexo', ''),
+        'sexo': getattr(usuario, 'sexo', '') or '',
         'hoy': date.today(),
         # Opcional: lista de especialidades para filtro rápido
         'especialidades': Medico.objects.values_list('especialidad', flat=True).distinct(),
@@ -271,6 +342,8 @@ def agregar_poliza(request):
             poliza.paciente = paciente
             poliza.save()
             messages.success(request, "Póliza agregada correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('dashboard_paciente')
     else:
         form = PolizaSeguroForm()
@@ -296,6 +369,8 @@ def gestionar_contacto_emergencia(request):
             contacto.paciente = paciente
             contacto.save()
             messages.success(request, "Contacto de emergencia guardado correctamente.")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('contacto_emergencia')   # 👈 aquí está la magia (se limpia el form)
     else:
         form = ContactoEmergenciaForm(instance=contacto)
@@ -443,6 +518,8 @@ def calificar_cita(request, cita_id):
                 fk_cita=cita
             )
             messages.success(request, "¡Gracias por tu calificación!")
+            # Consumir mensajes para que no aparezcan en otras páginas
+            list(messages.get_messages(request))
             return redirect('agenda')
         except Exception as e:
             messages.error(request, f"Error al guardar la calificación: {e}")
@@ -511,6 +588,10 @@ def ver_diagnostico(request, cita_id):
     # Verificar si ya tiene valoración
     tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
 
+    # Obtener gastos adicionales
+    gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita)
+    total_gastos_adicionales = gastos_adicionales.aggregate(total=models.Sum('monto'))['total'] or 0
+
     # Información del médico
     usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
     nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
@@ -520,6 +601,9 @@ def ver_diagnostico(request, cita_id):
         'cita': cita,
         'consulta': consulta,
         'tiene_valoracion': tiene_valoracion,
+        'gastos_adicionales': gastos_adicionales,
+        'total_gastos_adicionales': total_gastos_adicionales,
+        'total_consulta': (cita.monto_consulta or 0) + total_gastos_adicionales,
         'nombre_medico': nombre_medico,
         'especialidad': especialidad,
     }
@@ -554,6 +638,8 @@ def cancelar_cita(request, cita_id):
     cita.save()
 
     messages.success(request, "Cita cancelada correctamente.")
+    # Consumir mensajes para que no aparezcan en otras páginas
+    list(messages.get_messages(request))
     return redirect('agenda')
 
 @login_required
@@ -729,11 +815,15 @@ def config_perfil_paciente(request):
                     usuario.telefono = form.cleaned_data['telefono']
                     usuario.departamento = form.cleaned_data['departamento']
                     usuario.municipio = form.cleaned_data['municipio']
+                    usuario.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
+                    usuario.sexo = form.cleaned_data.get('sexo')
                     if form.cleaned_data['foto_perfil']:
                         usuario.foto_perfil = form.cleaned_data['foto_perfil']
                     usuario.save()
 
                 messages.success(request, "Perfil paciente actualizado correctamente.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
                 return redirect('dashboard_paciente')
             except Exception as e:
                 messages.error(request, f"Error al guardar los cambios: {e}")
@@ -748,9 +838,76 @@ def config_perfil_paciente(request):
             'telefono': usuario.telefono or '',
             'departamento': usuario.departamento or '',
             'municipio': usuario.municipio or '',
+            'fecha_nacimiento': usuario.fecha_nacimiento,
+            'sexo': usuario.sexo or '',
             'foto_perfil': usuario.foto_perfil,
         }
         form = PerfilPacienteForm(initial=initial_data)
 
     return render(request, 'paciente/config_perfil_paciente.html', {'form': form})
+
+@login_required
+@paciente_required
+def historial_facturas_paciente(request):
+    usuario = request.user
+    paciente = usuario.fk_paciente
+
+    if not paciente:
+        messages.error(request, "No tienes un perfil de paciente asociado.")
+        return redirect('dashboard_paciente')
+
+    # Filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+
+    # Query base - facturas del paciente
+    facturas = Factura.objects.filter(
+        citasmedicas__fk_paciente=paciente,
+        citasmedicas__fk_factura__isnull=False
+    ).select_related(
+        'fk_metodopago',
+        'citasmedicas__fk_medico'
+    ).order_by('-fecha_emision')
+
+    # Aplicar filtros de fecha
+    if fecha_desde:
+        facturas = facturas.filter(fecha_emision__gte=fecha_desde)
+    if fecha_hasta:
+        facturas = facturas.filter(fecha_emision__lte=fecha_hasta)
+
+    # Enriquecer datos
+    facturas_enriquecidas = []
+    for factura in facturas:
+        # Obtener la cita asociada
+        cita = CitasMedicas.objects.filter(fk_factura=factura).first()
+        medico = None
+        if cita and cita.fk_medico:
+            medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
+
+        # Calcular gastos adicionales
+        gastos_adicionales = GastosAdicionales.objects.filter(fk_cita=cita) if cita else []
+        total_gastos = sum(gasto.monto for gasto in gastos_adicionales)
+        total_factura = factura.monto + total_gastos
+
+        facturas_enriquecidas.append({
+            'factura': factura,
+            'medico': medico.get_full_name() if medico else "Médico desconocido",
+            'fecha_cita': cita.fecha_consulta if cita else None,
+            'metodo_pago': factura.fk_metodopago.tipometodopago if factura.fk_metodopago else "No especificado",
+            'monto_consulta': factura.monto,
+            'gastos_adicionales': gastos_adicionales,
+            'total_gastos_adicionales': total_gastos,
+            'total_factura': total_factura,
+            'status_pago': "Confirmado" if (cita and cita.pago_confirmado) else "Pendiente",
+        })
+
+    context = {
+        'facturas': facturas_enriquecidas,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'total_facturas': len(facturas_enriquecidas),
+        'total_monto': sum(f['total_factura'] for f in facturas_enriquecidas if f['total_factura']),
+    }
+
+    return render(request, 'paciente/historial_facturas.html', context)
 

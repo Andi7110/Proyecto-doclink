@@ -14,7 +14,7 @@ Sistema de gestión médica DocLink, una aplicación web desarrollada con Django
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/Andi7110/Proyecto-doclink.git
 cd Proyecto-doclink
 ```
 
@@ -127,6 +127,22 @@ Los pacientes pueden visualizar un ranking de médicos basado en las calificacio
 - Se pueden incluir reseñas opcionales para proporcionar feedback detallado.
 - Las calificaciones se muestran en el ranking de médicos y ayudan a otros pacientes en su elección.
 - Accesible desde la agenda del paciente, en las citas anteriores completadas.
+
+### Sistema de Métodos de Pago
+- Los pacientes pueden seleccionar entre dos métodos de pago al agendar citas: efectivo o tarjeta.
+- Para pagos con tarjeta, se requiere información segura: número de tarjeta (16 dígitos), fecha de expiración (MM/YY), CVV (3-4 dígitos), nombre del titular y tipo de tarjeta (débito/crédito).
+- Los datos de pago se almacenan de forma segura en la base de datos.
+- Para pagos en efectivo, se informa al paciente que debe realizar el pago al momento de la cita.
+- El método de pago se registra en la factura correspondiente a cada cita médica.
+
+### Historial de Facturas
+- **Para Médicos**: Pueden visualizar un historial completo de todas las facturas emitidas por sus consultas.
+- **Para Pacientes**: Pueden ver el historial de sus propias facturas con información detallada de pagos realizados.
+- Cada factura muestra: número de factura, fecha de emisión, nombre del médico/paciente, fecha de la cita, método de pago, estado del pago y monto.
+- Incluye filtros por rango de fechas para facilitar la búsqueda.
+- Muestra estadísticas totales: número de facturas y monto total acumulado.
+- Mejora la auditoría y transparencia en el sistema de pagos.
+- Accesible desde los dashboards respectivos en la sección "Historial de Facturas" / "Mis Facturas".
 
 ### Almacenamiento de Documentos
 - Los documentos médicos (PDFs, imágenes) se almacenan automáticamente en OneDrive.

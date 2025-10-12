@@ -32,5 +32,8 @@ urlpatterns = [
     path('crear-consulta-seguimiento-paciente/<int:paciente_id>/', views.crear_consulta_seguimiento, name='crear_consulta_seguimiento_paciente'),
     path('ver-consultas-seguimiento/', views.ver_consultas_seguimiento, name='ver_consultas_seguimiento'),
     path('descargar-archivo/<int:consulta_id>/<str:tipo>/', views.descargar_archivo_base64, name='descargar_archivo_base64'),
+    path('historial-facturas/', views.historial_facturas, name='historial_facturas'),
+    path('gastos-adicionales/<int:cita_id>/', views.gestionar_gastos_adicionales, name='gestionar_gastos_adicionales'),
+    path('eliminar-gasto/<int:gasto_id>/', views.eliminar_gasto_adicional, name='eliminar_gasto_adicional'),
 ]
 

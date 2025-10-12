@@ -57,6 +57,13 @@ class PerfilMedicoForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe tu experiencia profesional...'})
     )
+    precio_consulta = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': 'Ej: 25.00'}),
+        help_text="Precio base de tu consulta médica en dólares."
+    )
 
     # Campo para foto de perfil
     foto_perfil = forms.ImageField(
