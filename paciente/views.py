@@ -956,7 +956,7 @@ def config_perfil_paciente(request):
         usuario.save()
 
     if request.method == 'POST':
-        form = PerfilPacienteForm(request.POST, request.FILES)
+        form = PerfilPacienteForm(request.POST)
         if form.is_valid():
             try:
                 with transaction.atomic():
@@ -969,6 +969,7 @@ def config_perfil_paciente(request):
                     usuario.municipio = form.cleaned_data['municipio']
                     usuario.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
                     usuario.sexo = form.cleaned_data.get('sexo')
+                    # Guardar foto de perfil en base64
                     if form.cleaned_data['foto_perfil']:
                         usuario.foto_perfil = form.cleaned_data['foto_perfil']
                     usuario.save()

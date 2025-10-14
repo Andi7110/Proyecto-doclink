@@ -72,7 +72,7 @@
               <small class="form-text text-muted">Filtrar por departamento específico</small>
             </div>
             <div class="col-md-3 d-flex align-items-end gap-2">
-              <button type="button" class="btn btn-outline-success btn-sm shadow-sm" id="getLocationBtn" title="Obtener mi ubicación y mostrar clínicas cercanas">
+              <button type="button" class="btn btn-outline-success shadow-sm" id="getLocationBtn" title="Obtener mi ubicación y mostrar clínicas cercanas" style="font-size: 0.875rem; padding: 0.375rem 0.75rem;">
                 <i class="fas fa-crosshairs me-1"></i>Mostrar clínicas cercanas
               </button>
               <input type="hidden" name="user_lat" id="user_lat" value="{{ user_lat }}">
@@ -254,7 +254,7 @@
           let errorMessage = 'No se pudo obtener tu ubicación.';
           switch(error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = 'Acceso a la ubicación denegado. Por favor permite el acceso a tu ubicación.';
+              errorMessage = 'Acceso a la ubicación denegado. Por favor permite el acceso a tu ubicación desde la barra de direcciones del navegador.';
               break;
             case error.POSITION_UNAVAILABLE:
               errorMessage = 'La ubicación no está disponible.';

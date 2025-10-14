@@ -46,10 +46,11 @@ class PerfilPacienteForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    # Campo para foto de perfil
-    foto_perfil = forms.ImageField(
+    # Campo para foto de perfil (base64)
+    foto_perfil = forms.CharField(
         required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+        widget=forms.HiddenInput(),
+        help_text="Foto de perfil en formato base64"
     )
 
 class MetodoPagoForm(forms.Form):
