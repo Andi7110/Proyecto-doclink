@@ -8,6 +8,8 @@ Sistema de gestión médica DocLink, una aplicación web desarrollada con Django
 - PostgreSQL (para producción) o SQLite (para desarrollo local)
 - Docker (opcional, para contenedorización)
 - Git
+- SerpApi Key (para funcionalidades de mapas y geocoding)
+- SendGrid API Key (para envío de correos electrónicos)
 
 ## Instalación y Configuración
 
@@ -49,6 +51,10 @@ ALLOWED_HOSTS=127.0.0.1,localhost
 DATABASE_URL=sqlite:///db.sqlite3  # Para desarrollo local con SQLite
 # O para PostgreSQL: DATABASE_URL=postgresql://usuario:password@localhost:5432/doclink
 MEDIA_ROOT=C:\Users\[TuUsuario]\OneDrive\consultas-documentacion  # Ruta personalizada para archivos (opcional)
+
+# APIs Externas (requeridas para funcionalidades avanzadas)
+SERPAPI_KEY=tu-serpapi-key-aqui  # Para mapas y geocoding
+SENDGRID_API_KEY=tu-sendgrid-api-key-aqui  # Para envío de correos
 ```
 
 ### 5. Aplicar Migraciones de Base de Datos
@@ -90,6 +96,28 @@ python manage.py runserver
 
 Accede a la aplicación en `http://127.0.0.1:8000`
 
+### 10. Configuración Adicional (Opcional)
+
+#### Configurar SerpApi para Mapas
+1. Regístrate en [SerpApi](https://serpapi.com/)
+2. Obtén tu API key
+3. Agrega `SERPAPI_KEY=tu-api-key` al archivo `.env`
+
+#### Configurar SendGrid para Emails
+1. Registra una cuenta en [SendGrid](https://sendgrid.com/)
+2. Crea una API key
+3. Agrega `SENDGRID_API_KEY=tu-api-key` al archivo `.env`
+
+#### Configurar OneDrive para Almacenamiento
+1. Asegúrate de tener OneDrive instalado y configurado
+2. La ruta por defecto es `C:\Users\[Usuario]\OneDrive\consultas-documentacion\`
+3. Personaliza con `MEDIA_ROOT=ruta-personalizada` en `.env`
+
+#### Autenticación de Dos Factores (2FA)
+- Los usuarios pueden activar 2FA desde su perfil
+- Compatible con aplicaciones autenticadoras como Google Authenticator
+- Opcional pero recomendado para mayor seguridad
+
 ## Uso con Docker
 
 ### Construir la Imagen
@@ -106,15 +134,38 @@ docker run -p 8000:8000 --env-file .env doclink
 
 Asegúrate de configurar las variables de entorno en el archivo `.env` y montar volúmenes si es necesario para la base de datos.
 
+## APIs y Servicios Externos
+
+### SerpApi
+- **Uso**: Geocoding y búsqueda de lugares médicos en mapas
+- **Configuración**: `SERPAPI_KEY` en archivo `.env`
+- **Funcionalidades**: Mapa interactivo de médicos, búsqueda de clínicas cercanas
+- **Documentación**: https://serpapi.com/
+
+### SendGrid
+- **Uso**: Envío de correos electrónicos de verificación y notificaciones
+- **Configuración**: `SENDGRID_API_KEY` en archivo `.env`
+- **Funcionalidades**: Emails de verificación de cuenta, emails de bienvenida
+- **Documentación**: https://sendgrid.com/docs/
+
+### OneDrive
+- **Uso**: Almacenamiento de documentos médicos
+- **Configuración**: `MEDIA_ROOT` en archivo `.env`
+- **Funcionalidades**: Almacenamiento automático de PDFs e imágenes médicas
+- **Nota**: Sincronización automática con la nube
+
 ## Estructura del Proyecto
 
 - `Donlink/`: Configuración principal de Django
-- `inicio/`: App de autenticación y registro
-- `medico/`: App para médicos
-- `paciente/`: App para pacientes
-- `bd/`: App de base de datos y modelos
-- `static/`: Archivos estáticos
-- `templates/`: Plantillas HTML
+- `inicio/`: App de autenticación y registro (emails, formularios, vistas de login/registro)
+- `medico/`: App para médicos (dashboard, agenda, consultas, facturas, seguimientos)
+- `paciente/`: App para pacientes (dashboard, agenda, citas, mapas, facturas)
+- `bd/`: App de base de datos y modelos (todos los modelos de datos)
+- `static/`: Archivos estáticos (CSS, JS, imágenes)
+- `staticfiles/`: Archivos estáticos recopilados
+- `templates/`: Plantillas HTML organizadas por app
+- `migrations/`: Migraciones de base de datos
+- `fixtures/`: Datos iniciales para pruebas
 
 ## Funcionalidades
 
@@ -143,6 +194,70 @@ Los pacientes pueden visualizar un ranking de médicos basado en las calificacio
 - Muestra estadísticas totales: número de facturas y monto total acumulado.
 - Mejora la auditoría y transparencia en el sistema de pagos.
 - Accesible desde los dashboards respectivos en la sección "Historial de Facturas" / "Mis Facturas".
+
+### Historial de Pagos
+- **Para Médicos**: Vista completa de todos los pagos recibidos, incluyendo consultas y gastos adicionales.
+- **Para Pacientes**: Historial detallado de todos los pagos realizados por consultas y gastos adicionales.
+- Incluye filtros por rango de fechas.
+- Muestra estadísticas totales por tipo de pago y montos acumulados.
+- Accesible desde los dashboards respectivos en la sección "Historial de Pagos".
+
+### Sistema de Seguimiento Clínico
+- Los médicos pueden crear seguimientos clínicos para pacientes después de consultas.
+- Permite programar nuevas consultas de seguimiento automáticamente.
+- Incluye campos para diagnóstico final, observaciones, tratamientos y recetas médicas.
+- Los pacientes pueden ver sus seguimientos desde su dashboard.
+- Soporta consultas de seguimiento con comparación de síntomas y evolución.
+
+### Gastos Adicionales
+- Los médicos pueden agregar gastos adicionales a las citas médicas (exámenes, medicamentos, procedimientos).
+- Soporta diferentes métodos de pago para cada gasto adicional.
+- Los pacientes pueden pagar gastos adicionales pendientes con tarjeta.
+- Se incluyen en las facturas generadas automáticamente.
+- Gestión completa desde el dashboard del médico.
+
+### Sistema de Pólizas de Seguro
+- Los pacientes pueden registrar múltiples pólizas de seguro médico.
+- Incluye información de compañía aseguradora, número de póliza, fecha de vigencia y tipo de cobertura.
+- Integración con el perfil del paciente para facilitar el acceso a información médica.
+
+### Contactos de Emergencia
+- Los pacientes pueden registrar contactos de emergencia con información completa.
+- Incluye nombre, parentesco, teléfono y dirección.
+- Validación de formato de número telefónico internacional.
+
+### Mapa Interactivo de Médicos
+- Integración con SerpApi para mostrar clínicas y médicos en mapas interactivos.
+- Búsqueda de médicos cercanos usando coordenadas GPS del usuario.
+- Filtros por departamento y especialidad.
+- Vista de clínicas registradas con coordenadas geográficas.
+
+### Generación de PDFs de Facturas
+- Generación automática de facturas en formato PDF usando ReportLab.
+- Cumple con estándares de facturación electrónica salvadoreña.
+- Incluye códigos de generación, sellos de recepción y números de control.
+- Disponible tanto para médicos como pacientes.
+
+### Sistema de Recetas Médicas
+- Los médicos pueden prescribir medicamentos con dosis, frecuencia y duración.
+- Soporte para archivos adjuntos (imágenes, PDFs) en base64.
+- Las recetas se almacenan en las consultas médicas y seguimientos.
+- Los pacientes pueden descargar sus recetas desde su dashboard.
+
+### Autenticación de Dos Factores (2FA)
+- Sistema opcional de autenticación de dos factores para mayor seguridad.
+- Generación de códigos secretos para aplicaciones autenticadoras.
+- Configurable por usuario desde su perfil.
+
+### Fotos de Perfil
+- Los usuarios pueden subir fotos de perfil que se almacenan en base64.
+- Disponible para médicos y pacientes.
+- Se muestran en dashboards y perfiles.
+
+### Precios de Consulta Configurables
+- Los médicos pueden configurar precios personalizados para sus consultas.
+- Los precios se muestran al paciente durante el agendamiento de citas.
+- Integración con el sistema de facturación.
 
 ### Almacenamiento de Documentos
 - Los documentos médicos (PDFs, imágenes) se almacenan automáticamente en OneDrive.
