@@ -241,7 +241,7 @@ def config_perfildoc(request):
         usuario.save()
 
     if request.method == 'POST':
-        form = PerfilMedicoForm(request.POST, request.FILES)
+        form = PerfilMedicoForm(request.POST)
         if form.is_valid():
             try:
                 with transaction.atomic():
@@ -252,6 +252,7 @@ def config_perfildoc(request):
                     usuario.telefono = form.cleaned_data['telefono']
                     usuario.departamento = form.cleaned_data['departamento']
                     usuario.municipio = form.cleaned_data['municipio']
+                    # Guardar foto de perfil en base64
                     if form.cleaned_data['foto_perfil']:
                         usuario.foto_perfil = form.cleaned_data['foto_perfil']
                     usuario.save()

@@ -11,7 +11,7 @@
       <p class="text-muted">Edita tu información profesional y de atención médica.</p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+    <form method="post" class="card p-4 shadow-sm">
       {% csrf_token %}
 
       <h4 class="mb-3">Información Personal</h4>
@@ -75,15 +75,16 @@
       <div class="mb-3 text-center">
         <div class="mb-3">
           {% if user.foto_perfil %}
-            <img id="preview" src="{{ user.foto_perfil.url }}" alt="Foto de perfil actual" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+            <img id="preview" src="data:image/jpeg;base64,{{ user.foto_perfil }}" alt="Foto de perfil actual" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
           {% else %}
             <img id="preview" src="https://via.placeholder.com/150x150/e9ecef/6c757d?text=Sin+Foto" alt="Foto de perfil predeterminada" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
           {% endif %}
         </div>
         <div class="mb-3">
-          <label for="{{ form.foto_perfil.id_for_label }}" class="form-label">
+          <label for="photoInput" class="form-label">
             <i class="fas fa-camera"></i> Editar foto de perfil
           </label>
+          <input type="file" id="photoInput" accept="image/*" class="form-control">
           {{ form.foto_perfil }}
           {% if form.foto_perfil.errors %}
             <div class="text-danger">{{ form.foto_perfil.errors }}</div>
@@ -167,12 +168,14 @@
 </main>
 
 <script>
-  document.getElementById('{{ form.foto_perfil.id_for_label }}').addEventListener('change', function(event) {
+  document.getElementById('photoInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = function(e) {
+        const base64 = e.target.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
         document.getElementById('preview').src = e.target.result;
+        document.getElementById('{{ form.foto_perfil.id_for_label }}').value = base64;
       };
       reader.readAsDataURL(file);
     }

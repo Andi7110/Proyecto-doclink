@@ -65,10 +65,11 @@ class PerfilMedicoForm(forms.Form):
         help_text="Precio base de tu consulta médica en dólares."
     )
 
-    # Campo para foto de perfil
-    foto_perfil = forms.ImageField(
+    # Campo para foto de perfil (base64)
+    foto_perfil = forms.CharField(
         required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+        widget=forms.HiddenInput(),
+        help_text="Foto de perfil en formato base64"
     )
 class SeguimientoClinicoForm(forms.ModelForm):
     class Meta:
