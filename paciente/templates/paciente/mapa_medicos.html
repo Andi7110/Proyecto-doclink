@@ -1,7 +1,168 @@
 {% extends "paciente/dashboard_base.html" %}
 {% block content %}
 <div class="container-fluid mt-4">
-  <h3>Médicos en el mapa</h3>
+  <!-- Header con título mejorado -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-lg border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-map-marked-alt fa-3x mb-3 text-white"></i>
+          <h2 class="card-title mb-2 fw-bold">
+            Clínicas y Médicos en el Mapa
+          </h2>
+          <p class="mb-0 opacity-75">Encuentra clínicas registradas y lugares médicos cercanos con facilidad</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario de búsqueda mejorado -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="mb-0" style="color: #3f3d3dff; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+            <i class="fas fa-search me-2"></i>
+            Buscar Lugares Médicos
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="get" class="row g-3">
+            <div class="col-md-4">
+              <label for="q" class="form-label fw-bold text-primary">
+                <i class="fas fa-stethoscope me-1"></i>Buscar por nombre
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" name="q" id="q" class="form-control border-start-0" placeholder="Ej: Hospital La Paz, Dr. García..." value="{{ query }}" title="Busque por nombre de clínica, hospital o médico específico">
+              </div>
+              <small class="form-text text-muted">Busque por nombre de clínica o médico específico</small>
+            </div>
+            <div class="col-md-3">
+              <label for="location" class="form-label fw-bold text-primary">
+                <i class="fas fa-map-marker-alt me-1"></i>Buscar por ubicación
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="fas fa-map-pin text-muted"></i></span>
+                <input type="text" name="location" id="location" class="form-control border-start-0" placeholder="Ej: San Salvador, Calle Roma..." value="{{ location }}" title="Busque por ciudad, colonia, calle o dirección específica">
+              </div>
+              <small class="form-text text-muted">Busque por dirección específica</small>
+            </div>
+            <div class="col-md-3">
+              <label for="departamento" class="form-label fw-bold text-primary">
+                <i class="fas fa-building me-1"></i>Filtrar por departamento
+              </label>
+              <select name="departamento" class="form-select" id="departamento" title="Filtrar por departamento específico" onchange="this.form.submit()">
+                <option value="">Todos los departamentos</option>
+                <option value="Ahuachapán" {% if departamento == 'Ahuachapán' %}selected{% endif %}>Ahuachapán</option>
+                <option value="Santa Ana" {% if departamento == 'Santa Ana' %}selected{% endif %}>Santa Ana</option>
+                <option value="Sonsonate" {% if departamento == 'Sonsonate' %}selected{% endif %}>Sonsonate</option>
+                <option value="Chalatenango" {% if departamento == 'Chalatenango' %}selected{% endif %}>Chalatenango</option>
+                <option value="Cuscatlán" {% if departamento == 'Cuscatlán' %}selected{% endif %}>Cuscatlán</option>
+                <option value="La Libertad" {% if departamento == 'La Libertad' %}selected{% endif %}>La Libertad</option>
+                <option value="La Paz" {% if departamento == 'La Paz' %}selected{% endif %}>La Paz</option>
+                <option value="San Miguel" {% if departamento == 'San Miguel' %}selected{% endif %}>San Miguel</option>
+                <option value="San Salvador" {% if departamento == 'San Salvador' %}selected{% endif %}>San Salvador</option>
+                <option value="San Vicente" {% if departamento == 'San Vicente' %}selected{% endif %}>San Vicente</option>
+                <option value="Cabañas" {% if departamento == 'Cabañas' %}selected{% endif %}>Cabañas</option>
+                <option value="Usulután" {% if departamento == 'Usulután' %}selected{% endif %}>Usulután</option>
+                <option value="Morazán" {% if departamento == 'Morazán' %}selected{% endif %}>Morazán</option>
+                <option value="La Unión" {% if departamento == 'La Unión' %}selected{% endif %}>La Unión</option>
+              </select>
+              <small class="form-text text-muted">Filtrar por departamento específico</small>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+              <button type="button" class="btn btn-outline-success btn-sm shadow-sm" id="getLocationBtn" title="Obtener mi ubicación y mostrar clínicas cercanas">
+                <i class="fas fa-crosshairs me-1"></i>Mostrar clínicas cercanas
+              </button>
+              <input type="hidden" name="user_lat" id="user_lat" value="{{ user_lat }}">
+              <input type="hidden" name="user_lng" id="user_lng" value="{{ user_lng }}">
+              <input type="hidden" name="cercanas" value="true" id="cercanas">
+              <button type="submit" class="btn btn-primary btn-sm shadow-sm">
+                <i class="fas fa-search me-1"></i>Buscar
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm shadow-sm" onclick="clearFilters()">
+                <i class="fas fa-times me-1"></i>Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leyenda -->
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fas fa-info-circle me-2 text-primary"></i>Leyenda del Mapa
+          </h6>
+          <div class="row g-3">
+            <!-- Clínica registrada -->
+            <div class="col-md-4">
+              <div class="d-flex align-items-center p-3 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25">
+                <div class="me-3">
+                  <div style="width: 32px; height: 32px; background: #0080FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">
+                    🏥
+                  </div>
+                </div>
+                <div>
+                  <h6 class="mb-1 fw-bold text-primary">Clínica Registrada</h6>
+                  <small class="text-muted">Clínicas que forman parte de DocLink</small>
+                </div>
+              </div>
+            </div>
+            <!-- Lugar encontrado -->
+            <div class="col-md-4">
+              <div class="d-flex align-items-center p-3 bg-success bg-opacity-10 rounded border border-success border-opacity-25">
+                <div class="me-3">
+                  <div style="width: 32px; height: 32px; background: #008000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">
+                    📍
+                  </div>
+                </div>
+                <div>
+                  <h6 class="mb-1 fw-bold text-success">Lugar encontrado</h6>
+                  <small class="text-muted">Lugar encontrado en Google Maps</small>
+                </div>
+              </div>
+            </div>
+            <!-- Clínica sin ubicación registrada -->
+            <div class="col-md-4">
+              <div class="d-flex align-items-center p-3 bg-warning bg-opacity-10 rounded border border-warning border-opacity-25">
+                <div class="me-3">
+                  <div style="width: 32px; height: 32px; background: orange; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">
+                    ⚠️
+                  </div>
+                </div>
+                <div>
+                  <h6 class="mb-1 fw-bold text-warning">Clínica sin ubicación registrada</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de clínicas sin coordenadas -->
+  {% if clinicas_sin_coordenadas %}
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <div class="alert alert-warning">
+        <h6>Clínicas sin ubicación registrada:</h6>
+        <ul class="mb-0">
+          {% for clinica in clinicas_sin_coordenadas %}
+          <li>{{ clinica.nombre }} - {{ clinica.direccion|default:"Dirección no especificada" }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div id="map" style="height: 600px; width: 100%;"></div>
 </div>
 
@@ -9,6 +170,158 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+  // Función para mostrar mensaje de éxito de ubicación
+  function showLocationSuccessMessage() {
+    // Crear elemento de mensaje personalizado
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'location-success-message';
+    messageDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-family: 'Arial', sans-serif;
+      font-size: 14px;
+      max-width: 300px;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+    `;
+
+    messageDiv.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+        <div>
+          <strong>¡Ubicación obtenida!</strong><br>
+          <small>Ahora puedes buscar clínicas cercanas</small>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          font-size: 16px;
+          opacity: 0.8;
+          margin-left: auto;
+        ">&times;</button>
+      </div>
+    `;
+
+    document.body.appendChild(messageDiv);
+
+    // Animar entrada
+    setTimeout(() => {
+      messageDiv.style.opacity = '1';
+      messageDiv.style.transform = 'translateY(0)';
+    }, 100);
+
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+      if (messageDiv.parentElement) {
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateY(-20px)';
+        setTimeout(() => messageDiv.remove(), 300);
+      }
+    }, 5000);
+  }
+
+  // Función para obtener ubicación del usuario
+  function getUserLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          // Guardar coordenadas en campos ocultos
+          document.getElementById('user_lat').value = lat;
+          document.getElementById('user_lng').value = lng;
+
+          // Cambiar color del botón para indicar que se obtuvo la ubicación
+          document.getElementById('getLocationBtn').classList.remove('btn-outline-success');
+          document.getElementById('getLocationBtn').classList.add('btn-success');
+
+          // Mostrar mensaje de éxito personalizado
+          showLocationSuccessMessage();
+        },
+        function(error) {
+          console.error('Error obteniendo ubicación:', error);
+          let errorMessage = 'No se pudo obtener tu ubicación.';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Acceso a la ubicación denegado. Por favor permite el acceso a tu ubicación.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'La ubicación no está disponible.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Se agotó el tiempo para obtener la ubicación.';
+              break;
+          }
+
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error de ubicación',
+              text: errorMessage,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#dc3545'
+            });
+          } else {
+            alert(errorMessage);
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
+        }
+      );
+    } else {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Navegador incompatible',
+          text: 'Tu navegador no soporta geolocalización.',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#ffc107'
+        });
+      } else {
+        alert('Tu navegador no soporta geolocalización.');
+      }
+    }
+  }
+
+  // Función para limpiar filtros
+  function clearFilters() {
+    // Limpiar campos de texto
+    document.getElementById('q').value = '';
+    document.getElementById('location').value = '';
+
+    // Resetear select de departamento
+    document.getElementById('departamento').value = '';
+
+    // Limpiar campos ocultos de ubicación
+    document.getElementById('user_lat').value = '';
+    document.getElementById('user_lng').value = '';
+    document.getElementById('cercanas').value = 'true';
+
+    // Resetear botón de ubicación
+    document.getElementById('getLocationBtn').classList.remove('btn-success');
+    document.getElementById('getLocationBtn').classList.add('btn-outline-success');
+
+    // Redirigir a la página sin parámetros para mostrar todos los resultados
+    window.location.href = window.location.pathname;
+  }
+
+  // Event listener para el botón de ubicación
+  document.getElementById('getLocationBtn').addEventListener('click', getUserLocation);
+
   var map = L.map('map').setView([13.7, -89.2], 8); // Centro en El Salvador
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -16,12 +329,117 @@
       attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  {% for medico in medicos %}
-    {% if medico.fk_clinica %}
-      L.marker([{{ medico.fk_clinica.latitud }}, {{ medico.fk_clinica.longitud }}])
+  // Iconos personalizados
+  var clinicaIcon = L.divIcon({
+    html: '<div style="width: 32px; height: 32px; background: #0080FF; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">🏥</div>',
+    className: 'custom-div-icon',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+  });
+
+  var lugarIcon = L.icon({
+    iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOCuMTMgMiA1IDUuMTMgNSA5QzUgOS4zNyA1LjEzIDkuNSA1LjUgOS41TDExIDE1TDExLjUgOS41QzExLjg3IDkuNSAxMiA5MjM3IDEyIDlDMTIgNS4xMyAxNS44NyAyIDEyIDJaTTEyIDExLjVDMTAuOTcgMTEuNSAxMCAxMS4wMyAxMCAxMFMxMC45NyA4LjUgMTIgOC41UzE0IDkuMDMgMTQgMTBTMTMuMDMgMTEuNSAxMiAxMS41WiIgZmlsbD0iIzAwODAwMCIvPgo8L3N2Zz4=',
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24]
+  });
+
+  // Marcadores para clínicas registradas en el sistema
+  {% for clinica in clinicas_con_coordenadas %}
+    L.marker([{{ clinica.latitud }}, {{ clinica.longitud }}], {icon: clinicaIcon})
+      .addTo(map)
+      .bindPopup(`
+        <div style='min-width: 200px;'>
+          <h6 style='margin: 0 0 8px 0; color: #0080FF;'>🏥 {{ clinica.nombre }}</h6>
+          <p style='margin: 4px 0;'><strong>Dirección:</strong> {{ clinica.direccion|default:"No especificada" }}</p>
+          <p style='margin: 4px 0;'><strong>Teléfono:</strong> {{ clinica.telefono_clinica|default:"No disponible" }}</p>
+          {% if clinica.medico_set.all %}
+            <p style='margin: 4px 0;'><strong>Médicos:</strong></p>
+            <ul style='margin: 4px 0; padding-left: 20px;'>
+              {% for medico in clinica.medico_set.all %}
+                <li>{{ medico.usuario_set.first.nombre|default:"" }} {{ medico.usuario_set.first.apellido|default:"" }} - {{ medico.especialidad|default:"Sin especialidad" }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          <div style='margin-top: 8px;'>
+            <a href="{% url 'agendar_cita' %}?clinica={{ clinica.id_clinica }}" class='btn btn-primary btn-sm' style='color: white; text-decoration: none; padding: 4px 8px; border-radius: 4px; font-size: 12px;'>📅 Agendar Cita</a>
+          </div>
+          <small style='color: #0080FF; font-weight: bold;'>Clínica registrada en DocLink</small>
+        </div>
+      `);
+  {% endfor %}
+
+  // Marcadores para lugares médicos de SerpApi
+  {% for lugar in lugares_medicos %}
+    {% if lugar.latitude and lugar.longitude %}
+      L.marker([{{ lugar.latitude }}, {{ lugar.longitude }}], {icon: lugarIcon})
         .addTo(map)
-        .bindPopup("<b>{{ medico.usuario_set.first.nombre }} {{ medico.usuario_set.first.apellido }}</b><br>{{ medico.especialidad }}<br>{{ medico.fk_clinica.nombre }}");
+        .bindPopup(`
+          <div style='min-width: 200px;'>
+            <h6 style='margin: 0 0 8px 0; color: #008000;'>🏥 {{ lugar.title }}</h6>
+            <p style='margin: 4px 0;'><strong>Dirección:</strong> {{ lugar.address }}</p>
+            {% if lugar.rating %}
+              <p style='margin: 4px 0;'><strong>Calificación:</strong> ⭐ {{ lugar.rating }} {% if lugar.reviews %}({{ lugar.reviews }} reseñas){% endif %}</p>
+            {% endif %}
+            {% if lugar.website %}
+              <p style='margin: 4px 0;'><a href='{{ lugar.website }}' target='_blank' style='color: #008000; text-decoration: none;'>🌐 Ver sitio web</a></p>
+            {% endif %}
+            <small style='color: #008000; font-weight: bold;'>Encontrado en Google Maps</small>
+          </div>
+        `);
     {% endif %}
   {% endfor %}
+
+  // Ajustar vista del mapa para incluir todos los marcadores
+  var group = new L.featureGroup([
+    {% for clinica in clinicas_con_coordenadas %}
+      L.marker([{{ clinica.latitud }}, {{ clinica.longitud }}]),
+    {% endfor %}
+    {% for lugar in lugares_medicos %}
+      {% if lugar.latitude and lugar.longitude %}
+        L.marker([{{ lugar.latitude }}, {{ lugar.longitude }}]),
+      {% endif %}
+    {% endfor %}
+  ]);
+
+  // Función para centrar mapa según departamento
+  function centerMapOnDepartment(departamento) {
+    const departmentCoords = {
+      'Ahuachapán': [13.9214, -89.8453],
+      'Santa Ana': [13.9942, -89.5597],
+      'Sonsonate': [13.7183, -89.7242],
+      'Chalatenango': [14.0333, -88.9167],
+      'Cuscatlán': [13.8667, -89.0667],
+      'La Libertad': [13.4881, -89.3208],
+      'La Paz': [13.4958, -88.9778],
+      'San Miguel': [13.4833, -88.1833],
+      'San Salvador': [13.6929, -89.2182],
+      'San Vicente': [13.6333, -88.7833],
+      'Cabañas': [13.9167, -88.2333],
+      'Usulután': [13.35, -88.4333],
+      'Morazán': [13.7667, -88.1333],
+      'La Unión': [13.3333, -87.8333]
+    };
+
+    if (departmentCoords[departamento]) {
+      const zoom = departamento === 'San Salvador' ? 11 : 10;
+      map.setView(departmentCoords[departamento], zoom);
+    }
+  }
+
+  // Si se tienen coordenadas del usuario, centrar el mapa ahí
+  {% if user_lat and user_lng %}
+    map.setView([{{ user_lat }}, {{ user_lng }}], 14);
+  {% elif departamento %}
+    centerMapOnDepartment('{{ departamento }}');
+  {% else %}
+    if (group.getLayers().length > 0) {
+      map.fitBounds(group.getBounds().pad(0.1));
+    } else {
+      // Si no hay marcadores, centrar en El Salvador
+      map.setView([13.7, -89.2], 8);
+    }
+  {% endif %}
 </script>
 {% endblock %}

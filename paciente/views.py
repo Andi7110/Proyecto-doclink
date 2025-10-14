@@ -69,9 +69,12 @@ def agendar_cita(request):
 
     # Filtro por especialidad
     especialidad = request.GET.get('especialidad')
+    clinica_id = request.GET.get('clinica')
     medicos = Medico.objects.all()
     if especialidad:
         medicos = medicos.filter(especialidad__icontains=especialidad)
+    if clinica_id:
+        medicos = medicos.filter(fk_clinica_id=clinica_id)
 
     # Crear lista enriquecida con nombre del médico
     medicos_con_nombre = []
@@ -218,6 +221,7 @@ def agendar_cita(request):
         'paciente': paciente,
         'medicos': medicos_con_nombre,
         'especialidad_seleccionada': especialidad,
+        'clinica_seleccionada': clinica_id,
         'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', '') or '',
         'hoy': date.today(),
@@ -410,11 +414,152 @@ def buscar_medicos(request):
     return render(request, "paciente/buscar_medicos.html", context)
 
 def mapa_medicos(request):
-    # Traer todos los médicos que tengan clínica con lat/lng
-    medicos = Medico.objects.exclude(fk_clinica__latitud__isnull=True, fk_clinica__longitud__isnull=True)
-    
+    import requests
+    from django.conf import settings
+
+    # API Key de SerpApi (debería estar en settings)
+    serpapi_key = getattr(settings, 'SERPAPI_KEY', None)
+
+    # Traer todas las clínicas con sus médicos
+    clinicas = Clinica.objects.prefetch_related('medico_set').all()
+
+    # Separar clínicas con y sin coordenadas
+    clinicas_con_coordenadas = []
+    clinicas_sin_coordenadas = []
+
+    for clinica in clinicas:
+        if clinica.latitud and clinica.longitud:
+            clinicas_con_coordenadas.append(clinica)
+        else:
+            clinicas_sin_coordenadas.append(clinica)
+
+    # Filtrar clínicas por departamento si se especifica
+    departamento = request.GET.get('departamento', '')
+    if departamento:
+        clinicas_con_coordenadas_filtradas = []
+        for clinica in clinicas_con_coordenadas:
+            # Obtener departamento de la dirección de la clínica
+            departamento_clinica = obtener_departamento_direccion(clinica.direccion)
+            if departamento_clinica.lower() == departamento.lower():
+                clinicas_con_coordenadas_filtradas.append(clinica)
+        clinicas_con_coordenadas = clinicas_con_coordenadas_filtradas
+
+    # Intentar geocoding para clínicas sin coordenadas si hay API key
+    if serpapi_key and clinicas_sin_coordenadas:
+        for clinica in clinicas_sin_coordenadas:
+            if clinica.direccion:
+                try:
+                    # Usar SerpApi para geocoding
+                    geocode_url = "https://serpapi.com/search.json"
+                    geocode_params = {
+                        'engine': 'google_maps',
+                        'q': clinica.direccion + ', El Salvador',
+                        'api_key': serpapi_key,
+                        'limit': 1
+                    }
+
+                    geocode_response = requests.get(geocode_url, params=geocode_params, timeout=10)
+                    if geocode_response.status_code == 200:
+                        geocode_data = geocode_response.json()
+                        local_results = geocode_data.get('local_results', [])
+                        if local_results and local_results[0].get('latitude') and local_results[0].get('longitude'):
+                            # Actualizar coordenadas en la base de datos
+                            clinica.latitud = local_results[0]['latitude']
+                            clinica.longitud = local_results[0]['longitude']
+                            clinica.save()
+                            # Mover a clínicas con coordenadas
+                            clinicas_con_coordenadas.append(clinica)
+                            clinicas_sin_coordenadas.remove(clinica)
+                except Exception as e:
+                    print(f"Error en geocoding para clínica {clinica.nombre}: {e}")
+                    continue
+
+    # Parámetros de búsqueda
+    query = request.GET.get('q', '')
+    location = request.GET.get('location', '')
+    mostrar_cercanas = request.GET.get('cercanas', 'false').lower() == 'true'
+    user_lat = request.GET.get('user_lat')
+    user_lng = request.GET.get('user_lng')
+    departamento = request.GET.get('departamento', '')
+
+    # serpapi_key ya fue definido arriba
+    lugares_medicos = []
+    if serpapi_key and (query != 'hospitales clínicas médicos El Salvador' or mostrar_cercanas or departamento):
+        try:
+            # Si se solicita mostrar clínicas cercanas y se tienen coordenadas del usuario
+            if mostrar_cercanas and user_lat and user_lng:
+                # Usar las coordenadas del usuario como centro
+                centro_lat = float(user_lat)
+                centro_lng = float(user_lng)
+
+                # Llamada a SerpApi con coordenadas del usuario
+                url = "https://serpapi.com/search.json"
+                params = {
+                    'engine': 'google_maps',
+                    'q': 'hospitales clínicas médicos',
+                    'll': f'@{centro_lat},{centro_lng},14z',  # Centro en las coordenadas del usuario con zoom
+                    'api_key': serpapi_key,
+                    'type': 'hospital,clinic,doctor',
+                    'limit': 15
+                }
+            # Si se solicita mostrar clínicas cercanas pero no hay coordenadas del usuario, usar clínicas registradas
+            elif mostrar_cercanas and clinicas_con_coordenadas:
+                # Usar la primera clínica como centro para buscar cercanas
+                centro_lat = clinicas_con_coordenadas[0].latitud
+                centro_lng = clinicas_con_coordenadas[0].longitud
+
+                # Llamada a SerpApi con coordenadas específicas
+                url = "https://serpapi.com/search.json"
+                params = {
+                    'engine': 'google_maps',
+                    'q': 'hospitales clínicas médicos',
+                    'll': f'@{centro_lat},{centro_lng},14z',  # Centro en las coordenadas con zoom
+                    'api_key': serpapi_key,
+                    'type': 'hospital,clinic,doctor',
+                    'limit': 15
+                }
+            else:
+                # Búsqueda normal con filtro de departamento si se especifica
+                search_query = query
+                search_location = location
+
+                if departamento:
+                    search_location = f"{departamento}, El Salvador"
+
+                url = "https://serpapi.com/search.json"
+                params = {
+                    'engine': 'google_maps',
+                    'q': search_query,
+                    'location': search_location,
+                    'api_key': serpapi_key,
+                    'type': 'hospital,clinic,doctor',
+                    'limit': 20
+                }
+
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                lugares_medicos = data.get('local_results', [])
+
+                # Filtrar solo lugares con coordenadas válidas
+                lugares_medicos = [
+                    lugar for lugar in lugares_medicos
+                    if lugar.get('latitude') and lugar.get('longitude')
+                ]
+        except Exception as e:
+            print(f"Error al consultar SerpApi: {e}")
+            lugares_medicos = []
+
     context = {
-        "medicos": medicos
+        "clinicas_con_coordenadas": clinicas_con_coordenadas,
+        "clinicas_sin_coordenadas": clinicas_sin_coordenadas,
+        "lugares_medicos": lugares_medicos,
+        "query": query,
+        "location": location,
+        "mostrar_cercanas": mostrar_cercanas,
+        "user_lat": user_lat,
+        "user_lng": user_lng,
+        "departamento": departamento
     }
     return render(request, "paciente/mapa_medicos.html", context)
 @paciente_required

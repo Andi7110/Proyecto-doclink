@@ -217,6 +217,18 @@ EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI')  # Fallback to test key
 RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe')  # Fallback to test key
 
+# SerpApi settings
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
+
+# Validar que la API key esté configurada
+if not SERPAPI_KEY:
+    import warnings
+    warnings.warn(
+        "SERPAPI_KEY no está configurada. La funcionalidad del mapa de médicos estará limitada. "
+        "Configure la variable de entorno SERPAPI_KEY con su clave de SerpApi.",
+        UserWarning
+    )
+
 # Only silence test key warning if using test keys
 if RECAPTCHA_PUBLIC_KEY == '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI':
     SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
