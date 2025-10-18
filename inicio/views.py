@@ -188,6 +188,10 @@ def registroDoctor4_view(request):
                 is_active=True  # Activado inmediatamente para desarrollo
             )
 
+            # Simular tiempo de procesamiento para mostrar pantalla de carga
+            import time
+            time.sleep(10)  # Pausa de 10 segundos para mostrar pantalla de carga
+
             # Enviar email de bienvenida para médicos
             try:
                 from django.conf import settings
@@ -328,6 +332,10 @@ def registroPaciente4_view(request):
                 user_name=correo,  # correo como nombre de usuario
                 is_active=True  # Activado inmediatamente para desarrollo
             )
+
+            # Simular tiempo de procesamiento para mostrar pantalla de carga
+            import time
+            time.sleep(10)  # Pausa de 10 segundos para mostrar pantalla de carga
 
             # Enviar email de bienvenida para pacientes
             try:
