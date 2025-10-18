@@ -151,9 +151,6 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 |----------|--------|-----|---------------|
 | 📧 **Gmail SMTP** | ✅ **Activo** | Emails de registro y notificaciones | `EMAIL_*` variables |
 | 🗺️ **SerpApi** | ✅ **Activo** | Mapas y geocoding de clínicas | `SERPAPI_KEY` |
-| 🔐 **reCAPTCHA** | ❌ **Removido** | No se usa actualmente | - |
-| 📤 **SendGrid** | ❌ **Reemplazado** | Sustituido por Gmail SMTP | - |
-| ☁️ **OneDrive** | ❌ **Deprecado** | Ya no se utiliza | - |
 
 ## 📁 Estructura del Proyecto
 
