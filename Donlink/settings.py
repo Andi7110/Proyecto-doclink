@@ -28,7 +28,7 @@ load_dotenv()
 SECRET_KEY = os.environ.get('SECRET_KEY', 'sRXK8updw2ptErwCIWUhyahb7JlSVQPZ9Clp_c2gHQS2pZUKn0FFucrkZ2jCSkv8ERE')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Para probar emails en consola
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,doclink-djangoapp.softwar.me').split(',')
 
@@ -190,8 +190,8 @@ LOGIN_URL = '/login/'                  # obligatorio
 LOGIN_REDIRECT_URL = '/dashboard_doctor/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Email settings - SendGrid para producción, Console para desarrollo
-EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend' if os.environ.get('SENDGRID_API_KEY') else os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# Email settings - SMTP para producción
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -202,20 +202,20 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 
-# SendGrid settings
-SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+# Email configuration from environment
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 
-# reCAPTCHA settings
-RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI')  # Fallback to test key
-RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe')  # Fallback to test key
+# reCAPTCHA settings (optional)
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
 # SerpApi settings
 SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
@@ -230,7 +230,7 @@ if not SERPAPI_KEY:
     )
 
 # Only silence test key warning if using test keys
-if RECAPTCHA_PUBLIC_KEY == '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI':
+if RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PUBLIC_KEY == '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI':
     SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 else:
     SILENCED_SYSTEM_CHECKS = []
