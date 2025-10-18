@@ -80,28 +80,39 @@
   <script>
     // Mostrar pantalla de carga al enviar formulario
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM cargado, configurando event listeners...');
       const form = document.getElementById('registroForm');
       const submitBtn = document.getElementById('submitBtn');
       const spinner = submitBtn.querySelector('.spinner-border');
 
-      form.addEventListener('submit', function(e) {
-        console.log('Formulario enviado, mostrando pantalla de carga...');
+      if (form && submitBtn && spinner) {
+        console.log('Elementos encontrados, configurando submit handler...');
+        form.addEventListener('submit', function(e) {
+          console.log('Formulario enviado, mostrando pantalla de carga...');
 
-        // Mostrar spinner y deshabilitar botón
-        spinner.classList.remove('d-none');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Procesando...';
+          // Mostrar spinner y deshabilitar botón
+          spinner.classList.remove('d-none');
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Procesando...';
 
-        // Mostrar modal de carga
-        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), {
-          backdrop: 'static',
-          keyboard: false
+          // Mostrar modal de carga
+          try {
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), {
+              backdrop: 'static',
+              keyboard: false
+            });
+            loadingModal.show();
+            console.log('Modal mostrado exitosamente');
+          } catch (error) {
+            console.error('Error al mostrar modal:', error);
+          }
+
+          // El formulario se enviará normalmente
+          console.log('Enviando formulario al servidor...');
         });
-        loadingModal.show();
-
-        // El formulario se enviará normalmente
-        console.log('Modal mostrado, enviando formulario...');
-      });
+      } else {
+        console.error('No se encontraron los elementos necesarios:', {form, submitBtn, spinner});
+      }
     });
   </script>
 </body>

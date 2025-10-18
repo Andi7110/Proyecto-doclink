@@ -189,6 +189,7 @@ def registroDoctor4_view(request):
 
             # Enviar email de bienvenida para médicos
             try:
+                from django.conf import settings
                 context = {
                     'user_name': f'{usuario.nombre} {usuario.apellido}',
                     'especialidad': medico.especialidad,
@@ -329,6 +330,7 @@ def registroPaciente4_view(request):
 
             # Enviar email de bienvenida para pacientes
             try:
+                from django.conf import settings
                 context = {
                     'user_name': f'{usuario.nombre} {usuario.apellido}',
                     'base_url': settings.BASE_URL
