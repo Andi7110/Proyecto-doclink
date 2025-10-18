@@ -1,267 +1,245 @@
-# Proyecto-doclink
+# 🏥 DocLink - Sistema de Gestión Médica
 
-Sistema de gestión médica DocLink, una aplicación web desarrollada con Django que permite la gestión de citas médicas, perfiles de médicos y pacientes.
+[![Django](https://img.shields.io/badge/Django-5.2.1-green.svg)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Requisitos Previos
+> 🚀 **Sistema integral de gestión médica** desarrollado con Django que permite la administración completa de citas médicas, perfiles de médicos y pacientes, con integración de mapas, pagos y notificaciones por email.
 
-- Python 3.11 o superior
-- PostgreSQL (para producción) o SQLite (para desarrollo local)
-- Docker (opcional, para contenedorización)
-- Git
-- SerpApi Key (para funcionalidades de mapas y geocoding)
-- SendGrid API Key (para envío de correos electrónicos)
+## ✨ Características Principales
 
-## Instalación y Configuración
+- 👨‍⚕️ **Gestión de Médicos**: Perfiles completos, agendas, especialidades y precios configurables
+- 🏥 **Gestión de Pacientes**: Historial médico, citas, pagos y seguimientos
+- 📅 **Sistema de Citas**: Agendamiento en línea con confirmación automática
+- 💳 **Pagos Integrados**: Soporte para efectivo y tarjetas de crédito/débito
+- 📧 **Notificaciones**: Emails automáticos de confirmación y recordatorios
+- 🗺️ **Mapas Interactivos**: Localización de clínicas y médicos cercanos
+- 📊 **Facturación**: Generación automática de PDFs con códigos fiscales
+- 🔐 **Seguridad**: Autenticación 2FA opcional y encriptación de datos
+- 📱 **Responsive**: Interfaz moderna y adaptativa para todos los dispositivos
 
-### 1. Clonar el Repositorio
+## 📋 Requisitos Previos
+
+| Requisito | Versión | Uso |
+|-----------|---------|-----|
+| 🐍 **Python** | 3.11+ | Lenguaje de programación principal |
+| 🐘 **PostgreSQL** | 15+ | Base de datos de producción |
+| 🐳 **Docker** | Latest | Contenedorización (opcional) |
+| 📝 **Git** | Latest | Control de versiones |
+| 🗺️ **SerpApi Key** | - | Mapas y geocoding |
+| 📧 **Gmail/SMTP** | - | Envío de correos electrónicos |
+
+## 🚀 Instalación Rápida
+
+### 🐑 Clonación y Configuración Inicial
 
 ```bash
+# 1. Clonar repositorio
 git clone https://github.com/Andi7110/Proyecto-doclink.git
 cd Proyecto-doclink
-```
 
-### 2. Configuración del Entorno Virtual
-
-Crea y activa un entorno virtual:
-
-```bash
+# 2. Configurar entorno virtual
 python -m venv venv
-# En Windows:
+# Windows:
 venv\Scripts\activate
-# En Linux/Mac:
+# Linux/Mac:
 source venv/bin/activate
-```
 
-### 3. Instalar Dependencias
-
-Instala las dependencias desde requirements.txt:
-
-```bash
+# 3. Instalar dependencias
 pip install -r requirements.txt
-```
 
-### 4. Configuración de Variables de Entorno
+# 4. Configurar variables de entorno
+cp .env.example .env  # Copiar template
+# Editar .env con tus configuraciones
 
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-SECRET_KEY=tu-clave-secreta-aqui
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-DATABASE_URL=sqlite:///db.sqlite3  # Para desarrollo local con SQLite
-# O para PostgreSQL: DATABASE_URL=postgresql://usuario:password@localhost:5432/doclink
-MEDIA_ROOT=C:\Users\[TuUsuario]\OneDrive\consultas-documentacion  # Ruta personalizada para archivos (opcional)
-
-# APIs Externas (requeridas para funcionalidades avanzadas)
-SERPAPI_KEY=tu-serpapi-key-aqui  # Para mapas y geocoding
-SENDGRID_API_KEY=tu-sendgrid-api-key-aqui  # Para envío de correos
-```
-
-### 5. Aplicar Migraciones de Base de Datos
-
-```bash
+# 5. Ejecutar migraciones
 python manage.py migrate
-```
 
-### 6. Crear Roles Iniciales (Opcional)
-
-Los roles se crean automáticamente al iniciar el servidor, pero puedes verificarlos manualmente:
-
-```bash
-python manage.py shell -c "
-from bd.models import Rol
-roles = [('medico', 'Rol para médicos'), ('paciente', 'Rol para pacientes'), ('admin', 'Rol para administradores')]
-for nombre, desc in roles:
-    Rol.objects.get_or_create(nombre=nombre, defaults={'descripcion': desc})
-"
-```
-
-### 7. Crear Superusuario (Opcional)
-
-```bash
+# 6. Crear superusuario (opcional)
 python manage.py createsuperuser
-```
 
-### 8. Recopilar Archivos Estáticos
-
-```bash
-python manage.py collectstatic --noinput
-```
-
-### 9. Ejecutar el Servidor de Desarrollo
-
-```bash
+# 7. Ejecutar servidor
 python manage.py runserver
 ```
 
-Accede a la aplicación en `http://127.0.0.1:8000`
+🌐 **Accede a la aplicación**: `http://127.0.0.1:8000`
 
-### 10. Configuración Adicional (Opcional)
+### ⚙️ Variables de Entorno (.env)
 
-#### Configurar SerpApi para Mapas
-1. Regístrate en [SerpApi](https://serpapi.com/)
-2. Obtén tu API key
-3. Agrega `SERPAPI_KEY=tu-api-key` al archivo `.env`
+```env
+# Configuración Django
+SECRET_KEY=tu-clave-secreta-aqui
+DEBUG=False  # False para producción
+ALLOWED_HOSTS=doclink-djangoapp.softwar.me,127.0.0.1,localhost
+PORT=8000
 
-#### Configurar SendGrid para Emails
-1. Registra una cuenta en [SendGrid](https://sendgrid.com/)
-2. Crea una API key
-3. Agrega `SENDGRID_API_KEY=tu-api-key` al archivo `.env`
+# Base de datos
+DATABASE_URL=postgresql://postgres:doclink2025@doclink-database-qqcj42:5432/doclinkdb
 
-#### Configurar OneDrive para Almacenamiento
-1. Asegúrate de tener OneDrive instalado y configurado
-2. La ruta por defecto es `C:\Users\[Usuario]\OneDrive\consultas-documentacion\`
-3. Personaliza con `MEDIA_ROOT=ruta-personalizada` en `.env`
+# Seguridad
+CSRF_TRUSTED_ORIGINS=https://doclink-djangoapp.softwar.me
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
 
-#### Autenticación de Dos Factores (2FA)
-- Los usuarios pueden activar 2FA desde su perfil
-- Compatible con aplicaciones autenticadoras como Google Authenticator
-- Opcional pero recomendado para mayor seguridad
+# Email (SMTP - Gmail)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=soportedoclink@gmail.com
+EMAIL_HOST_PASSWORD=tu-app-password
+EMAIL_TIMEOUT=30
 
-## Uso con Docker
+# APIs Externas
+SERPAPI_KEY=tu-serpapi-key-aqui
+BASE_URL=https://doclink-djangoapp.softwar.me
+```
 
-### Construir la Imagen
+### 🔧 Configuración de APIs Externas
+
+#### 📧 **Configuración de Email (Gmail SMTP)**
+1. ✅ **Ya configurado** - Usa Gmail SMTP (gratuito)
+2. 🔐 Genera un "App Password" en tu cuenta Gmail
+3. 📝 Agrega las credenciales al `.env`
+
+#### 🗺️ **Configuración de SerpApi (Mapas)**
+1. 🌐 Regístrate en [SerpApi](https://serpapi.com/)
+2. 🔑 Obtén tu API key gratuita
+3. 📝 Agrega `SERPAPI_KEY=tu-api-key` al `.env`
+
+#### 🔐 **Autenticación 2FA**
+- ✅ **Implementado** - Los usuarios pueden activar 2FA opcional
+- 📱 Compatible con Google Authenticator y similares
+
+## 🐳 Despliegue con Docker
+
+### 🚀 Despliegue Rápido
 
 ```bash
+# Construir imagen
 docker build -t doclink .
-```
 
-### Ejecutar el Contenedor
-
-```bash
+# Ejecutar contenedor
 docker run -p 8000:8000 --env-file .env doclink
+
+# O usando Docker Compose (recomendado)
+docker-compose up -d
 ```
 
-Asegúrate de configurar las variables de entorno en el archivo `.env` y montar volúmenes si es necesario para la base de datos.
+### 📋 Dockerfile Optimizado
 
-## APIs y Servicios Externos
+```dockerfile
+FROM python:3.11-slim
 
-### SerpApi
-- **Uso**: Geocoding y búsqueda de lugares médicos en mapas
-- **Configuración**: `SERPAPI_KEY` en archivo `.env`
-- **Funcionalidades**: Mapa interactivo de médicos, búsqueda de clínicas cercanas
-- **Documentación**: https://serpapi.com/
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-### SendGrid
-- **Uso**: Envío de correos electrónicos de verificación y notificaciones
-- **Configuración**: `SENDGRID_API_KEY` en archivo `.env`
-- **Funcionalidades**: Emails de verificación de cuenta, emails de bienvenida
-- **Documentación**: https://sendgrid.com/docs/
+COPY . .
+RUN python manage.py collectstatic --noinput
 
-### OneDrive
-- **Uso**: Almacenamiento de documentos médicos
-- **Configuración**: `MEDIA_ROOT` en archivo `.env`
-- **Funcionalidades**: Almacenamiento automático de PDFs e imágenes médicas
-- **Nota**: Sincronización automática con la nube
+EXPOSE 8000
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
 
-## Estructura del Proyecto
+## 🔗 APIs y Servicios Integrados
 
-- `Donlink/`: Configuración principal de Django
-- `inicio/`: App de autenticación y registro (emails, formularios, vistas de login/registro)
-- `medico/`: App para médicos (dashboard, agenda, consultas, facturas, seguimientos)
-- `paciente/`: App para pacientes (dashboard, agenda, citas, mapas, facturas)
-- `bd/`: App de base de datos y modelos (todos los modelos de datos)
-- `static/`: Archivos estáticos (CSS, JS, imágenes)
-- `staticfiles/`: Archivos estáticos recopilados
-- `templates/`: Plantillas HTML organizadas por app
-- `migrations/`: Migraciones de base de datos
-- `fixtures/`: Datos iniciales para pruebas
+| Servicio | Estado | Uso | Configuración |
+|----------|--------|-----|---------------|
+| 📧 **Gmail SMTP** | ✅ **Activo** | Emails de registro y notificaciones | `EMAIL_*` variables |
+| 🗺️ **SerpApi** | ✅ **Activo** | Mapas y geocoding de clínicas | `SERPAPI_KEY` |
+| 🔐 **reCAPTCHA** | ❌ **Removido** | No se usa actualmente | - |
+| 📤 **SendGrid** | ❌ **Reemplazado** | Sustituido por Gmail SMTP | - |
+| ☁️ **OneDrive** | ❌ **Deprecado** | Ya no se utiliza | - |
 
-## Funcionalidades
+## 📁 Estructura del Proyecto
 
-### Ranking de Médicos
-Los pacientes pueden visualizar un ranking de médicos basado en las calificaciones promedio de las consultas. Incluye filtros por especialidad y ubicación (municipio de la clínica). Accesible desde el dashboard del paciente en la sección "Ranking de Médicos".
+```
+📦 Proyecto-doclink/
+├── 🏠 Donlink/              # ⚙️ Configuración principal de Django
+├── 🔐 inicio/               # 👤 Autenticación y registro con emails
+├── 👨‍⚕️ medico/              # 🏥 Dashboard médico, consultas, facturas
+├── 🏥 paciente/             # 📅 Dashboard paciente, citas, mapas
+├── 🗄️ bd/                   # 💾 Modelos de datos y base de datos
+├── 🎨 static/               # 🎭 Archivos estáticos (CSS, JS, imágenes)
+├── 📄 templates/            # 🏗️ Plantillas HTML por aplicación
+├── 🔄 migrations/           # 📊 Migraciones de base de datos
+├── 🧪 fixtures/             # 📋 Datos de prueba iniciales
+├── 📋 requirements.txt      # 📦 Dependencias Python
+├── 🐳 Dockerfile           # 🐳 Configuración de contenedor
+├── ⚙️ .env                 # 🔐 Variables de entorno (local)
+└── 📖 README.md            # 📚 Esta documentación
+```
 
-### Sistema de Calificaciones y Reseñas
-- Los pacientes pueden calificar a los médicos después de completar una consulta.
-- Las calificaciones van de 1 a 5 estrellas.
-- Se pueden incluir reseñas opcionales para proporcionar feedback detallado.
-- Las calificaciones se muestran en el ranking de médicos y ayudan a otros pacientes en su elección.
-- Accesible desde la agenda del paciente, en las citas anteriores completadas.
+## 🎯 Funcionalidades Principales
 
-### Sistema de Métodos de Pago
-- Los pacientes pueden seleccionar entre dos métodos de pago al agendar citas: efectivo o tarjeta.
-- Para pagos con tarjeta, se requiere información segura: número de tarjeta (16 dígitos), fecha de expiración (MM/YY), CVV (3-4 dígitos), nombre del titular y tipo de tarjeta (débito/crédito).
-- Los datos de pago se almacenan de forma segura en la base de datos.
-- Para pagos en efectivo, se informa al paciente que debe realizar el pago al momento de la cita.
-- El método de pago se registra en la factura correspondiente a cada cita médica.
+### 👨‍⚕️ **Para Médicos**
+- 📊 **Dashboard Personalizado** con estadísticas y agenda
+- 📅 **Gestión de Citas** con calendario interactivo
+- 💰 **Facturación Automática** con PDFs fiscales
+- 📋 **Recetas Médicas** con dosis y tratamientos
+- 🔄 **Seguimientos Clínicos** programables
+- 💵 **Gastos Adicionales** por consulta
+- ⭐ **Sistema de Calificaciones** de pacientes
 
-### Historial de Facturas
-- **Para Médicos**: Pueden visualizar un historial completo de todas las facturas emitidas por sus consultas.
-- **Para Pacientes**: Pueden ver el historial de sus propias facturas con información detallada de pagos realizados.
-- Cada factura muestra: número de factura, fecha de emisión, nombre del médico/paciente, fecha de la cita, método de pago, estado del pago y monto.
-- Incluye filtros por rango de fechas para facilitar la búsqueda.
-- Muestra estadísticas totales: número de facturas y monto total acumulado.
-- Mejora la auditoría y transparencia en el sistema de pagos.
-- Accesible desde los dashboards respectivos en la sección "Historial de Facturas" / "Mis Facturas".
+### 🏥 **Para Pacientes**
+- 📱 **Dashboard Intuitivo** con historial completo
+- 🗓️ **Agendamiento en Línea** 24/7
+- 💳 **Pagos Seguros** (efectivo/tarjeta)
+- 🗺️ **Mapas Interactivos** de médicos cercanos
+- 📄 **Historial de Facturas** y pagos
+- ⭐ **Ranking de Médicos** por calificaciones
+- 📞 **Contactos de Emergencia** configurables
 
-### Historial de Pagos
-- **Para Médicos**: Vista completa de todos los pagos recibidos, incluyendo consultas y gastos adicionales.
-- **Para Pacientes**: Historial detallado de todos los pagos realizados por consultas y gastos adicionales.
-- Incluye filtros por rango de fechas.
-- Muestra estadísticas totales por tipo de pago y montos acumulados.
-- Accesible desde los dashboards respectivos en la sección "Historial de Pagos".
+### 🔧 **Características Técnicas**
+- 📧 **Emails Automáticos** de confirmación y bienvenida
+- 🔐 **Autenticación 2FA** opcional
+- 📸 **Fotos de Perfil** en base64
+- 💾 **Base de Datos PostgreSQL** para producción
+- 🐳 **Docker Ready** para despliegue fácil
+- 📱 **Responsive Design** para móviles y desktop
 
-### Sistema de Seguimiento Clínico
-- Los médicos pueden crear seguimientos clínicos para pacientes después de consultas.
-- Permite programar nuevas consultas de seguimiento automáticamente.
-- Incluye campos para diagnóstico final, observaciones, tratamientos y recetas médicas.
-- Los pacientes pueden ver sus seguimientos desde su dashboard.
-- Soporta consultas de seguimiento con comparación de síntomas y evolución.
+### 📊 **Sistema de Pagos y Facturación**
+- 💳 **Múltiples Métodos**: Efectivo y tarjetas
+- 📄 **PDFs Automáticos** con códigos fiscales
+- 📈 **Historial Completo** con filtros por fecha
+- 💰 **Precios Configurables** por médico
+- 🧾 **Gastos Adicionales** por consulta
 
-### Gastos Adicionales
-- Los médicos pueden agregar gastos adicionales a las citas médicas (exámenes, medicamentos, procedimientos).
-- Soporta diferentes métodos de pago para cada gasto adicional.
-- Los pacientes pueden pagar gastos adicionales pendientes con tarjeta.
-- Se incluyen en las facturas generadas automáticamente.
-- Gestión completa desde el dashboard del médico.
+### 🗺️ **Integraciones Externas**
+- 🗺️ **SerpApi**: Mapas y geocoding de clínicas
+- 📧 **Gmail SMTP**: Emails gratuitos y confiables
+- 🔒 **Seguridad**: CSRF, sesiones seguras, HTTPS
 
-### Sistema de Pólizas de Seguro
-- Los pacientes pueden registrar múltiples pólizas de seguro médico.
-- Incluye información de compañía aseguradora, número de póliza, fecha de vigencia y tipo de cobertura.
-- Integración con el perfil del paciente para facilitar el acceso a información médica.
+## 🤝 Contribuir
 
-### Contactos de Emergencia
-- Los pacientes pueden registrar contactos de emergencia con información completa.
-- Incluye nombre, parentesco, teléfono y dirección.
-- Validación de formato de número telefónico internacional.
+¡Las contribuciones son bienvenidas! Para contribuir:
 
-### Mapa Interactivo de Médicos
-- Integración con SerpApi para mostrar clínicas y médicos en mapas interactivos.
-- Búsqueda de médicos cercanos usando coordenadas GPS del usuario.
-- Filtros por departamento y especialidad.
-- Vista de clínicas registradas con coordenadas geográficas.
+1. 🍴 **Fork** el proyecto
+2. 🌿 **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. 💾 **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 **Push** a la rama (`git push origin feature/AmazingFeature`)
+5. 🔄 **Abre** un Pull Request
 
-### Generación de PDFs de Facturas
-- Generación automática de facturas en formato PDF usando ReportLab.
-- Cumple con estándares de facturación electrónica salvadoreña.
-- Incluye códigos de generación, sellos de recepción y números de control.
-- Disponible tanto para médicos como pacientes.
+## 📄 Licencia
 
-### Sistema de Recetas Médicas
-- Los médicos pueden prescribir medicamentos con dosis, frecuencia y duración.
-- Soporte para archivos adjuntos (imágenes, PDFs) en base64.
-- Las recetas se almacenan en las consultas médicas y seguimientos.
-- Los pacientes pueden descargar sus recetas desde su dashboard.
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
-### Autenticación de Dos Factores (2FA)
-- Sistema opcional de autenticación de dos factores para mayor seguridad.
-- Generación de códigos secretos para aplicaciones autenticadoras.
-- Configurable por usuario desde su perfil.
+## 📞 Soporte
 
-### Fotos de Perfil
-- Los usuarios pueden subir fotos de perfil que se almacenan en base64.
-- Disponible para médicos y pacientes.
-- Se muestran en dashboards y perfiles.
+¿Necesitas ayuda? Contacta al equipo de desarrollo o abre un issue en GitHub.
 
-### Precios de Consulta Configurables
-- Los médicos pueden configurar precios personalizados para sus consultas.
-- Los precios se muestran al paciente durante el agendamiento de citas.
-- Integración con el sistema de facturación.
+---
 
-### Almacenamiento de Documentos
-- Los documentos médicos (PDFs, imágenes) se almacenan automáticamente en OneDrive.
-- Ruta por defecto: `C:\Users\[Usuario]\OneDrive\consultas-documentacion\`
-- Se puede personalizar la ruta mediante la variable de entorno `MEDIA_ROOT` en el archivo `.env`.
-- Los archivos se sincronizan automáticamente con la nube de OneDrive.
-- **Nota**: Ya no se utiliza almacenamiento local en el proyecto.
+<div align="center">
+
+**Desarrollado con ❤️ para la comunidad médica de El Salvador**
+
+⭐ **Si te gusta el proyecto, ¡dale una estrella!**
+
+[📧 Email](mailto:soportedoclink@gmail.com) • [🐛 Reportar Bug](https://github.com/Andi7110/Proyecto-doclink/issues) • [💡 Solicitar Feature](https://github.com/Andi7110/Proyecto-doclink/issues)
+
+</div>
