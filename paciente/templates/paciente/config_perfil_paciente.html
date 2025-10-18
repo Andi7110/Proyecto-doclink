@@ -88,6 +88,14 @@
         </div>
       </div>
 
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="id_dui" class="form-label">DUI</label>
+          <input type="text" class="form-control" id="id_dui" name="dui" value="{{ user.fk_paciente.dui }}" readonly>
+          <small class="form-text text-muted">El DUI no se puede modificar después del registro</small>
+        </div>
+      </div>
+
       <h4 class="mb-3 mt-4">Foto de Perfil</h4>
 
       <div class="mb-3 text-center">

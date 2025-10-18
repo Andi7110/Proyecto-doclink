@@ -240,6 +240,7 @@ class Medico(models.Model):
     sub_especialidad_2 = models.TextField(blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
     precio_consulta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Precio base de la consulta médica")
+    titulo_medico = models.TextField(blank=True, null=True, help_text="Título médico en formato base64")
     fk_horario_medico = models.ForeignKey(HorarioMedico, models.DO_NOTHING, db_column='fk_horario_medico', blank=True, null=True)
     fk_clinica = models.ForeignKey(Clinica, models.DO_NOTHING, db_column='fk_clinica', blank=True, null=True)
     fk_ranking_medico = models.ForeignKey('RankingMedico', models.DO_NOTHING, db_column='fk_ranking_medico', blank=True, null=True)

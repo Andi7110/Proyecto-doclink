@@ -161,6 +161,25 @@ def registroDoctor4_view(request):
             messages.error(request, "Este correo ya está registrado.")
             return redirect('registro_doctor')
 
+        # Procesar archivo de título médico
+        titulo_medico_base64 = None
+        if 'licencia_file' in request.FILES:
+            archivo = request.FILES['licencia_file']
+            # Validar tamaño (5MB máximo)
+            if archivo.size > 5 * 1024 * 1024:
+                messages.error(request, "El archivo es demasiado grande. Máximo 5MB.")
+                return redirect('registro_doctor4')
+
+            # Validar tipo de archivo
+            tipos_permitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
+            if archivo.content_type not in tipos_permitidos:
+                messages.error(request, "Tipo de archivo no permitido. Solo PDF, JPG, PNG.")
+                return redirect('registro_doctor4')
+
+            # Convertir a base64
+            import base64
+            titulo_medico_base64 = base64.b64encode(archivo.read()).decode('utf-8')
+
         partes = nombre_apellido.split(" ", 1)
         nombre = partes[0]
         apellido = partes[1] if len(partes) > 1 else ""
@@ -169,7 +188,8 @@ def registroDoctor4_view(request):
             # Crear médico
             medico = Medico.objects.create(
                 no_jvpm=licencia,
-                especialidad=especialidad
+                especialidad=especialidad,
+                titulo_medico=titulo_medico_base64
             )
 
             # Obtener el rol "medico"
