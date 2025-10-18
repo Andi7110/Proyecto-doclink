@@ -25,8 +25,9 @@ def send_html_email(subject, template_name, context, recipient_list, from_email=
     """
     Envía un email HTML con fallback a texto plano usando templates de Django.
     """
+    from django.conf import settings
+
     if from_email is None:
-        from django.conf import settings
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER)
 
     # Cargar templates HTML y texto

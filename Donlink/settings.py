@@ -202,6 +202,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'soportedoclink@gmail.com'
 SERVER_EMAIL = EMAIL_HOST_USER or 'soportedoclink@gmail.com'
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 
+# Gmail API settings (para funcionalidades avanzadas de email)
+GMAIL_API_CLIENT_SECRET_FILE = os.environ.get('GMAIL_API_CLIENT_SECRET_FILE', 'trchatbot2.json')
+GMAIL_API_SCOPES = ['https://mail.google.com/']
+
 # reCAPTCHA settings (optional) - Default to empty strings to avoid type errors
 RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
 RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
