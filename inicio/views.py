@@ -195,7 +195,7 @@ def registroDoctor4_view(request):
                     'user_name': f'{usuario.nombre} {usuario.apellido}',
                     'especialidad': medico.especialidad,
                     'licencia': medico.no_jvpm,
-                    'base_url': settings.BASE_URL
+                    'base_url': getattr(settings, 'BASE_URL', 'https://doclink-djangoapp.softwar.me')
                 }
                 send_html_email(
                     '¡Bienvenido a DocLink - Médico!',
@@ -334,7 +334,7 @@ def registroPaciente4_view(request):
                 from django.conf import settings
                 context = {
                     'user_name': f'{usuario.nombre} {usuario.apellido}',
-                    'base_url': settings.BASE_URL
+                    'base_url': getattr(settings, 'BASE_URL', 'https://doclink-djangoapp.softwar.me')
                 }
                 send_html_email(
                     '¡Bienvenido a DocLink - Paciente!',
