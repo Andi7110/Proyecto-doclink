@@ -28,9 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy project
 COPY . /app/
 
-# Copy Gmail API credentials (if they exist)
-COPY token.json /app/ 
-COPY trchatbot2.json /app/ 
+# Copy Gmail API credentials (if they exist) - Optional files
 
 # Change ownership of the app directory to the non-root user
 RUN chown -R appuser:appuser /app
