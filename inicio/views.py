@@ -187,25 +187,24 @@ def registroDoctor4_view(request):
                 is_active=True  # Activado inmediatamente para desarrollo
             )
 
-            # Para desarrollo: sin verificación de email
-            # Crear token de verificación
-            # token = secrets.token_urlsafe(32)
-            # expires_at = timezone.now() + timedelta(hours=24)
-            # EmailVerificationToken.objects.create(user=usuario, token=token, expires_at=expires_at)
-
-            # Enviar email de verificación
-            # verification_url = f'http://127.0.0.1:8000/verificar-email/{token}/'
-            # context = {
-            #     'user_name': f'{usuario.nombre} {usuario.apellido}',
-            #     'verification_url': verification_url,
-            #     'user_type': 'medico'
-            # }
-            # send_html_email(
-            #     'Verifica tu cuenta en DocLink',
-            #     'email_verification',
-            #     context,
-            #     [usuario.correo]
-            # )
+            # Enviar email de bienvenida para médicos
+            try:
+                context = {
+                    'user_name': f'{usuario.nombre} {usuario.apellido}',
+                    'especialidad': medico.especialidad,
+                    'licencia': medico.no_jvpm,
+                    'base_url': settings.BASE_URL
+                }
+                send_html_email(
+                    '¡Bienvenido a DocLink - Médico!',
+                    'welcome_medico',
+                    context,
+                    [usuario.correo]
+                )
+                logging.info(f"Email de bienvenida enviado a médico: {usuario.correo}")
+            except Exception as email_error:
+                logging.warning(f"Error al enviar email de bienvenida médico: {str(email_error)}")
+                # No fallar el registro por error de email
 
             # Limpiar sesión
             for key in ['nombre_apellido', 'especialidad', 'licencia', 'correo', 'telefono', 'password']:
@@ -328,25 +327,22 @@ def registroPaciente4_view(request):
                 is_active=True  # Activado inmediatamente para desarrollo
             )
 
-            # Para desarrollo: sin verificación de email
-            # Crear token de verificación
-            # token = secrets.token_urlsafe(32)
-            # expires_at = timezone.now() + timedelta(hours=24)
-            # EmailVerificationToken.objects.create(user=usuario, token=token, expires_at=expires_at)
-
-            # Enviar email de verificación
-            # verification_url = f'http://127.0.0.1:8000/verificar-email/{token}/'
-            # context = {
-            #     'user_name': f'{usuario.nombre} {usuario.apellido}',
-            #     'verification_url': verification_url,
-            #     'user_type': 'paciente'
-            # }
-            # send_html_email(
-            #     'Verifica tu cuenta en DocLink',
-            #     'email_verification',
-            #     context,
-            #     [usuario.correo]
-            # )
+            # Enviar email de bienvenida para pacientes
+            try:
+                context = {
+                    'user_name': f'{usuario.nombre} {usuario.apellido}',
+                    'base_url': settings.BASE_URL
+                }
+                send_html_email(
+                    '¡Bienvenido a DocLink - Paciente!',
+                    'welcome_paciente',
+                    context,
+                    [usuario.correo]
+                )
+                logging.info(f"Email de bienvenida enviado a paciente: {usuario.correo}")
+            except Exception as email_error:
+                logging.warning(f"Error al enviar email de bienvenida paciente: {str(email_error)}")
+                # No fallar el registro por error de email
 
             # Limpiar sesión
             for key in ['nombre_apellido', 'fecha_nacimiento', 'dui', 'genero', 'correo', 'telefono', 'password']:
