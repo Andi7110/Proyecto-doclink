@@ -213,9 +213,9 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 
-# reCAPTCHA settings (optional)
-RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
-RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
+# reCAPTCHA settings (optional) - Default to empty strings to avoid type errors
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
 
 # SerpApi settings
 SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
@@ -232,6 +232,10 @@ if not SERPAPI_KEY:
 # Only silence test key warning if using test keys
 if RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PUBLIC_KEY == '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI':
     SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+elif not RECAPTCHA_PRIVATE_KEY or RECAPTCHA_PRIVATE_KEY == '':
+    # Disable captcha app if no keys are configured
+    INSTALLED_APPS.remove('captcha')
+    SILENCED_SYSTEM_CHECKS = []
 else:
     SILENCED_SYSTEM_CHECKS = []
 
