@@ -1117,7 +1117,7 @@ def historial_pagos_paciente(request):
         usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Médico desconocido"
 
-        estado = 'Completado' if cita.pago_confirmado else 'Pendiente'
+        estado = 'Completado' if cita.pago_confirmado or cita.metodo_pago == 'efectivo' else 'Pendiente'
 
         pagos.append({
             'tipo': 'consulta',
