@@ -591,7 +591,7 @@ def programar_cita_doc(request):
         metodo_pago_obj = None
 
         if metodo_pago:
-            metodo_pago_obj = MetodosPago.objects.create(
+            metodo_pago_obj, created = MetodosPago.objects.get_or_create(
                 tipometodopago=metodo_pago
             )
 
