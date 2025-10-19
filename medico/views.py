@@ -1245,9 +1245,9 @@ def historial_pagos(request):
     # Ordenar por fecha descendente
     pagos.sort(key=lambda x: x['fecha'], reverse=True)
 
-    # Calcular totales
-    total_consultas = sum(p['monto'] for p in pagos if p['tipo'] == 'consulta')
-    total_gastos = sum(p['monto'] for p in pagos if p['tipo'] == 'gasto_adicional')
+    # Calcular totales (filtrando valores None)
+    total_consultas = sum(p['monto'] for p in pagos if p['tipo'] == 'consulta' and p['monto'] is not None)
+    total_gastos = sum(p['monto'] for p in pagos if p['tipo'] == 'gasto_adicional' and p['monto'] is not None)
     total_general = total_consultas + total_gastos
 
     # Obtener lista de pacientes para el filtro
