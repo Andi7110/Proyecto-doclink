@@ -1175,10 +1175,10 @@ def historial_pagos(request):
     fecha_hasta = request.GET.get('fecha_hasta')
     paciente_id = request.GET.get('paciente')
 
-    # Obtener todas las citas pagadas del médico
-    citas_pagadas = CitasMedicas.objects.filter(
+    # Obtener todas las citas completadas del médico
+    citas_completadas = CitasMedicas.objects.filter(
         fk_medico=medico,
-        fk_factura__isnull=False
+        status_cita_medica='Completada'
     ).select_related('fk_paciente', 'fk_factura').order_by('-fecha_consulta')
 
     # Aplicar filtros de fecha
@@ -1203,22 +1203,28 @@ def historial_pagos(request):
     if paciente_id:
         gastos_pagados = gastos_pagados.filter(fk_cita__fk_paciente_id=paciente_id)
 
+    # Filtrar solo gastos pagados
+    gastos_pagados = gastos_pagados.filter(pagado=True)
+
     # Preparar datos para el template
     pagos = []
 
-    # Agregar consultas pagadas
-    for cita in citas_pagadas:
+    # Agregar consultas completadas
+    for cita in citas_completadas:
         usuario_paciente = Usuario.objects.filter(fk_paciente=cita.fk_paciente).first()
         nombre_paciente = usuario_paciente.get_full_name() if usuario_paciente else "Paciente desconocido"
+
+        # Determinar estado basado en pago_confirmado
+        estado = 'Completado' if cita.pago_confirmado else 'Pendiente'
 
         pagos.append({
             'tipo': 'consulta',
             'fecha': cita.fecha_consulta,
             'paciente': nombre_paciente,
             'descripcion': f"Consulta médica - {cita.des_motivo_consulta_paciente or 'Sin motivo especificado'}",
-            'monto': cita.fk_factura.monto,
-            'metodo_pago': cita.fk_factura.fk_metodopago.get_tipometodopago_display() if cita.fk_factura.fk_metodopago else "No especificado",
-            'estado': 'Completado'
+            'monto': cita.fk_factura.monto if cita.fk_factura else cita.monto_consulta,
+            'metodo_pago': cita.fk_factura.fk_metodopago.get_tipometodopago_display() if cita.fk_factura and cita.fk_factura.fk_metodopago else (cita.get_metodo_pago_display() if cita.metodo_pago else "No especificado"),
+            'estado': estado
         })
 
     # Agregar gastos adicionales pagados
