@@ -443,6 +443,7 @@ def contraOlvidada_view(request):
 
                 # Enviar código por email
                 try:
+                    from django.conf import settings
                     context = {
                         'reset_code': reset_code,
                         'user_name': f'{usuario.nombre} {usuario.apellido}',
