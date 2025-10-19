@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 import logging
+from django.urls import reverse
 
 
 def send_html_email(subject, template_name, context, recipient_list, from_email=None):
@@ -456,7 +457,8 @@ def contraOlvidada_view(request):
                         [usuario.correo]
                     )
                     logging.info(f"Código de recuperación enviado a: {usuario.correo}")
-                    messages.success(request, "¡Código enviado! Revisa tu correo electrónico.")
+                    # Redirigir con parámetro para mostrar mensaje solo en esta página
+                    return redirect(f"{reverse('contra_olvidada')}?sent=1")
                 except Exception as email_error:
                     logging.warning(f"Error al enviar código de recuperación: {str(email_error)}")
                     # Fallback: mostrar código en pantalla para desarrollo

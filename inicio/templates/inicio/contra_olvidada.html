@@ -24,6 +24,13 @@
                     <h4 class="mb-0">Recuperar Contraseña</h4>
                 </div>
                 <div class="card-body">        
+                    {% if request.GET.sent %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong>¡Código enviado!</strong> Revisa tu correo electrónico para obtener el código de recuperación.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
                     <form method="post">
                         {% csrf_token %}
 
