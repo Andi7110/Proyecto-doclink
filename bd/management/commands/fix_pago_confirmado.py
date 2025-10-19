@@ -7,7 +7,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Actualizar todas las citas con efectivo para que aparezcan como confirmadas
         citas_actualizadas = CitasMedicas.objects.filter(
-            metodo_pago='efectivo',
+            metodo_pago__in=['efectivo', 'Efectivo'],
             pago_confirmado=False
         ).update(pago_confirmado=True)
 
