@@ -98,9 +98,129 @@
                                     <td>${{ pago.monto|floatformat:2 }}</td>
                                     <td>{{ pago.metodo_pago }}</td>
                                     <td>
-                                        <span class="badge bg-success">{{ pago.estado }}</span>
+                                        {% if pago.estado == 'Completado' %}
+                                            <span class="badge bg-success">{{ pago.estado }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">{{ pago.estado }}</span>
+                                            {% if pago.metodo_pago == 'Tarjeta' %}
+                                                {% if pago.tipo == 'consulta' %}
+                                                    <button class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#pagarModal"
+                                                            data-tipo="consulta" data-id="{{ pago.cita_id }}" data-monto="{{ pago.monto }}">
+                                                        <i class="fas fa-credit-card"></i> Pagar
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#pagarModal"
+                                                            data-tipo="gasto" data-id="{{ pago.gasto_id }}" data-monto="{{ pago.monto }}">
+                                                        <i class="fas fa-credit-card"></i> Pagar
+                                                    </button>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
                                     </td>
                                 </tr>
+<!-- Modal para pago con tarjeta -->
+<div class="modal fade" id="pagarModal" tabindex="-1" aria-labelledby="pagarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pagarModalLabel">Pagar con Tarjeta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="pagoForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Monto a pagar: $<span id="montoPagar"></span></strong>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="numero_tarjeta_modal" class="form-label">Número de tarjeta</label>
+                            <input type="text" name="numero_tarjeta" id="numero_tarjeta_modal" class="form-control" maxlength="16" placeholder="1234567890123456" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fecha_expiracion_modal" class="form-label">Fecha expiración</label>
+                            <input type="text" name="fecha_expiracion" id="fecha_expiracion_modal" class="form-control" placeholder="MM/YY" maxlength="5" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="cvv_modal" class="form-label">CVV</label>
+                            <input type="text" name="cvv" id="cvv_modal" class="form-control" maxlength="4" placeholder="123" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombre_titular_modal" class="form-label">Nombre del titular</label>
+                            <input type="text" name="nombre_titular" id="nombre_titular_modal" class="form-control" placeholder="Como aparece en la tarjeta" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tipo_tarjeta_modal" class="form-label">Tipo de tarjeta</label>
+                            <select name="tipo_tarjeta" id="tipo_tarjeta_modal" class="form-control" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="debito">Débito</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="tipo_pago" id="tipoPagoInput">
+                    <input type="hidden" name="id_pago" id="idPagoInput">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-credit-card me-2"></i>Procesar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pagarModal = document.getElementById('pagarModal');
+    const montoSpan = document.getElementById('montoPagar');
+    const tipoPagoInput = document.getElementById('tipoPagoInput');
+    const idPagoInput = document.getElementById('idPagoInput');
+    const pagoForm = document.getElementById('pagoForm');
+
+    // Manejar apertura del modal
+    pagarModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const tipo = button.getAttribute('data-tipo');
+        const id = button.getAttribute('data-id');
+        const monto = button.getAttribute('data-monto');
+
+        montoSpan.textContent = monto;
+        tipoPagoInput.value = tipo;
+        idPagoInput.value = id;
+
+        // Cambiar action del form según el tipo
+        if (tipo === 'consulta') {
+            pagoForm.action = `/paciente/pagar-consulta/${id}/`;
+        } else {
+            pagoForm.action = `/paciente/pagar-gasto/${id}/`;
+        }
+    });
+
+    // Formatear fecha de expiración
+    document.getElementById('fecha_expiracion_modal').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+
+    // Validar número de tarjeta (solo números)
+    document.getElementById('numero_tarjeta_modal').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    // Validar CVV (solo números)
+    document.getElementById('cvv_modal').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+});
+</script>
                             {% endfor %}
                         </tbody>
                     </table>

@@ -6,6 +6,7 @@ from datetime import date, datetime, time
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from django.db import transaction
+from django.views.decorators.http import require_POST
 from .decorators import paciente_required
 from django.shortcuts import render, redirect, get_object_or_404
 from bd.models import PolizaSeguro, ContactoEmergencia, GastosAdicionales
@@ -204,7 +205,7 @@ def agendar_cita(request):
                     fk_factura=factura,
                     metodo_pago=metodo_pago,
                     monto_consulta=monto,
-                    pago_confirmado=False  # Se confirma cuando la cita se pone en proceso
+                    pago_confirmado=metodo_pago == 'efectivo'  # Solo confirmado si es efectivo
                 )
 
             messages.success(request, "¡Cita agendada correctamente!")
@@ -1085,37 +1086,38 @@ def historial_pagos_paciente(request):
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
 
-    # Obtener todas las citas pagadas del paciente
-    citas_pagadas = CitasMedicas.objects.filter(
+    # Obtener todas las citas del paciente (pagadas y pendientes)
+    citas_todas = CitasMedicas.objects.filter(
         fk_paciente=paciente,
         fk_factura__isnull=False
     ).select_related('fk_medico', 'fk_factura').order_by('-fecha_consulta')
 
     # Aplicar filtros de fecha
     if fecha_desde:
-        citas_pagadas = citas_pagadas.filter(fecha_consulta__gte=fecha_desde)
+        citas_todas = citas_todas.filter(fecha_consulta__gte=fecha_desde)
     if fecha_hasta:
-        citas_pagadas = citas_pagadas.filter(fecha_consulta__lte=fecha_hasta)
+        citas_todas = citas_todas.filter(fecha_consulta__lte=fecha_hasta)
 
-    # Obtener gastos adicionales pagados
-    gastos_pagados = GastosAdicionales.objects.filter(
-        fk_cita__fk_paciente=paciente,
-        pagado=True
+    # Obtener gastos adicionales (pagados y pendientes)
+    gastos_todos = GastosAdicionales.objects.filter(
+        fk_cita__fk_paciente=paciente
     ).select_related('fk_cita__fk_medico').order_by('-fecha_creacion')
 
     # Aplicar filtros de fecha a gastos
     if fecha_desde:
-        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__gte=fecha_desde)
+        gastos_todos = gastos_todos.filter(fecha_creacion__date__gte=fecha_desde)
     if fecha_hasta:
-        gastos_pagados = gastos_pagados.filter(fecha_creacion__date__lte=fecha_hasta)
+        gastos_todos = gastos_todos.filter(fecha_creacion__date__lte=fecha_hasta)
 
     # Preparar datos para el template
     pagos = []
 
-    # Agregar consultas pagadas
-    for cita in citas_pagadas:
+    # Agregar consultas (completadas y pendientes)
+    for cita in citas_todas:
         usuario_medico = Usuario.objects.filter(fk_medico=cita.fk_medico).first()
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Médico desconocido"
+
+        estado = 'Completado' if cita.pago_confirmado else 'Pendiente'
 
         pagos.append({
             'tipo': 'consulta',
@@ -1124,13 +1126,17 @@ def historial_pagos_paciente(request):
             'descripcion': f"Consulta médica - {cita.des_motivo_consulta_paciente or 'Sin motivo especificado'}",
             'monto': cita.fk_factura.monto,
             'metodo_pago': cita.fk_factura.fk_metodopago.get_tipometodopago_display() if cita.fk_factura.fk_metodopago else "No especificado",
-            'estado': 'Completado'
+            'estado': estado,
+            'cita_id': cita.id_cita_medicas,
+            'pago_confirmado': cita.pago_confirmado
         })
 
-    # Agregar gastos adicionales pagados
-    for gasto in gastos_pagados:
+    # Agregar gastos adicionales (pagados y pendientes)
+    for gasto in gastos_todos:
         usuario_medico = Usuario.objects.filter(fk_medico=gasto.fk_cita.fk_medico).first()
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Médico desconocido"
+
+        estado = 'Completado' if gasto.pagado else 'Pendiente'
 
         pagos.append({
             'tipo': 'gasto_adicional',
@@ -1139,7 +1145,10 @@ def historial_pagos_paciente(request):
             'descripcion': gasto.descripcion,
             'monto': gasto.monto,
             'metodo_pago': gasto.get_metodo_pago_display(),
-            'estado': 'Completado'
+            'estado': estado,
+            'gasto_id': gasto.id_gastos_adicionales,
+            'cita_id': gasto.fk_cita.id_cita_medicas,
+            'pago_confirmado': gasto.pagado
         })
 
     # Ordenar por fecha descendente
@@ -1163,6 +1172,152 @@ def historial_pagos_paciente(request):
     return render(request, 'paciente/historial_pagos.html', context)
 
 
+@login_required
+@paciente_required
+def pagar_consulta_historial(request, cita_id):
+    """Vista para procesar pago de consulta desde el historial de pagos"""
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para pagar consultas.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        cita = CitasMedicas.objects.get(id_cita_medicas=cita_id, fk_paciente=paciente)
+    except CitasMedicas.DoesNotExist:
+        raise PermissionDenied("Cita no encontrada o no tienes permisos.")
+
+    if request.method == 'POST':
+        # Procesar datos de la tarjeta
+        numero_tarjeta = request.POST.get('numero_tarjeta')
+        fecha_expiracion = request.POST.get('fecha_expiracion')
+        cvv = request.POST.get('cvv')
+        nombre_titular = request.POST.get('nombre_titular')
+        tipo_tarjeta = request.POST.get('tipo_tarjeta')
+
+        # Validar campos
+        if not all([numero_tarjeta, fecha_expiracion, cvv, nombre_titular, tipo_tarjeta]):
+            messages.error(request, "Por favor completa todos los campos.")
+            return redirect('historial_pagos_paciente')
+
+        # Validar formato de número de tarjeta
+        if not numero_tarjeta.isdigit() or len(numero_tarjeta) != 16:
+            messages.error(request, "El número de tarjeta debe tener 16 dígitos.")
+            return redirect('historial_pagos_paciente')
+
+        # Validar formato de fecha de expiración
+        import re
+        if not re.match(r'^\d{2}/\d{2}$', fecha_expiracion):
+            messages.error(request, "Formato de fecha de expiración inválido (MM/YY).")
+            return redirect('historial_pagos_paciente')
+
+        try:
+            with transaction.atomic():
+                # Crear método de pago
+                metodo_pago_obj = MetodosPago.objects.create(
+                    tipometodopago='tarjeta',
+                    numero_tarjeta=numero_tarjeta,
+                    fecha_expiracion=fecha_expiracion,
+                    cvv=cvv,
+                    nombre_titular=nombre_titular,
+                    tipo_tarjeta=tipo_tarjeta
+                )
+
+                # Actualizar la factura con el método de pago
+                cita.fk_factura.fk_metodopago = metodo_pago_obj
+                cita.fk_factura.save()
+
+                # Marcar la cita como pagada
+                cita.pago_confirmado = True
+                cita.save()
+
+                messages.success(request, f"¡Pago procesado correctamente! Se ha pagado ${cita.monto_consulta} por la consulta.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
+                return redirect('historial_pagos_paciente')
+
+        except Exception as e:
+            messages.error(request, f"Error al procesar el pago: {e}")
+            return redirect('historial_pagos_paciente')
+
+    return redirect('historial_pagos_paciente')
+
+@login_required
+@paciente_required
+def pagar_gasto_historial(request, gasto_id):
+    """Vista para procesar pago de gasto adicional desde el historial de pagos"""
+    usuario = request.user
+
+    if not hasattr(usuario, 'fk_paciente') or usuario.fk_paciente is None:
+        raise PermissionDenied("No tienes permisos para pagar gastos adicionales.")
+
+    paciente = usuario.fk_paciente
+
+    try:
+        gasto = GastosAdicionales.objects.get(id_gastos_adicionales=gasto_id, fk_cita__fk_paciente=paciente)
+    except GastosAdicionales.DoesNotExist:
+        raise PermissionDenied("Gasto no encontrado o no tienes permisos.")
+
+    if request.method == 'POST':
+        # Procesar datos de la tarjeta
+        numero_tarjeta = request.POST.get('numero_tarjeta')
+        fecha_expiracion = request.POST.get('fecha_expiracion')
+        cvv = request.POST.get('cvv')
+        nombre_titular = request.POST.get('nombre_titular')
+        tipo_tarjeta = request.POST.get('tipo_tarjeta')
+
+        # Validar campos
+        if not all([numero_tarjeta, fecha_expiracion, cvv, nombre_titular, tipo_tarjeta]):
+            messages.error(request, "Por favor completa todos los campos.")
+            return redirect('historial_pagos_paciente')
+
+        # Validar formato de número de tarjeta
+        if not numero_tarjeta.isdigit() or len(numero_tarjeta) != 16:
+            messages.error(request, "El número de tarjeta debe tener 16 dígitos.")
+            return redirect('historial_pagos_paciente')
+
+        # Validar formato de fecha de expiración
+        import re
+        if not re.match(r'^\d{2}/\d{2}$', fecha_expiracion):
+            messages.error(request, "Formato de fecha de expiración inválido (MM/YY).")
+            return redirect('historial_pagos_paciente')
+
+        try:
+            with transaction.atomic():
+                # Crear método de pago
+                metodo_pago_obj = MetodosPago.objects.create(
+                    tipometodopago='tarjeta',
+                    numero_tarjeta=numero_tarjeta,
+                    fecha_expiracion=fecha_expiracion,
+                    cvv=cvv,
+                    nombre_titular=nombre_titular,
+                    tipo_tarjeta=tipo_tarjeta
+                )
+
+                # Marcar gasto como pagado
+                gasto.pagado = True
+                gasto.save()
+
+                # Crear factura para el gasto adicional
+                factura = Factura.objects.create(
+                    fecha_emision=timezone.now().date(),
+                    monto=gasto.monto,
+                    fk_metodopago=metodo_pago_obj
+                )
+
+                messages.success(request, f"¡Pago procesado correctamente! Se ha pagado ${gasto.monto} por el gasto adicional.")
+                # Consumir mensajes para que no aparezcan en otras páginas
+                list(messages.get_messages(request))
+                return redirect('historial_pagos_paciente')
+
+        except Exception as e:
+            messages.error(request, f"Error al procesar el pago: {e}")
+            return redirect('historial_pagos_paciente')
+
+    return redirect('historial_pagos_paciente')
+
+@require_POST
 @login_required
 @paciente_required
 def pagar_gastos_adicionales(request, cita_id):

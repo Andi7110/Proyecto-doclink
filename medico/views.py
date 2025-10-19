@@ -11,7 +11,7 @@ from django.db.models import Sum, Q
 from django.utils import timezone
 from datetime import date, timedelta
 
-from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica, SeguimientoClinico, ConsultaSeguimiento, GastosAdicionales
+from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica, SeguimientoClinico, ConsultaSeguimiento, GastosAdicionales, MetodosPago
 from .forms import PerfilMedicoForm, SeguimientoClinicoForm, ProgramarCitaSeguimientoForm
 from bd.models import RecetaMedica, CitasMedicas, Clinica, HorarioMedico, Medico, Usuario, Paciente, ValoracionConsulta, ConsultaMedica
 from .forms import PerfilMedicoForm
@@ -586,12 +586,21 @@ def programar_cita_doc(request):
                 fk_paciente=paciente
             )
 
+        # Crear método de pago
+        metodo_pago = request.POST.get('metodo_pago')
+        metodo_pago_obj = None
+
+        if metodo_pago:
+            metodo_pago_obj = MetodosPago.objects.create(
+                tipometodopago=metodo_pago
+            )
+
         # Crear factura
         precio = request.POST.get('precio')
         factura = Factura.objects.create(
             fecha_emision=timezone.now().date(),
             monto=precio,
-            fk_metodopago=None  # puedes definirlo después
+            fk_metodopago=metodo_pago_obj
         )
 
         # Crear la cita médica
@@ -603,7 +612,10 @@ def programar_cita_doc(request):
             hora_inicio=request.POST.get('hora_inicio'),
             hora_fin=request.POST.get('hora_fin'),
             status_cita_medica=request.POST.get('status_cita_medica'),
-            des_motivo_consulta_paciente=request.POST.get('des_motivo_consulta_paciente')
+            des_motivo_consulta_paciente=request.POST.get('des_motivo_consulta_paciente'),
+            metodo_pago=metodo_pago,
+            monto_consulta=precio,
+            pago_confirmado=metodo_pago == 'efectivo'  # Solo confirmado si es efectivo
         )
 
         # Crear notificación

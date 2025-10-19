@@ -57,6 +57,22 @@
       <input type="number" name="precio" id="precio" class="form-control" step="0.01" min="0" required>
     </div>
 
+    <!-- Método de pago -->
+    <div class="mb-3">
+      <label for="metodo_pago" class="form-label">💳 Método de pago</label>
+      <select name="metodo_pago" id="metodo_pago" class="form-select" required>
+        <option value="">-- Seleccione método de pago --</option>
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+      </select>
+      <div class="form-text">
+        <small class="text-muted">
+          Si selecciona "Tarjeta", el paciente deberá proporcionar los datos de pago al momento de agendar la cita.
+        </small>
+      </div>
+    </div>
+
+
     <!-- Fecha y horario -->
     <div class="row">
       <div class="col-md-4 mb-3">
