@@ -118,7 +118,7 @@ class CitasMedicas(models.Model):
     # Campos para método de pago
     metodo_pago = models.CharField(max_length=20, choices=[('efectivo', 'Efectivo'), ('tarjeta', 'Tarjeta')], blank=True, null=True)
     monto_consulta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    pago_confirmado = models.BooleanField(default=False)
+    pago_confirmado = models.BooleanField(default=False, help_text="Indica si el pago ha sido confirmado")
 
     class Meta:
         managed = True
