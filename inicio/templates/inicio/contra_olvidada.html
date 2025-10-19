@@ -24,13 +24,6 @@
                     <h4 class="mb-0">Recuperar Contraseña</h4>
                 </div>
                 <div class="card-body">        
-                    {% if reset_code %}
-                    <div class="alert alert-success">
-                        <strong>¡Código generado!</strong> Tu código de recuperación es: <code class="fs-5">{{ reset_code }}</code>
-                        <br><small>Cópialo y pégalo abajo para cambiar tu contraseña.</small>
-                    </div>
-                    {% endif %}
-
                     <form method="post">
                         {% csrf_token %}
 
@@ -41,7 +34,7 @@
                             <input type="email" name="email" class="form-control" id="email" placeholder="correo@ejemplo.com" required>
                         </div>
                         <div class="d-grid mb-3">
-                            <button type="submit" name="action" value="generate" class="btn btn-info">Generar Código de Recuperación</button>
+                            <button type="submit" name="action" value="generate" class="btn btn-info">Enviar Código de Recuperación</button>
                         </div>
                         {% else %}
                         <!-- Paso 2: Cambiar contraseña -->

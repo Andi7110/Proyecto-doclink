@@ -441,12 +441,25 @@ def contraOlvidada_view(request):
                 request.session['reset_email'] = email
                 request.session['reset_code'] = reset_code
 
-                # Mostrar código en consola (para desarrollo)
-                print(f"\n=== CÓDIGO DE RECUPERACIÓN PARA {email} ===")
-                print(f"Código: {reset_code}")
-                print("=" * 50)
-
-                messages.success(request, f"¡Código generado! Cópialo de arriba y continúa con el cambio de contraseña.")
+                # Enviar código por email
+                try:
+                    context = {
+                        'reset_code': reset_code,
+                        'user_name': f'{usuario.nombre} {usuario.apellido}',
+                        'base_url': getattr(settings, 'BASE_URL', 'https://doclink-djangoapp.softwar.me')
+                    }
+                    send_html_email(
+                        'Código de Recuperación de Contraseña - DocLink',
+                        'password_reset',
+                        context,
+                        [usuario.correo]
+                    )
+                    logging.info(f"Código de recuperación enviado a: {usuario.correo}")
+                    messages.success(request, "¡Código enviado! Revisa tu correo electrónico.")
+                except Exception as email_error:
+                    logging.warning(f"Error al enviar código de recuperación: {str(email_error)}")
+                    # Fallback: mostrar código en pantalla para desarrollo
+                    messages.warning(request, f"Error al enviar email. Tu código es: {reset_code}")
 
             except Usuario.DoesNotExist:
                 messages.error(request, "No existe una cuenta con ese email.")
