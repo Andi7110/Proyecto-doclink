@@ -434,8 +434,12 @@ def mapa_medicos(request):
         else:
             clinicas_sin_coordenadas.append(clinica)
 
-    # Filtrar clínicas por departamento si se especifica
+    # Parámetros de búsqueda
+    query = request.GET.get('q', '')
+    location = request.GET.get('location', '')
     departamento = request.GET.get('departamento', '')
+
+    # Filtrar clínicas por departamento si se especifica
     if departamento:
         clinicas_con_coordenadas_filtradas = []
         for clinica in clinicas_con_coordenadas:
@@ -444,6 +448,19 @@ def mapa_medicos(request):
             if departamento_clinica.lower() == departamento.lower():
                 clinicas_con_coordenadas_filtradas.append(clinica)
         clinicas_con_coordenadas = clinicas_con_coordenadas_filtradas
+
+    # Filtrar clínicas registradas por nombre (query) y ubicación (location)
+    if query:
+        clinicas_con_coordenadas = [
+            clinica for clinica in clinicas_con_coordenadas
+            if query.lower() in clinica.nombre.lower()
+        ]
+
+    if location:
+        clinicas_con_coordenadas = [
+            clinica for clinica in clinicas_con_coordenadas
+            if location.lower() in (clinica.direccion or '').lower()
+        ]
 
     # Intentar geocoding para clínicas sin coordenadas si hay API key
     if serpapi_key and clinicas_sin_coordenadas:
