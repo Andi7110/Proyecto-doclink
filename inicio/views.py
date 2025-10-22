@@ -467,7 +467,7 @@ def contraOlvidada_view(request):
             except Usuario.DoesNotExist:
                 messages.error(request, "No existe una cuenta con ese email.")
 
-        elif action == 'reset':  # Cambiar contraseña
+        elif action == 'verify_and_reset':  # Verificar código y cambiar contraseña en un solo paso
             code = request.POST.get('code')
             new_password1 = request.POST.get('new_password1')
             new_password2 = request.POST.get('new_password2')
@@ -475,10 +475,13 @@ def contraOlvidada_view(request):
             # Verificar código
             if code != request.session.get('reset_code'):
                 messages.error(request, "Código incorrecto.")
+                logging.warning(f"Código incorrecto para email: {request.session.get('reset_email')}")
             elif new_password1 != new_password2:
                 messages.error(request, "Las contraseñas no coinciden.")
+                logging.warning(f"Contraseñas no coinciden para email: {request.session.get('reset_email')}")
             elif len(new_password1) < 8:
                 messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
+                logging.warning(f"Contraseña demasiado corta para email: {request.session.get('reset_email')}")
             else:
                 # Cambiar contraseña
                 email = request.session.get('reset_email')
@@ -486,6 +489,7 @@ def contraOlvidada_view(request):
                     usuario = Usuario.objects.get(correo=email)
                     usuario.set_password(new_password1)
                     usuario.save()
+                    logging.info(f"Contraseña cambiada exitosamente para usuario: {usuario.correo}")
 
                     # Limpiar sesión
                     del request.session['reset_email']
@@ -496,6 +500,7 @@ def contraOlvidada_view(request):
 
                 except Usuario.DoesNotExist:
                     messages.error(request, "Error al cambiar contraseña.")
+                    logging.error(f"Usuario no encontrado al cambiar contraseña: {email}")
 
     return render(request, 'inicio/contra_olvidada.html', {
         'reset_code': reset_code,
@@ -503,15 +508,14 @@ def contraOlvidada_view(request):
     })
 
 def reset_password_view(request):
+    # Verificar que el código haya sido verificado
+    if not request.session.get('code_verified'):
+        messages.error(request, "Primero debes verificar el código de recuperación.")
+        return redirect('contra_olvidada')
+
     if request.method == 'POST':
-        code = request.POST.get('code')
         new_password1 = request.POST.get('new_password1')
         new_password2 = request.POST.get('new_password2')
-
-        # Verificar código
-        if code != request.session.get('reset_code'):
-            messages.error(request, "Código incorrecto.")
-            return redirect('reset_password')
 
         if new_password1 != new_password2:
             messages.error(request, "Las contraseñas no coinciden.")
@@ -531,6 +535,7 @@ def reset_password_view(request):
             # Limpiar sesión
             del request.session['reset_email']
             del request.session['reset_code']
+            del request.session['code_verified']
 
             messages.success(request, "Contraseña cambiada exitosamente. Ya puedes iniciar sesión.")
             return redirect('login')

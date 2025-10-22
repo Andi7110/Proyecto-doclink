@@ -34,7 +34,7 @@
                     <form method="post">
                         {% csrf_token %}
 
-                        {% if not reset_code %}
+                        {% if not request.GET.sent %}
                         <!-- Paso 1: Generar código -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Correo Electrónico</label>
@@ -44,21 +44,21 @@
                             <button type="submit" name="action" value="generate" class="btn btn-info">Enviar Código de Recuperación</button>
                         </div>
                         {% else %}
-                        <!-- Paso 2: Cambiar contraseña -->
+                        <!-- Paso 2: Ingresar código y nueva contraseña -->
                         <div class="mb-3">
                             <label for="code" class="form-label">Código de Recuperación</label>
                             <input type="text" name="code" class="form-control" id="code" placeholder="Ingresa el código de 6 dígitos" required>
                         </div>
                         <div class="mb-3">
                             <label for="new_password1" class="form-label">Nueva Contraseña</label>
-                            <input type="password" name="new_password1" class="form-control" id="new_password1" required>
+                            <input type="password" class="form-control" id="new_password1" name="new_password1" placeholder="Nueva contraseña" required>
                         </div>
                         <div class="mb-3">
                             <label for="new_password2" class="form-label">Confirmar Nueva Contraseña</label>
-                            <input type="password" name="new_password2" class="form-control" id="new_password2" required>
+                            <input type="password" class="form-control" id="new_password2" name="new_password2" placeholder="Confirma la nueva contraseña" required>
                         </div>
                         <div class="d-grid mb-3">
-                            <button type="submit" name="action" value="reset" class="btn btn-success">Cambiar Contraseña</button>
+                            <button type="submit" name="action" value="verify_and_reset" class="btn btn-primary">Verificar y Cambiar Contraseña</button>
                         </div>
                         {% endif %}
 
