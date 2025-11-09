@@ -1,0 +1,34 @@
+# Configuración de Django
+SECRET_KEY=django-insecure-$l)%msd2%bomaq*4@b3rzrhnm)j(&exf*valk^_*t*^d3wu*sr
+DEBUG=True
+ALLOWED_HOSTS=doclink-djangoapp.softwar.me,127.0.0.1,localhost
+PORT=8000
+
+# Configuración de CSRF y Cookies
+CSRF_TRUSTED_ORIGINS=https://doclink-djangoapp.softwar.me
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+SESSION_COOKIE_SAMESITE=Lax
+CSRF_COOKIE_SAME_SITE=Lax
+
+# Base de datos LOCAL (SQLite)
+DATABASE_URL=sqlite:///db.sqlite3
+
+# Configuración de Email (SMTP)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=soportedoclink@gmail.com
+EMAIL_HOST_PASSWORD=goxv tbzf dwik ccby
+EMAIL_TIMEOUT=30
+
+# Configuración de Gmail API (opcional)
+GMAIL_API_CLIENT_SECRET_FILE=trchatbot2.json
+
+# SerpApi (para mapas)
+SERPAPI_KEY=01849e3f7ce371ef201bc275c5586c6628b6f7b419552b46979791fce967a415
+
+# URL base para emails
+BASE_URL=https://doclink-djangoapp.softwar.me

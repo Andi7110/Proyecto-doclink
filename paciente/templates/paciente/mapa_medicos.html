@@ -358,13 +358,20 @@
             <p style='margin: 4px 0;'><strong>Médicos:</strong></p>
             <ul style='margin: 4px 0; padding-left: 20px;'>
               {% for medico in clinica.medico_set.all %}
-                <li>{{ medico.usuario_set.first.nombre|default:"" }} {{ medico.usuario_set.first.apellido|default:"" }} - {{ medico.especialidad|default:"Sin especialidad" }}</li>
-              {% endfor %}
+  <li>
+    {{ medico.usuario_set.first.nombre|default:"" }} {{ medico.usuario_set.first.apellido|default:"" }}
+    - {{ medico.especialidad|default:"Sin especialidad" }}
+    <br>
+    <a href="{% url 'agendar_cita' %}?medico_id={{ medico.id_medico }}&clinica={{ clinica.id_clinica }}"
+       class="btn btn-outline-primary btn-sm mt-1">
+       📅 Agendar cita
+    </a>
+  </li>
+{% endfor %}
+
             </ul>
           {% endif %}
-          <div style='margin-top: 8px;'>
-            <a href="{% url 'agendar_cita' %}?clinica={{ clinica.id_clinica }}" class='btn btn-primary btn-sm' style='color: white; text-decoration: none; padding: 4px 8px; border-radius: 4px; font-size: 12px;'>📅 Agendar Cita</a>
-          </div>
+          
           <small style='color: #0080FF; font-weight: bold;'>Clínica registrada en DocLink</small>
         </div>
       `);

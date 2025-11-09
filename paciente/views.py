@@ -34,19 +34,65 @@ def obtener_departamento_direccion(direccion):
 def views_home(request):
     return render(request, 'paciente/home.html')
 
-
 @login_required
 @paciente_required
 def dashboard_paciente(request):
     usuario = request.user
     paciente = getattr(usuario, 'fk_paciente', None)
-    
-    if not paciente:
-        # Si no hay paciente asociado, evita el error
-        messages.error(request, "No tienes un paciente asociado.")
-        return redirect('home')  # O a otra vista segura
 
-    return render(request, "paciente/dashboard_paciente.html", {"paciente": paciente})
+    if not paciente:
+        messages.error(request, "No tienes un paciente asociado.")
+        return redirect('home')
+
+    especialidad_filter = request.GET.get('especialidad', '')
+    ubicacion_filter = request.GET.get('ubicacion', '')
+
+    # Traer todos los médicos con sus clínicas y citas
+    medicos = Medico.objects.prefetch_related('citasmedicas__valoracionconsulta', 'fk_clinica').annotate(
+        avg_rating=Coalesce(Avg('citasmedicas__valoracionconsulta__calificacion_consulta'), 0),
+        num_ratings=Count('citasmedicas__valoracionconsulta'),
+        num_reviews=Count('citasmedicas__valoracionconsulta', filter=Q(citasmedicas__valoracionconsulta__resena__isnull=False))
+    )
+
+    # Aplicar filtros
+    if especialidad_filter:
+        medicos = medicos.filter(especialidad__icontains=especialidad_filter)
+    if ubicacion_filter:
+        medicos = medicos.filter(fk_clinica__direccion__icontains=ubicacion_filter)
+
+    medicos = medicos.order_by('-avg_rating', 'especialidad')[:10]
+
+    medicos_con_datos = []
+    for medico in medicos:
+        usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+        nombre_completo = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
+        clinica_nombre = medico.fk_clinica.nombre if medico.fk_clinica else "Sin clínica"
+        direccion = medico.fk_clinica.direccion if medico.fk_clinica and medico.fk_clinica.direccion else "No especificada"
+
+        medicos_con_datos.append({
+            'id_medico': medico.id_medico,
+            'nombre_completo': nombre_completo,
+            'especialidad': medico.especialidad or "No especificada",
+            'clinica': clinica_nombre,
+            'ubicacion_clinica': direccion,
+            'departamento': obtener_departamento_direccion(direccion),
+            'avg_rating': round(medico.avg_rating, 1),
+            'num_ratings': medico.num_ratings,
+            'num_reviews': medico.num_reviews,
+        })
+
+    context = {
+        'medicos_destacados': medicos_con_datos,
+        'especialidades': Medico.objects.values_list('especialidad', flat=True)
+                          .distinct().exclude(especialidad__isnull=True).exclude(especialidad=''),
+        'ubicaciones': DEPARTAMENTOS_EL_SALVADOR,
+        'especialidad_filter': especialidad_filter,
+        'ubicacion_filter': ubicacion_filter,
+    }
+
+    return render(request, "paciente/dashboard_paciente.html", context)
+
+
 
 #Agendar cita
 @login_required
@@ -217,6 +263,27 @@ def agendar_cita(request):
             messages.error(request, f"Error al guardar la cita: {e}")
             return redirect('agendar_cita')
 
+
+
+    # --- NUEVO: obtener médico seleccionado desde GET ---
+    medico_id = request.GET.get('medico_id')
+    medico_nombre = None
+    medico_precio = None
+
+    if medico_id:
+        try:
+            medico = Medico.objects.get(id_medico=medico_id)
+            usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+            if usuario_medico:
+                medico_nombre = f"{usuario_medico.nombre} {usuario_medico.apellido}".strip()
+            else:
+                medico_nombre = "Nombre no disponible"
+            medico_precio = medico.precio_consulta
+        except Medico.DoesNotExist:
+            medico_nombre = "Médico no encontrado"
+            medico_precio = None
+    # --- FIN DE NUEVO BLOQUE ---
+
     context = {
         'edad': edad,
         'paciente': paciente,
@@ -226,8 +293,11 @@ def agendar_cita(request):
         'nombre': usuario.get_full_name() if callable(getattr(usuario, 'get_full_name', None)) else f"{usuario.nombre} {usuario.apellido}",
         'sexo': getattr(usuario, 'sexo', '') or '',
         'hoy': date.today(),
-        # Opcional: lista de especialidades para filtro rápido
         'especialidades': Medico.objects.values_list('especialidad', flat=True).distinct(),
+        # --- Agregamos ---
+        'medico_id': medico_id,
+        'medico_nombre': medico_nombre,
+        'medico_precio': medico_precio,
     }
 
     return render(request, 'paciente/agendar_cita.html', context)
@@ -246,10 +316,7 @@ def ver_agenda(request):
     hoy = date.today()
     ahora = datetime.now().time()
 
-    # Query base (sin enriquecer)
-    citas = CitasMedicas.objects.filter()
-
-    # Construir lista enriquecida de citas futuras (para mostrar acciones si ya están "Completada")
+    # --- Citas futuras ---
     citas_qs_futuras = CitasMedicas.objects.filter(
         fk_paciente=paciente,
         status_cita_medica__in=['Pendiente', 'En proceso']
@@ -265,7 +332,6 @@ def ver_agenda(request):
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
         especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
         clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
-
         citas_futuras.append({
             'cita': cita,
             'tiene_valoracion': tiene_valoracion,
@@ -274,15 +340,12 @@ def ver_agenda(request):
             'clinica': clinica,
         })
 
-    ahora = datetime.now()
-
-    # Citas completadas
+    # --- Citas completadas ---
     citas_completadas = CitasMedicas.objects.filter(
         fk_paciente=paciente,
         status_cita_medica='Completada'
     ).order_by('-fecha_consulta', '-hora_inicio').select_related('fk_medico', 'fk_medico__fk_clinica')
 
-    # Enriquecer citas completadas con info de valoración
     citas_completadas_con_valoracion = []
     for cita in citas_completadas:
         tiene_valoracion = ValoracionConsulta.objects.filter(fk_cita=cita).exists()
@@ -290,7 +353,6 @@ def ver_agenda(request):
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
         especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
         clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
-
         citas_completadas_con_valoracion.append({
             'cita': cita,
             'tiene_valoracion': tiene_valoracion,
@@ -299,7 +361,7 @@ def ver_agenda(request):
             'clinica': clinica,
         })
 
-    # Citas canceladas
+    # --- Citas canceladas ---
     citas_canceladas = CitasMedicas.objects.filter(
         fk_paciente=paciente,
         status_cita_medica='Cancelado'
@@ -311,7 +373,6 @@ def ver_agenda(request):
         nombre_medico = usuario_medico.get_full_name() if usuario_medico else "Nombre no disponible"
         especialidad = cita.fk_medico.especialidad if cita.fk_medico else ""
         clinica = cita.fk_medico.fk_clinica.nombre if cita.fk_medico and cita.fk_medico.fk_clinica else ""
-
         citas_canceladas_lista.append({
             'cita': cita,
             'nombre_medico': nombre_medico,
@@ -319,14 +380,34 @@ def ver_agenda(request):
             'clinica': clinica,
         })
 
+    # --- Datos base del contexto ---
     context = {
         'paciente': paciente,
-        'citas': citas,
-        'ahora': ahora,
         'citas_futuras': citas_futuras,
         'citas_completadas': citas_completadas_con_valoracion,
         'citas_canceladas': citas_canceladas_lista,
+        'hoy': hoy,
+        'usuario': usuario,
     }
+
+    # --- Si se recibe un médico desde otra vista ---
+    medico_id = request.GET.get('medico_id')
+    if medico_id:
+        try:
+            medico = Medico.objects.get(id_medico=medico_id)
+            usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+            medico_nombre = f"{usuario_medico.nombre or ''} {usuario_medico.apellido or ''}".strip()
+            medico_precio = medico.precio_consulta
+        except Medico.DoesNotExist:
+            medico_nombre = "Médico no encontrado"
+            medico_precio = ""
+
+        # Añadir datos del médico seleccionado al contexto
+        context.update({
+            'medico_id': medico_id,
+            'medico_nombre': medico_nombre,
+            'medico_precio': medico_precio,
+        })
 
     return render(request, 'paciente/agenda.html', context)
 
@@ -386,28 +467,52 @@ def buscar_medicos(request):
     tipo_filtro = request.GET.get("tipo_filtro", "todo")
     q = request.GET.get("q", "").strip()
 
-    medicos = Medico.objects.all()
+    # Obtener todos los médicos con sus usuarios y clínicas
+    medicos = Medico.objects.select_related("fk_clinica").all()
 
+    # Filtrado según el texto ingresado
     if q:
         if tipo_filtro == "nombre":
-            medicos = medicos.filter(
-                Q(usuario__nombre__icontains=q) | Q(usuario__apellido__icontains=q)
+            usuarios = Usuario.objects.filter(
+                Q(nombre__icontains=q) | Q(apellido__icontains=q),
+                fk_medico__isnull=False
             )
+            medicos = medicos.filter(id_medico__in=usuarios.values("fk_medico"))
         elif tipo_filtro == "especialidad":
             medicos = medicos.filter(especialidad__icontains=q)
         elif tipo_filtro == "ubicacion":
-            medicos = medicos.filter(ubicacion__icontains=q)
-        # 'todo' busca en todos los campos
+            medicos = medicos.filter(fk_clinica__direccion__icontains=q)
         elif tipo_filtro == "todo":
+            usuarios = Usuario.objects.filter(
+                Q(nombre__icontains=q) | Q(apellido__icontains=q),
+                fk_medico__isnull=False
+            )
             medicos = medicos.filter(
-                Q(usuario__nombre__icontains=q) |
-                Q(usuario__apellido__icontains=q) |
-                Q(especialidad__icontains=q) |
-                Q(ubicacion__icontains=q)
+                Q(id_medico__in=usuarios.values("fk_medico"))
+                | Q(especialidad__icontains=q)
+                | Q(fk_clinica__direccion__icontains=q)
             )
 
+    # Enlazar usuario con médico para mostrar nombre completo
+    medicos_con_datos = []
+    for medico in medicos:
+        usuario_medico = Usuario.objects.filter(fk_medico=medico).first()
+        nombre_completo = (
+            f"{usuario_medico.nombre} {usuario_medico.apellido}"
+            if usuario_medico
+            else "Nombre no disponible"
+        )
+        ubicacion = medico.fk_clinica.direccion if medico.fk_clinica else "No especificada"
+
+        medicos_con_datos.append({
+            "id_medico": medico.id_medico,
+            "nombre_completo": nombre_completo,
+            "especialidad": medico.especialidad or "Sin especialidad",
+            "ubicacion": ubicacion,
+        })
+
     context = {
-        "medicos": medicos,
+        "medicos": medicos_con_datos,
         "tipo_filtro": tipo_filtro,
         "q": q,
     }
@@ -431,6 +536,7 @@ def mapa_medicos(request):
     for clinica in clinicas:
         if clinica.latitud and clinica.longitud:
             clinicas_con_coordenadas.append(clinica)
+            
         else:
             clinicas_sin_coordenadas.append(clinica)
 

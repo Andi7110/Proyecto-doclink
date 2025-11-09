@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Agendar Nueva Cita</h2>
+
+<div class="container">
+    
 
     {% if messages %}
         {% for message in messages %}
@@ -17,106 +18,60 @@
     <form method="post" class="row g-3">
         {% csrf_token %}
 
-        <!-- Buscar Médico -->
-        <div class="col-md-5">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Buscar Médico</h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <input type="text" id="buscar-medico" class="form-control" placeholder="Buscar por nombre o especialidad...">
-                        <button class="btn btn-outline-secondary" type="button" id="btn-buscar">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        {% for esp in especialidades|slice:":5" %}
-                        <a href="?especialidad={{ esp }}" class="btn btn-sm btn-outline-primary">{{ esp }}</a>
-                        {% endfor %}
-                    </div>
-
-                    <div class="list-group" style="max-height: 300px; overflow-y: auto;">
-                        {% for medico in medicos %}
-                        <a href="#" class="list-group-item list-group-item-action seleccionar-medico"
-                           data-id="{{ medico.id_medico }}" data-nombre="{{ medico.nombre_completo }}" data-precio="{{ medico.precio_consulta }}">
-                            <div class="d-flex w-100 justify-content-between">
-                                <div>
-                                    <h6 class="mb-1">{{ medico.nombre_completo }}</h6>
-                                    <small class="text-muted">{{ medico.especialidad }}</small>
-                                </div>
-                                {% if medico.precio_consulta %}
-                                <small class="text-success fw-bold">${{ medico.precio_consulta }}</small>
-                                {% else %}
-                                <small class="text-warning">Precio no definido</small>
-                                {% endif %}
-                            </div>
-                        </a>
-                        {% empty %}
-                        <div class="alert alert-info mb-0">
-                            No se encontraron médicos con esos criterios.
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Datos del paciente y cita -->
         <div class="col-md-7">
-            <div class="card mb-4">
+            <!-- Datos personales -->
+            <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Tus Datos</h5>
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Tus Datos</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" value="{{ nombre }}" readonly>
+                        <label for="nombre" class="form-label">Nombre Completo</label>
+                        <input type="text" id="nombre" class="form-control" value="{{ nombre }}" readonly>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Edad</label>
-                            <input type="text" class="form-control" value="{% if edad %}{{ edad }} años{% else %}No especificada{% endif %}" readonly>
+                            <label for="edad" class="form-label">Edad</label>
+                            <input type="text" id="edad" class="form-control" 
+                                   value="{% if edad %}{{ edad }} años{% else %}No especificada{% endif %}" readonly>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Sexo</label>
-                            <input type="text" class="form-control" value="{% if sexo %}{{ sexo }}{% else %}No especificado{% endif %}" readonly>
+                            <label for="sexo" class="form-label">Sexo</label>
+                            <input type="text" id="sexo" class="form-control" 
+                                   value="{% if sexo %}{{ sexo }}{% else %}No especificado{% endif %}" readonly>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detalles de cita -->
-            <div class="card">
+            <!-- Detalles de la cita -->
+            <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Detalles de la Cita</h5>
+                    <h5 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Detalles de la Cita</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-4 p-3 bg-light rounded">
-                        <h6>Médico seleccionado:</h6>
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <p class="mb-0 fs-5" id="medico-seleccionado-texto">
-                                    {% if medico_nombre %}
-                                        <strong>{{ medico_nombre }}</strong>
-                                    {% else %}
-                                        <span class="text-muted">Ningún médico seleccionado</span>
-                                    {% endif %}
-                                </p>
-                                <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}">
-                            </div>
-                        </div>
+                        <h6 class="fw-bold">Médico seleccionado:</h6>
+                        <p id="medico-seleccionado-texto" class="fs-5 mb-2">
+                            {% if medico_nombre %}
+                                <strong>{{ medico_nombre }}</strong>
+                            {% else %}
+                                <span class="text-muted">Ningún médico seleccionado</span>
+                            {% endif %}
+                        </p>
+                        <input type="hidden" name="medico_id" id="medico_id" value="{{ medico_id|default:'' }}">
+                        <div id="alerta-precio" class="alert alert-warning d-none mt-2"></div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label for="fecha_cita" class="form-label">Fecha de la cita</label>
+                            <label for="fecha_cita" class="form-label">Fecha</label>
                             <input type="date" name="fecha_cita" id="fecha_cita" class="form-control" required min="{{ hoy|date:'Y-m-d' }}">
                         </div>
                         <div class="col-md-6">
                             <label for="hora_cita" class="form-label">Hora</label>
-                            <input type="time" name="hora_cita" id="hora_cita" class="form-control" value="09:00" required min="08:00" max="18:00" step="1800">
+                            <input type="time" name="hora_cita" id="hora_cita" class="form-control" required min="08:00" max="18:00" step="1800">
                         </div>
                     </div>
 
@@ -128,44 +83,41 @@
             </div>
 
             <!-- Método de Pago -->
-            <div class="card mt-4">
+            <div class="card mt-4 shadow-sm">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Método de Pago</h5>
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Método de Pago</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="monto_consulta" class="form-label">Monto de la consulta ($)</label>
-                            <input type="number" name="monto_consulta" id="monto_consulta" class="form-control" step="0.01" min="0" readonly required>
-                            <small class="form-text text-muted">El monto se determina por el precio establecido por el médico.</small>
+                            <input type="number" name="monto_consulta" id="monto_consulta" 
+                                   class="form-control" step="0.01" min="0" value="{{ medico_precio|default:'' }}" readonly required>
+                            <small class="form-text text-muted">Se define según el médico.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Método de pago</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="metodo_pago" id="efectivo" value="efectivo" required>
-                                <label class="form-check-label" for="efectivo">
-                                    Efectivo
-                                </label>
+                                <label class="form-check-label" for="efectivo">Efectivo</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="metodo_pago" id="tarjeta" value="tarjeta" required>
-                                <label class="form-check-label" for="tarjeta">
-                                    Tarjeta de crédito/débito
-                                </label>
+                                <label class="form-check-label" for="tarjeta">Tarjeta de crédito/débito</label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Campos de tarjeta (ocultos por defecto) -->
+                    <!-- Campos de tarjeta -->
                     <div id="campos-tarjeta" class="mt-4" style="display: none;">
                         <h6 class="text-primary mb-3">Datos de la tarjeta</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="numero_tarjeta" class="form-label">Número de tarjeta</label>
+                                <label for="numero_tarjeta" class="form-label">Número</label>
                                 <input type="text" name="numero_tarjeta" id="numero_tarjeta" class="form-control" maxlength="16" placeholder="1234567890123456">
                             </div>
                             <div class="col-md-3">
-                                <label for="fecha_expiracion" class="form-label">Fecha expiración</label>
+                                <label for="fecha_expiracion" class="form-label">Expira</label>
                                 <input type="text" name="fecha_expiracion" id="fecha_expiracion" class="form-control" placeholder="MM/YY" maxlength="5">
                             </div>
                             <div class="col-md-3">
@@ -173,11 +125,11 @@
                                 <input type="text" name="cvv" id="cvv" class="form-control" maxlength="4" placeholder="123">
                             </div>
                             <div class="col-md-6">
-                                <label for="nombre_titular" class="form-label">Nombre del titular</label>
+                                <label for="nombre_titular" class="form-label">Titular</label>
                                 <input type="text" name="nombre_titular" id="nombre_titular" class="form-control" placeholder="Como aparece en la tarjeta">
                             </div>
                             <div class="col-md-6">
-                                <label for="tipo_tarjeta" class="form-label">Tipo de tarjeta</label>
+                                <label for="tipo_tarjeta" class="form-label">Tipo</label>
                                 <select name="tipo_tarjeta" id="tipo_tarjeta" class="form-control">
                                     <option value="">Seleccionar...</option>
                                     <option value="debito">Débito</option>
@@ -189,7 +141,17 @@
 
                     <div class="alert alert-info mt-3" id="info-efectivo" style="display: none;">
                         <i class="fas fa-info-circle me-2"></i>
-                        Para pago en efectivo, deberá realizar el pago al momento de la cita médica.
+                        Para pago en efectivo, se realiza al momento de la cita.
+                    </div>
+
+                    <!-- Resumen -->
+                    <div class="alert alert-secondary mt-3">
+                        <h6 class="mb-1">Resumen:</h6>
+                        <ul class="mb-0">
+                            <li><strong>Médico:</strong> <span id="resumen-medico">-</span></li>
+                            <li><strong>Fecha:</strong> <span id="resumen-fecha">-</span></li>
+                            <li><strong>Hora:</strong> <span id="resumen-hora">-</span></li>
+                        </ul>
                     </div>
 
                     <button type="submit" class="btn btn-success w-100 py-2 mt-3" id="btn-confirmar">
@@ -202,38 +164,48 @@
 </div>
 
 <script>
+// --- JavaScript incluido en el template ---
 document.addEventListener('DOMContentLoaded', function () {
-    const medicoSeleccionadoTexto = document.getElementById('medico-seleccionado-texto');
     const medicoInput = document.getElementById('medico_id');
+    const medicoTexto = document.getElementById('medico-seleccionado-texto');
+    const montoInput = document.getElementById('monto_consulta');
+    const alertaPrecio = document.getElementById('alerta-precio');
+    const resumenMedico = document.getElementById('resumen-medico');
+    const resumenFecha = document.getElementById('resumen-fecha');
+    const resumenHora = document.getElementById('resumen-hora');
 
+    // ✅ Si ya hay un médico cargado desde Django, actualizamos el resumen automáticamente
+    const medicoNombre = "{{ medico_nombre|escapejs }}";
+    if (medicoNombre) {
+        resumenMedico.textContent = medicoNombre;
+    }
+
+
+    // Seleccionar médico
     document.querySelectorAll('.seleccionar-medico').forEach(btn => {
-        btn.addEventListener('click', function (e) {
+        btn.addEventListener('click', e => {
             e.preventDefault();
-            const medicoId = this.dataset.id;
-            const medicoNombre = this.dataset.nombre;
-            const precio = this.dataset.precio;
+            const id = btn.dataset.id;
+            const nombre = btn.dataset.nombre;
+            const precio = btn.dataset.precio;
 
-            medicoInput.value = medicoId;
-            medicoSeleccionadoTexto.innerHTML = `<strong>${medicoNombre}</strong>`;
+            medicoInput.value = id;
+            medicoTexto.innerHTML = `<strong>${nombre}</strong>`;
+            resumenMedico.textContent = nombre;
 
-            // Actualizar el monto de la consulta
-            const montoInput = document.getElementById('monto_consulta');
             if (precio) {
                 montoInput.value = precio;
+                alertaPrecio.classList.add('d-none');
             } else {
                 montoInput.value = '';
-                alert('Este médico no ha configurado un precio de consulta. No podrás agendar la cita hasta que lo haga.');
+                alertaPrecio.textContent = 'Este médico no ha configurado un precio.';
+                alertaPrecio.classList.remove('d-none');
             }
         });
     });
 
-    document.getElementById('btn-buscar').addEventListener('click', function () {
-        const termino = document.getElementById('buscar-medico').value.trim();
-        if (termino) {
-            window.location.href = `?especialidad=${encodeURIComponent(termino)}`;
-        }
-    });
 
+    // Validar fecha
     const fechaInput = document.getElementById('fecha_cita');
     fechaInput.addEventListener('change', function () {
         const hoy = new Date();
@@ -243,72 +215,92 @@ document.addEventListener('DOMContentLoaded', function () {
         if (seleccion < hoy) {
             alert('No puede seleccionar una fecha pasada');
             this.value = '';
+        } else {
+            resumenFecha.textContent = this.value;
         }
     });
 
-    document.getElementById('buscar-medico').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            document.getElementById('btn-buscar').click();
-        }
+    document.getElementById('hora_cita').addEventListener('change', e => {
+        resumenHora.textContent = e.target.value;
     });
 
-    // Manejar cambio de método de pago
+    // Métodos de pago
     document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const camposTarjeta = document.getElementById('campos-tarjeta');
             const infoEfectivo = document.getElementById('info-efectivo');
-
             if (this.value === 'tarjeta') {
                 camposTarjeta.style.display = 'block';
                 infoEfectivo.style.display = 'none';
-                // Hacer campos de tarjeta requeridos
-                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(field => {
-                    field.setAttribute('required', 'required');
-                });
-            } else if (this.value === 'efectivo') {
+                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(f => f.required = true);
+            } else {
                 camposTarjeta.style.display = 'none';
                 infoEfectivo.style.display = 'block';
-                // Quitar required de campos de tarjeta
-                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(field => {
-                    field.removeAttribute('required');
-                });
+                document.querySelectorAll('#campos-tarjeta input, #campos-tarjeta select').forEach(f => f.required = false);
             }
         });
     });
 
-    // Formatear fecha de expiración
-    document.getElementById('fecha_expiracion').addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            value = value.substring(0, 2) + '/' + value.substring(2, 4);
-        }
-        e.target.value = value;
+    // Validar formato de tarjeta
+    document.getElementById('fecha_expiracion').addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
+        e.target.value = v;
     });
 
-    // Validar número de tarjeta (solo números)
-    document.getElementById('numero_tarjeta').addEventListener('input', function(e) {
-        e.target.value = e.target.value.replace(/\D/g, '');
-    });
-
-    // Validar CVV (solo números)
-    document.getElementById('cvv').addEventListener('input', function(e) {
-        e.target.value = e.target.value.replace(/\D/g, '');
+    ['numero_tarjeta', 'cvv'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
     });
 });
 </script>
 
 <style>
-    .seleccionar-medico:hover {
-        background-color: #f8f9fa;
-        cursor: pointer;
-    }
 
-    .card {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
+/* El contenedor del formulario ahora ocupa todo el ancho */
+.container {
+    width: 700%;
+    border-radius: 10px;
+     padding-left: 250px
+    
+}
 
-    textarea {
-        resize: none;
-    }
+.h2{
+    text-align=center;
+}
+
+/* Secciones del formulario */
+.card {
+    margin-bottom: 25px;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Ajusta los inputs */
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+textarea { resize: none; }
+
+button {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+input:invalid, textarea:invalid {
+    border-color: #dc3545;
+}
 </style>
+
+
 {% endblock %}

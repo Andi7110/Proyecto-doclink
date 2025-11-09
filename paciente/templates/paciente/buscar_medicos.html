@@ -1,37 +1,71 @@
 {% extends "paciente/dashboard_base.html" %}
 {% block content %}
 
-<h2>Buscar médicos</h2>
+<div class="w-100">
 
-<form method="get" action="{% url 'buscar_medicos' %}" class="d-flex gap-2 mb-3">
-  <select name="tipo_filtro" class="form-select" style="width:150px;">
-    <option value="todo" {% if tipo_filtro == "todo" %}selected{% endif %}>Todo</option>
-    <option value="nombre" {% if tipo_filtro == "nombre" %}selected{% endif %}>Nombre</option>
-    <option value="especialidad" {% if tipo_filtro == "especialidad" %}selected{% endif %}>Especialidad</option>
-    <option value="ubicacion" {% if tipo_filtro == "ubicacion" %}selected{% endif %}>Ubicación</option>
-  </select>
-
-  <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ q }}">
-  <button type="submit" class="btn btn-success">🔍 Buscar</button>
-</form>
-
-{% if medicos %}
-  <div class="row">
-    {% for medico in medicos %}
-      <div class="col-md-6 mb-3">
-        <div class="card p-3">
-          <h5>{{ medico.usuario.nombre }} {{ medico.usuario.apellido }}</h5>
-          <p>Especialidad: {{ medico.especialidad }}</p>
-          <p>Ubicación: {{ medico.ubicacion }}</p>
-          <a href="{% url 'agendar_cita' %}" class="btn btn-info">Agendar cita</a>
-        </div>
+  <!-- Sección de búsqueda -->
+  <div class="bg-white rounded-3 p-4 mb-4 shadow-sm">
+    <h2 class="mb-4">Buscar Médico</h2>
+    
+    <form method="get" action="{% url 'buscar_medicos' %}" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Filtrar por:</label>
+        <select name="tipo_filtro" class="form-select">
+          <option value="todo" {% if tipo_filtro == "todo" %}selected{% endif %}>Todo</option>
+          <option value="nombre" {% if tipo_filtro == "nombre" %}selected{% endif %}>Nombre</option>
+          <option value="especialidad" {% if tipo_filtro == "especialidad" %}selected{% endif %}>Especialidad</option>
+          <option value="ubicacion" {% if tipo_filtro == "ubicacion" %}selected{% endif %}>Ubicación</option>
+        </select>
       </div>
-    {% endfor %}
+      
+      <div class="col-md-7">
+        <label class="form-label fw-bold">Buscar:</label>
+        <input type="text" name="q" class="form-control form-control-lg"
+               placeholder="Ingrese nombre, especialidad o ubicación..." value="{{ q }}">
+      </div>
+      
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-success btn-lg w-100">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+      </div>
+    </form>
   </div>
-{% else %}
-  <div class="alert alert-warning">
-    No se encontraron médicos con los criterios de búsqueda.
+
+  <!-- Resultados -->
+  {% if medicos %}
+  <div class="bg-white rounded-3 p-4 mb-4 shadow-sm">
+    <h3 class="mb-4">Médicos Disponibles</h3>
+    <div class="row g-4">
+      {% for medico in medicos %}
+      <div class="col-xl-3 col-lg-4 col-md-6">
+  <div class="card h-100 shadow-sm border-0">
+    <div class="card-body text-center">
+      <div class="mb-3">
+        <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+      </div>
+
+     <h5 class="card-title">{{ medico.nombre_completo }}</h5>
+<p class="card-text"><strong>Especialidad:</strong> {{ medico.especialidad }}</p>
+<p class="card-text"><strong>Ubicación:</strong> {{ medico.ubicacion }}</p>
+
+<a href="{% url 'agendar_cita' %}?medico_id={{ medico.id_medico }}" class="btn btn-primary">
+  <i class="fas fa-calendar-plus me-1"></i> Agendar Cita
+</a>
+
+    </div>
   </div>
-{% endif %}
+</div>
+
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center">
+    No se encontraron médicos con los criterios ingresados.
+  </div>
+  {% endif %}
+
+</div>
 
 {% endblock %}

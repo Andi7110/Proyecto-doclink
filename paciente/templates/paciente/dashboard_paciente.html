@@ -1,8 +1,10 @@
 {% extends "paciente/dashboard_base.html" %}
 {% block content %}
+
+
 <div class="row mt-4 align-items-center">
   <div class="col-12 col-lg-8 d-flex flex-wrap align-items-center gap-2 mb-3">
-    <h2 class="mb-0">¡Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}! </h2>
+    <h2 class="text-primary mb-0">¡Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}! </h2>
   </div>
   <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
     <div class="card shadow-sm p-3 text-center" style="min-width: 180px; width: 200px;">
@@ -13,80 +15,138 @@
   </div>
 </div>
 
-<a href="{% url 'mapa_medicos' %}" class="btn btn-info">📍 Ver médicos en el mapa</a>
-<!-- Botones principales -->
-<!-- Botón agregar póliza -->
-<div class="d-flex flex-wrap gap-2 mb-4 mt-2">
-  <a href="{% url 'agregar_poliza' %}" class="btn btn-primary">
-    Agregar Póliza
-  </a>
-<!-- Botón para agregar/editar contacto de emergencia -->
-  <a href="{% url 'contacto_emergencia' %}" class="btn btn-warning">
-    Contacto de Emergencia
-  </a>
-  <a href="{% url 'agenda' %}" class="btn btn-success">
-    📅 Ver Agenda y Diagnósticos
-  </a>
-  <button class="btn btn-danger btn-custom">Cancelar cita</button>
-  <div class="dropdown">
-    <button class="btn btn-info btn-custom text-white dropdown-toggle" style="background:#0076b5;" type="button"
-      data-bs-toggle="dropdown" aria-expanded="false">
-      Cuadro Clinico
+<!-- Botones principales mejorados -->
+<div class="row g-3 mb-4 mt-3">
+  <div class="col-md-4">
+    <a href="{% url 'mapa_medicos' %}" class="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-map"></i> 
+      <span>Ver médicos en el mapa</span>
+    </a>
+  </div>
+  
+  <div class="col-md-4">
+    <a href="{% url 'agregar_poliza' %}" class="btn btn-outline-success w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-file-earmark-plus"></i>
+      <span>Agregar Póliza</span>
+    </a>
+  </div>
+  
+  <div class="col-md-4">
+    <a href="{% url 'contacto_emergencia' %}" class="btn btn-outline-warning w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-telephone"></i>
+      <span>Contacto de Emergencia</span>
+    </a>
+  </div>
+</div>
+
+<!-- Segunda fila de botones -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{% url 'agenda' %}" class="btn btn-outline-info w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-calendar-check"></i>
+      <span>Ver Agenda y Diagnósticos</span>
+    </a>
+  </div>
+  
+  <div class="col-md-4">
+    <button class="btn btn-outline-danger w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+      <i class="bi bi-x-circle"></i>
+      <span>Cancelar cita</span>
     </button>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Ver cuadro</a></li>
-    </ul>
   </div>
+  
+ 
 </div>
 
-<div class="row gx-4">
-  <!-- Panel izquierdo: Buscar Medico -->
-  <div class="col-12 col-lg-6 mb-4">
-    <div class="card shadow-sm p-3 h-100">
+<!-- SECCIÓN DE BÚSQUEDA QUE OCUPA TODA LA PANTALLA -->
+<div class="card shadow-sm p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    
+  </div>
+  
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <span class="fw-bold" style="font-size:1.5rem;">Buscar Médico</span>
-  <form method="get" action="{% url 'buscar_medicos' %}" class="ms-auto d-flex" style="min-width: 250px; max-width: 320px; width: 100%;">
-    <select name="tipo_filtro" class="form-select me-2">
-      <option value="todo" {% if request.GET.tipo_filtro == "todo" %}selected{% endif %}>Todo</option>
-      <option value="nombre" {% if request.GET.tipo_filtro == "nombre" %}selected{% endif %}>Nombre</option>
-      <option value="especialidad" {% if request.GET.tipo_filtro == "especialidad" %}selected{% endif %}>Especialidad</option>
-      <option value="ubicacion" {% if request.GET.tipo_filtro == "ubicacion" %}selected{% endif %}>Ubicación</option>
-    </select>
-
-    <input type="search" name="q" class="form-control me-2" placeholder="Buscar..." value="{{ request.GET.q }}">
-    <button class="btn btn-success" type="submit">🔍</button>
-  </form>
-</div>
-
-        <div class="row">
-        <!-- Info médico -->
-        <div class="col-md-6 border-end">
-          <h6 style="font-weight: bold;"></h6>
-          <p class="mb-3" style="font-size: 1rem;">
-            
-          </p>
-        </div>
-        <!-- Puntaje y botón -->
-        <div class="col-md-6 d-flex flex-column align-items-center justify-content-between">
-          <div>
-            <h6 style="font-weight: bold;">Puntuacion de medico</h6>
-            <span class="rating-stars" style="font-size:2rem;">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-          </div>
-          <a href="{% url 'agendar_cita' %}" class="btn btn-info mt-4 w-75 text-white" style="background:#00b8e6; display: inline-block; text-align: center;">
-              <b>+ Agendar cita</b>
-          </a>
-        </div>
-      </div>
+  <!-- Información del médico -->
+  <div class="row mt-4">
+    <div class="col-md-6 border-end">
+      <h6 style="font-weight: bold;">Encuentra tu médico ideal</h6>
+      <p class="mb-3" style="font-size: 1rem;">
+        Busca entre nuestra amplia red de profesionales de la salud certificados y calificados por pacientes.
+      </p>
     </div>
-  </div>
-  <!-- Panel derecho: Ranking de Médicos -->
-  <div class="col-12 mb-4">
-    <div class="card shadow-sm p-3 h-100">
-      <h6 class="mb-3" style="font-weight:bold;">Ranking de Medicos</h6>
-      <p class="mb-3">Consulta el ranking completo de médicos basado en calificaciones de pacientes.</p>
-      <a href="{% url 'ranking_medico' %}" class="btn btn-primary w-100">Ver Ranking Completo</a>
+    
+    <div class="col-md-6 d-flex flex-column align-items-center justify-content-between">
+    
+      <a href="{% url 'buscar_medicos' %}" class="btn btn-info mt-3 w-75 text-white" 
+         style="background:#00b8e6; display: inline-block; text-align: center;">
+        <b>+ Agendar cita</b>
+      </a>
     </div>
   </div>
 </div>
+
+
+<!-- SECCIÓN DE LOS 10 MEJORES MÉDICOS DEL RANKING -->
+<div class="card shadow-sm p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Mira nuestro ranking de medicos
+    </h2>
+    <a href="{% url 'ranking_medico' %}" class="btn btn-outline-primary">Ver Ranking Completo</a>
+  </div>
+
+  
+
+<style>
+.card {
+  border: none;
+  border-radius: 15px;
+}
+
+.form-control-lg {
+  height: calc(3.5rem + 2px);
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+.btn-lg {
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 10px;
+}
+
+.rating-stars {
+  color: #ffc107;
+  font-size: 1.5rem;
+}
+
+.medico-item {
+  transition: all 0.3s ease;
+}
+
+.medico-item:hover {
+  transform: translateY(-2px);
+}
+</style>
+
+<script>
+function filtrarMedicos() {
+  const especialidad = document.getElementById('especialidadFilter').value;
+  const ubicacion = document.getElementById('ubicacionFilter').value;
+  const medicos = document.querySelectorAll('.medico-item');
+  
+  medicos.forEach(medico => {
+    const medEspecialidad = medico.getAttribute('data-especialidad');
+    const medUbicacion = medico.getAttribute('data-ubicacion');
+    
+    const showEspecialidad = !especialidad || medEspecialidad === especialidad;
+    const showUbicacion = !ubicacion || medUbicacion === ubicacion;
+    
+    if (showEspecialidad && showUbicacion) {
+      medico.style.display = 'block';
+    } else {
+      medico.style.display = 'none';
+    }
+  });
+}
+</script>
+
 {% endblock %}

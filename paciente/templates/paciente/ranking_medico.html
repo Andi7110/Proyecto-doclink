@@ -67,7 +67,11 @@
                             <p class="mb-0"><strong>Reseñas:</strong> {{ medico.num_reviews }}</p>
                         </div>
                         <div class="col-md-2 text-end">
-                            <a href="{% url 'agendar_cita' %}?especialidad={{ medico.especialidad }}" class="btn btn-info text-white">Agendar Cita</a>
+                           <!-- 🔹 Botón adaptado igual que en buscar_medicos -->
+                    <a href="{% url 'agendar_cita' %}?medico_id={{ medico.id_medico }}" class="btn btn-primary">
+    Agendar Cita
+</a>
+
                         </div>
                     </div>
                 </div>
